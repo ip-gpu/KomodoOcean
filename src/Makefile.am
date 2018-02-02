@@ -80,7 +80,8 @@ if BUILD_KOMODOD
 endif
 
 if BUILD_KOMODO_UTILS
-  bin_PROGRAMS += komodo-cli komodo-tx
+#  bin_PROGRAMS += komodo-cli komodo-tx
+
 endif
 
 LIBZCASH_H = \
@@ -91,13 +92,14 @@ LIBZCASH_H = \
   zcash/Note.hpp \
   zcash/prf.h \
   zcash/Proof.hpp \
-  zcash/util.h \
+  zcash/util_zcash.h \
   zcash/Zcash.h
 
 .PHONY: FORCE check-symbols check-security
 # bitcoin core #
 BITCOIN_CORE_H = \
   addrman.h \
+  addrdb.h \
   alert.h \
   amount.h \
   arith_uint256.h \
@@ -126,6 +128,7 @@ BITCOIN_CORE_H = \
   core_memusage.h \
   eccryptoverify.h \
   ecwrapper.h \
+  fs.h \
   hash.h \
   httprpc.h \
   httpserver.h \
@@ -208,6 +211,7 @@ libbitcoin_server_a_CPPFLAGS = $(BITCOIN_INCLUDES) $(MINIUPNPC_CPPFLAGS) $(EVENT
 libbitcoin_server_a_SOURCES = \
   sendalert.cpp \
   addrman.cpp \
+  addrdb.cpp \
   alert.cpp \
   alertkeys.h \
   asyncrpcoperation.cpp \
@@ -215,6 +219,7 @@ libbitcoin_server_a_SOURCES = \
   bloom.cpp \
   chain.cpp \
   checkpoints.cpp \
+  fs.cpp \
   httprpc.cpp \
   httpserver.cpp \
   init.cpp \
@@ -267,6 +272,7 @@ libbitcoin_wallet_a_SOURCES = \
   wallet/rpcdump.cpp \
   wallet/rpcwallet.cpp \
   wallet/wallet.cpp \
+  wallet/wallet_fees.cpp \
   wallet/wallet_ismine.cpp \
   wallet/walletdb.cpp \
   $(BITCOIN_CORE_H) \
@@ -317,11 +323,11 @@ libbitcoin_common_a_SOURCES = \
   core_write.cpp \
   eccryptoverify.cpp \
   ecwrapper.cpp \
-  hash.cpp \
+  hash_komodo.cpp \
   key.cpp \
   keystore.cpp \
   netbase.cpp \
-  primitives/block.cpp \
+  primitives/block_komodo.cpp \
   primitives/transaction.cpp \
   protocol.cpp \
   pubkey.cpp \
@@ -464,7 +470,7 @@ libzcash_a_SOURCES = \
   zcash/Proof.cpp \
   zcash/Note.cpp \
   zcash/prf.cpp \
-  zcash/util.cpp \
+  zcash/util_zcash.cpp \
   zcash/circuit/commitment.tcc \
   zcash/circuit/gadget.tcc \
   zcash/circuit/merkle.tcc \
@@ -482,7 +488,7 @@ libzcash_a_CPPFLAGS += -DMONTGOMERY_OUTPUT
 
 # zcashconsensus library #
 if BUILD_KOMODO_LIBS
-include_HEADERS = script/zcashconsensus.h
+include_HEADERS = 
 libzcashconsensus_la_SOURCES = \
   crypto/equihash.cpp \
   crypto/hmac_sha512.cpp \
@@ -492,10 +498,9 @@ libzcashconsensus_la_SOURCES = \
   crypto/sha512.cpp \
   eccryptoverify.cpp \
   ecwrapper.cpp \
-  hash.cpp \
+  hash_komodo.cpp \
   primitives/transaction.cpp \
   pubkey.cpp \
-  script/zcashconsensus.cpp \
   script/interpreter.cpp \
   script/script.cpp \
   uint256.cpp \
@@ -553,4 +558,4 @@ endif
 #include Makefile.gtest.include
 #endif
 
-include Makefile.zcash.include
+#include Makefile.zcash.include
