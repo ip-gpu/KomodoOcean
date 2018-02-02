@@ -32,12 +32,10 @@
 #define STORAGE_LEVELDB_PORT_PORT_WIN_H_
 
 #ifdef _MSC_VER
-//#define snprintf _snprintf
+#define snprintf _snprintf
 #define close _close
 #define fread_unlocked _fread_nolock
 #endif
-
-#pragma warning(disable : 4100)
 
 #include <string>
 #include <stdint.h>
@@ -169,9 +167,6 @@ inline bool Snappy_Uncompress(const char* input, size_t length,
 inline bool GetHeapProfile(void (*func)(void*, const char*, int), void* arg) {
   return false;
 }
-
-bool HasAcceleratedCRC32C();
-uint32_t AcceleratedCRC32C(uint32_t crc, const char* buf, size_t size);
 
 }
 }

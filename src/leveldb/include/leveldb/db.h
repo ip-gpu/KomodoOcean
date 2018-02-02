@@ -5,12 +5,6 @@
 #ifndef STORAGE_LEVELDB_INCLUDE_DB_H_
 #define STORAGE_LEVELDB_INCLUDE_DB_H_
 
-#ifdef _WIN64
-#define ssize_t __int64
-#else
-#define ssize_t long
-#endif
-
 #include <stdint.h>
 #include <stdio.h>
 #include "leveldb/iterator.h"
@@ -20,7 +14,7 @@ namespace leveldb {
 
 // Update Makefile if you change these
 static const int kMajorVersion = 1;
-static const int kMinorVersion = 20;
+static const int kMinorVersion = 18;
 
 struct Options;
 struct ReadOptions;
@@ -121,8 +115,6 @@ class DB {
   //     about the internal operation of the DB.
   //  "leveldb.sstables" - returns a multi-line string that describes all
   //     of the sstables that make up the db contents.
-  //  "leveldb.approximate-memory-usage" - returns the approximate number of
-  //     bytes of memory in use by the DB.
   virtual bool GetProperty(const Slice& property, std::string* value) = 0;
 
   // For each i in [0,n-1], store in "sizes[i]", the approximate
