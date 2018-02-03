@@ -2,6 +2,9 @@
 # Distributed under the MIT software license, see the accompanying
 # file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
+# TODO: Remove this dirty hack ... 
+#CXXFLAGS+=-fPIC -DHAVE_DECL_EVP_MD_CTX_NEW
+
 bin_PROGRAMS += qt/komodo-qt
 EXTRA_LIBRARIES += qt/libkomodoqt.a
 
@@ -189,7 +192,7 @@ KOMODO_QT_H = \
   qt/bantablemodel.h \
   qt/komodoaddressvalidator.h \
   qt/komodoamountfield.h \
-  qt/komodogui.h \
+  qt/komodooceangui.h \
   qt/komodounits.h \
   qt/callback.h \
   qt/clientmodel.h \
@@ -298,7 +301,7 @@ KOMODO_QT_BASE_CPP = \
   qt/bantablemodel.cpp \
   qt/komodoaddressvalidator.cpp \
   qt/komodoamountfield.cpp \
-  qt/komodogui.cpp \
+  qt/komodooceangui.cpp \
   qt/komodounits.cpp \
   qt/clientmodel.cpp \
   qt/csvmodelwriter.cpp \
