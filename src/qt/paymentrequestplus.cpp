@@ -14,7 +14,11 @@
 #include <stdexcept>
 
 #include <openssl/x509_vfy.h>
+
+#if HAVE_DECL_EVP_MD_CTX_NEW
+#else
 #include <evp/evp_locl.h>
+#endif
 
 #include <QDateTime>
 #include <QDebug>
