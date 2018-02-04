@@ -6,6 +6,10 @@
 #ifndef KOMODO_POLICY_POLICY_H
 #define KOMODO_POLICY_POLICY_H
 
+#if defined(linux) || defined(__linux)
+#include <sys/types.h>
+#endif
+
 #include "consensus/consensus.h"
 #include "script/interpreter.h"
 #include "script/standard.h"
