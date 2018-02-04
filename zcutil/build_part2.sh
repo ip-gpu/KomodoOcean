@@ -88,7 +88,7 @@ PREFIX="$(pwd)/depends/$BUILD/"
 
 #HOST="$HOST" BUILD="$BUILD" NO_RUST="$RUST_ARG" "$MAKE" "$@" -C ./depends/ V=1
 
-#./autogen.sh
+./autogen.sh
 DECKER_ARGS="--enable-tests=no --enable-wallet=yes with_boost_libdir=$(pwd)/depends/x86_64-unknown-linux-gnu/lib"
 DECKER_QT_INCPATH='-isystem /usr/include/x86_64-linux-gnu/qt5 -isystem /usr/include/x86_64-linux-gnu/qt5/QtWidgets -isystem /usr/include/x86_64-linux-gnu/qt5/QtGui -isystem /usr/include/x86_64-linux-gnu/qt5/QtNetwork -isystem /usr/include/x86_64-linux-gnu/qt5/QtDBus -isystem /usr/include/x86_64-linux-gnu/qt5/QtCore'
 #CPPFLAGS="-I$(pwd)/depends/x86_64-unknown-linux-gnu/include/" LDFLAGS="-L$(pwd)/depends/x86_64-unknown-linux-gnu/lib/"
@@ -108,6 +108,6 @@ DECKER_DEPS="CPPFLAGS=-I$(pwd)/depends/x86_64-unknown-linux-gnu/include LDFLAGS=
 #	CPPFLAGS="-I/path1 -I/path2" LDFLAGS="-L/path1 -L/path2"
 
 echo -e "\n"
-CC="$CC" CXX="$CXX" ./configure CXXFLAGS='-fwrapv -fno-strict-aliasing -Werror -g' $DECKER_ARGS $DECKER_DEPS
+CC="$CC" CXX="$CXX" ./configure CXXFLAGS='-fPIC -fwrapv -fno-strict-aliasing -Werror -g' $DECKER_ARGS $DECKER_DEPS
 
 #"$MAKE" "$@" V=1

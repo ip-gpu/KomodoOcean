@@ -11,11 +11,16 @@ define(_COPYRIGHT_YEAR, 2017)
 define(_COPYRIGHT_HOLDERS, "The %s developers")
 define(_COPYRIGHT_HOLDERS_SUBSTITUTION, "Ocean and Decker")
 
-AC_INIT([Zcash],[_CLIENT_VERSION_MAJOR._CLIENT_VERSION_MINOR._CLIENT_VERSION_SUFFIX(_ZC_BUILD_VAL)],[https://github.com/zcash/zcash/issues],[zcash])
+AC_INIT([Komodo],[_CLIENT_VERSION_MAJOR._CLIENT_VERSION_MINOR._CLIENT_VERSION_SUFFIX(_ZC_BUILD_VAL)],[https://github.com/zcash/zcash/issues],[zcash])
 AC_CONFIG_SRCDIR([src/main.cpp])
 AC_CONFIG_HEADERS([src/config/komodo-config.h])
 AC_CONFIG_AUX_DIR([build-aux])
 AC_CONFIG_MACRO_DIR([build-aux/m4])
+
+BITCOIN_DAEMON_NAME=komodod
+BITCOIN_GUI_NAME=komodo-qt
+BITCOIN_CLI_NAME=komodo-cli
+BITCOIN_TX_NAME=komodo-tx
 
 AC_CANONICAL_HOST
 
@@ -301,30 +306,31 @@ case $host in
          fi
        fi
 
-dnl       AC_CHECK_PROG([BREW],brew, brew)
-dnl       if test x$BREW = xbrew; then
-        dnl These Homebrew packages may be keg-only, meaning that they won't be found
-        dnl in expected paths because they may conflict with system files. Ask
-        dnl Homebrew where each one is located, then adjust paths accordingly.
-        dnl It's safe to add these paths even if the functionality is disabled by
-        dnl the user (--without-wallet for example).
+       AC_PATH_PROGS([RSVG_CONVERT], [rsvg-convert rsvg],rsvg-convert)
+       AC_CHECK_PROG([BREW],brew, brew)
+       if test x$BREW = xbrew; then
+         dnl These Homebrew packages may be keg-only, meaning that they won't be found
+         dnl in expected paths because they may conflict with system files. Ask
+         dnl Homebrew where each one is located, then adjust paths accordingly.
+         dnl It's safe to add these paths even if the functionality is disabled by
+         dnl the user (--without-wallet or --without-gui for example).
 
-dnl         openssl_prefix=`$BREW --prefix openssl 2>/dev/null`
-dnl         bdb_prefix=`$BREW --prefix berkeley-db4 2>/dev/null`
-dnl         qt5_prefix=`$BREW --prefix qt5 2>/dev/null`
-dnl         if test x$openssl_prefix != x; then
-dnl           PKG_CONFIG_PATH="$PKG_CONFIG_PATH"
-dnl           export PKG_CONFIG_PATH
-dnl         fi
-dnl         if test x$bdb_prefix != x; then
-dnl           CPPFLAGS="$CPPFLAGS -I$bdb_prefix/include"
-dnl           LIBS="$LIBS -L$bdb_prefix/lib"
-dnl         fi
-dnl         if test x$qt5_prefix != x; then
-dnl           PKG_CONFIG_PATH="$qt5_prefix/lib/pkgconfig:$PKG_CONFIG_PATH"
-dnl           export PKG_CONFIG_PATH
-dnl         fi
-dnl       fi
+         openssl_prefix=`$BREW --prefix openssl 2>/dev/null`
+         bdb_prefix=`$BREW --prefix berkeley-db4 2>/dev/null`
+         qt5_prefix=`$BREW --prefix qt5 2>/dev/null`
+         if test x$openssl_prefix != x; then
+           PKG_CONFIG_PATH="$openssl_prefix/lib/pkgconfig:$PKG_CONFIG_PATH"
+           export PKG_CONFIG_PATH
+         fi
+         if test x$bdb_prefix != x; then
+           CPPFLAGS="$CPPFLAGS -I$bdb_prefix/include"
+           LIBS="$LIBS -L$bdb_prefix/lib"
+         fi
+         if test x$qt5_prefix != x; then
+           PKG_CONFIG_PATH="$qt5_prefix/lib/pkgconfig:$PKG_CONFIG_PATH"
+           export PKG_CONFIG_PATH
+         fi
+       fi
      else
        case $build_os in
          *darwin*)
@@ -334,6 +340,9 @@ dnl       fi
            AC_PATH_TOOL([INSTALLNAMETOOL], [install_name_tool], install_name_tool)
            AC_PATH_TOOL([OTOOL], [otool], otool)
            AC_PATH_PROGS([GENISOIMAGE], [genisoimage mkisofs],genisoimage)
+           AC_PATH_PROGS([RSVG_CONVERT], [rsvg-convert rsvg],rsvg-convert)
+           AC_PATH_PROGS([IMAGEMAGICK_CONVERT], [convert],convert)
+           AC_PATH_PROGS([TIFFCP], [tiffcp],tiffcp)
 
            dnl libtool will try to strip the static lib, which is a problem for
            dnl cross-builds because strip attempts to call a hard-coded ld,
@@ -561,7 +570,12 @@ if test x$use_upnp != xno; then
   )
 fi
 
-if test x$build_komodo_utils$build_komodod$use_tests = xnonono; then
+BITCOIN_QT_INIT
+
+dnl sets $bitcoin_enable_qt, $bitcoin_enable_qt_test, $bitcoin_enable_qt_dbus
+BITCOIN_QT_CONFIGURE([$use_pkgconfig], [qt5])
+
+if test x$build_komodo_utils$build_komodod$use_tests$build_bitcoind$bitcoin_enable_qt = xnononono; then
     use_boost=no
 else
     use_boost=yes
@@ -705,7 +719,11 @@ if test x$use_pkgconfig = xyes; then
     [
       PKG_CHECK_MODULES([SSL], [libssl],, [AC_MSG_ERROR(openssl  not found.)])
       PKG_CHECK_MODULES([CRYPTO], [libcrypto],,[AC_MSG_ERROR(libcrypto  not found.)])
-      if test x$build_komodo_utils$build_komodod$komodo_enable_qt$use_tests != xnononono; then
+      BITCOIN_QT_CHECK([PKG_CHECK_MODULES([PROTOBUF], [protobuf], [have_protobuf=yes], [BITCOIN_QT_FAIL(libprotobuf not found)])])
+      if test x$use_qr != xno; then
+        BITCOIN_QT_CHECK([PKG_CHECK_MODULES([QR], [libqrencode], [have_qrencode=yes], [have_qrencode=no])])
+      fi
+      if test x$build_komodo_utils$build_komodod$bitcoin_enable_qt$use_tests != xnononono; then
         PKG_CHECK_MODULES([EVENT], [libevent],, [AC_MSG_ERROR(libevent not found.)])
         if test x$TARGET_OS != xwindows; then
           PKG_CHECK_MODULES([EVENT_PTHREADS], [libevent_pthreads],, [AC_MSG_ERROR(libevent_pthreads not found.)])
@@ -733,7 +751,7 @@ else
   AC_CHECK_HEADER([openssl/ssl.h],, AC_MSG_ERROR(libssl headers missing),)
   AC_CHECK_LIB([ssl],         [main],SSL_LIBS=-lssl, AC_MSG_ERROR(libssl missing))
 
-  if test x$build_komodo_utils$build_komodod$komodo_enable_qt$use_tests != xnononono; then
+  if test x$build_komodo_utils$build_komodod$bitcoin_enable_qt$use_tests != xnononono; then
     AC_CHECK_HEADER([event2/event.h],, AC_MSG_ERROR(libevent headers missing),)
     AC_CHECK_LIB([event],[main],EVENT_LIBS=-levent,AC_MSG_ERROR(libevent missing))
     if test x$TARGET_OS != xwindows; then
@@ -762,6 +780,12 @@ else
         ZMQ_CFLAGS="$ZMQ_CFLAGS -DZMQ_STATIC"
       ;;
     esac
+  fi
+
+  BITCOIN_QT_CHECK(AC_CHECK_LIB([protobuf] ,[main],[PROTOBUF_LIBS=-lprotobuf], BITCOIN_QT_FAIL(libprotobuf not found)))
+  if test x$use_qr != xno; then
+    BITCOIN_QT_CHECK([AC_CHECK_LIB([qrencode], [main],[QR_LIBS=-lqrencode], [have_qrencode=no])])
+    BITCOIN_QT_CHECK([AC_CHECK_HEADER([qrencode.h],, have_qrencode=no)])
   fi
 fi
 
@@ -940,6 +964,10 @@ AM_CONDITIONAL([ENABLE_WALLET],[test x$enable_wallet = xyes])
 AM_CONDITIONAL([ENABLE_MINING],[test x$enable_mining = xyes])
 AM_CONDITIONAL([ENABLE_RUST],[test x$enable_rust = xyes])
 AM_CONDITIONAL([ENABLE_TESTS],[test x$BUILD_TEST = xyes])
+AM_CONDITIONAL([ENABLE_QT],[test x$bitcoin_enable_qt = xyes])
+AM_CONDITIONAL([ENABLE_QT_TESTS],[test x$BUILD_TEST_QT = xyes])
+AM_CONDITIONAL([ENABLE_BENCH],[test x$use_bench = xyes])
+AM_CONDITIONAL([USE_QRCODE], [test x$use_qr = xyes])
 AM_CONDITIONAL([USE_LCOV],[test x$use_lcov = xyes])
 AM_CONDITIONAL([USE_COMPARISON_TOOL],[test x$use_comparison_tool != xno])
 AM_CONDITIONAL([USE_COMPARISON_TOOL_REORG_TESTS],[test x$use_comparison_tool_reorg_test != xno])
@@ -1018,3 +1046,38 @@ case $host in
      chmod 755 libtool
    ;;
 esac
+
+dnl Replace the BUILDDIR path with the correct Windows path if compiling on Native Windows
+case ${OS} in
+   *Windows*)
+     sed  's/BUILDDIR="\/\([[a-z]]\)/BUILDDIR="\1:/'  test/config.ini > test/config-2.ini
+     mv test/config-2.ini test/config.ini
+   ;;
+esac
+
+echo 
+echo "Options used to compile and link:"
+echo "  with wallet   = $enable_wallet"
+echo "  with gui / qt = $bitcoin_enable_qt"
+if test x$bitcoin_enable_qt != xno; then
+    echo "    qt version  = $bitcoin_qt_got_major_vers"
+    echo "    with qr     = $use_qr"
+fi
+echo "  with zmq      = $use_zmq"
+echo "  with test     = $use_tests"
+echo "  with bench    = $use_bench"
+echo "  with upnp     = $use_upnp"
+echo "  debug enabled = $enable_debug"
+echo "  werror        = $enable_werror"
+echo 
+echo "  target os     = $TARGET_OS"
+echo "  build os      = $BUILD_OS"
+echo
+echo "  CC            = $CC"
+echo "  CFLAGS        = $CFLAGS"
+echo "  CPPFLAGS      = $CPPFLAGS"
+echo "  CXX           = $CXX"
+echo "  CXXFLAGS      = $CXXFLAGS"
+echo "  LDFLAGS       = $LDFLAGS"
+echo "  ARFLAGS       = $ARFLAGS"
+echo 

@@ -37,6 +37,7 @@ LIBBITCOIN_COMMON=libbitcoin_common.a
 LIBBITCOIN_CLI=libbitcoin_cli.a
 LIBBITCOIN_UTIL=libbitcoin_util.a
 LIBBITCOIN_CRYPTO=crypto/libbitcoin_crypto.a
+LIBBITCOINQT=qt/libkomodoqt.a
 LIBSECP256K1=secp256k1/libsecp256k1.la
 LIBUNIVALUE=univalue/libunivalue.la
 LIBZCASH=libzcash.a -lcurl
@@ -206,7 +207,7 @@ obj/build.h: FORCE
 	  $(abs_top_srcdir)
 libbitcoin_util_a-clientversion.$(OBJEXT): obj/build.h
 
-# server: zcashd
+# server: shared between komodod and komodo-qt
 libbitcoin_server_a_CPPFLAGS = $(BITCOIN_INCLUDES) $(MINIUPNPC_CPPFLAGS) $(EVENT_CFLAGS) $(EVENT_PTHREADS_CFLAGS)
 libbitcoin_server_a_SOURCES = \
   sendalert.cpp \
@@ -259,7 +260,7 @@ libbitcoin_zmq_a_SOURCES = \
 endif
 
 
-# wallet: zcashd, but only linked when wallet enabled
+# wallet: shared between bitcoind and bitcoin-qt, but only linked
 libbitcoin_wallet_a_CPPFLAGS = $(BITCOIN_INCLUDES)
 libbitcoin_wallet_a_SOURCES = \
   utiltest.cpp \
@@ -559,6 +560,7 @@ endif
 #endif
 
 #include Makefile.zcash.include
+
 #if ENABLE_QT
 include Makefile.qt.include
 #endif
