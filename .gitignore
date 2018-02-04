@@ -124,3 +124,10 @@ src/qt/test/moc*.cpp
 komodo-qt                 
 komodo-qt_test            
 src/qt/gen*
+
+src/config/komodo-config.h
+src/config/komodo-config.h.in
+src/komodod
+src/qt/komodo-qt
+
+
