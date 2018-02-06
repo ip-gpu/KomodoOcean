@@ -92,22 +92,21 @@ bool CDBEnv::Open(const boost::filesystem::path& pathIn)
         nEnvFlags |= DB_PRIVATE;
 
     char db_path[256];
-    char log_path[256];
-    char err_path[256];
-
     memset(db_path, 0, 256);
+    char log_path[256];
     memset(log_path, 0, 256);
+    char err_path[256];
     memset(err_path, 0, 256);
 
-#ifdef WIN32
+    #ifdef WIN32	
     GetShortPathNameA(strPath.c_str(), db_path, 256);
     GetShortPathNameA(pathLogDir.string().c_str(), log_path, 256);
     GetShortPathNameA(pathErrorFile.string().c_str(), err_path, 256);
-#else
+    #else
     strcpy(db_path,strPath.c_str());
     strcpy(log_path,pathLogDir.string().c_str());
     strcpy(err_path,pathErrorFile.string().c_str());
-#endif
+    #endif
 
 //    dbenv->set_lg_dir(pathLogDir.string().c_str());
     dbenv->set_lg_dir(log_path);

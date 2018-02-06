@@ -422,7 +422,8 @@ void komodo_stateupdate(int32_t height,uint8_t notarypubs[][33],uint8_t numnotar
                 mp = (unsigned char*)malloc(fsize);
                 if (mp)
                 {
-                    fread(mp,1,fsize,fp);
+                    //!!!!!!!!! turned off...
+		    //fread(mp,1,fsize,fp);
                     mpos = 0;
 
                     LogPrintf("%s: komodostate loaded...\n", __func__);
