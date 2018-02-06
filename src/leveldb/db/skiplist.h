@@ -1,10 +1,10 @@
-// Copyright (c) 2011 The LevelDB Authors. All rights reserved.
-// Use of this source code is governed by a BSD-style license that can be
-// found in the LICENSE file. See the AUTHORS file for names of contributors.
-
 #ifndef STORAGE_LEVELDB_DB_SKIPLIST_H_
 #define STORAGE_LEVELDB_DB_SKIPLIST_H_
 
+// Copyright (c) 2011 The LevelDB Authors. All rights reserved.
+// Use of this source code is governed by a BSD-style license that can be
+// found in the LICENSE file. See the AUTHORS file for names of contributors.
+//
 // Thread safety
 // -------------
 //
@@ -348,7 +348,7 @@ void SkipList<Key,Comparator>::Insert(const Key& key) {
     for (int i = GetMaxHeight(); i < height; i++) {
       prev[i] = head_;
     }
-    //LogPrintf( "Change height from %d to %d\n", max_height_, height);
+    //fprintf(stderr, "Change height from %d to %d\n", max_height_, height);
 
     // It is ok to mutate max_height_ without any synchronization
     // with concurrent readers.  A concurrent reader that observes

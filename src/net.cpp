@@ -80,7 +80,7 @@ static std::vector<ListenSocket> vhListenSocket;
 CAddrMan addrman;
 int nMaxConnections = DEFAULT_MAX_PEER_CONNECTIONS;
 bool fAddressesInitialized = false;
-std::atomic<bool> fNetworkActive = true;
+std::atomic<bool> fNetworkActive = { true };
 bool setBannedIsDirty = false;
 
 bool GetNetworkActive() { return fNetworkActive; };

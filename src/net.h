@@ -172,7 +172,7 @@ CNodeSignals& GetNodeSignals();
 
 class NetEventsInterface;
 
-void Discover(boost::thread_group& threadGroup);
+void static Discover(boost::thread_group& threadGroup);
 
 /**
  * Interface for message handling

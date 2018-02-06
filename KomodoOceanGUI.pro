@@ -2,9 +2,9 @@ TEMPLATE = app
 TARGET = KomodoOceanGUI
 VERSION = 0.1.0.0
 
-INCLUDEPATH += src src\qt src\libsnark src\protobuf src\secp256k1 src\secp256k1\include src\leveldb\include src\leveldb\helpers\memenv src\leveldb src\univalue\include src\libevent\include src\libevent\compat
+INCLUDEPATH += src src\qt src\libsnark src\secp256k1 src\secp256k1\include src\leveldb\include src\leveldb\helpers\memenv src\leveldb src\univalue\include src\libevent\include src\libevent\compat
 
-MINIUPNPC_INCLUDE_PATH = src\miniupnpc
+MINIUPNPC_INCLUDE_PATH = 
 
 windows:INCLUDEPATH += D:\libgmp_6.1.1_msvc14\include
 windows:INCLUDEPATH += D:\BDB_6.2.32\include D:\db-6.2.23\build_windows
@@ -75,19 +75,18 @@ contains(USE_UPNP, -) {
     DEFINES += USE_UPNP=$$USE_UPNP MINIUPNP_STATICLIB STATICLIB
     INCLUDEPATH += $$MINIUPNPC_INCLUDE_PATH
 
-    SOURCES += src\miniupnpc\connecthostport.c \
-    src\miniupnpc\igd_desc_parse.c \
-    src\miniupnpc\minisoap.c \
-    src\miniupnpc\minissdpc.c \
-    src\miniupnpc\miniupnpc.c \
-    src\miniupnpc\miniwget.c \
-    src\miniupnpc\minixml.c \
-    src\miniupnpc\portlistingparse.c \
-    src\miniupnpc\receivedata.c \
-    src\miniupnpc\upnpcommands.c \
-    src\miniupnpc\upnpdev.c \
-    src\miniupnpc\upnperrors.c \
-    src\miniupnpc\upnpreplyparse.c
+    #SOURCES += src\miniupnpc\connecthostport.c \
+    #src\miniupnpc\igd_desc_parse.c \
+    #src\miniupnpc\minisoap.c \
+    #src\miniupnpc\minissdpc.c \
+    #src\miniupnpc\miniupnpc.c \
+    #src\miniupnpc\miniwget.c \
+    #src\miniupnpc\minixml.c \
+    #src\miniupnpc\portlistingparse.c \
+    #src\miniupnpc\upnpcommands.c \
+    #src\miniupnpc\upnpdev.c \
+    #src\miniupnpc\upnperrors.c \
+    #src\miniupnpc\upnpreplyparse.c
 
     windows:LIBS += -liphlpapi
 }
@@ -188,43 +187,7 @@ HEADERS += src\komodo_globals.h \
      src\komodo_komodod.h \
      src\komodo_utils.h
 
-SOURCES += src\protobuf\google\protobuf\any.cc \
-    src\protobuf\google\protobuf\arena.cc \
-    src\protobuf\google\protobuf\descriptor.cc \
-    src\protobuf\google\protobuf\descriptor.pb.cc \
-    src\protobuf\google\protobuf\descriptor_database.cc \
-    src\protobuf\google\protobuf\dynamic_message.cc \
-    src\protobuf\google\protobuf\extension_set.cc \
-    src\protobuf\google\protobuf\extension_set_heavy.cc \
-    src\protobuf\google\protobuf\generated_message_reflection.cc \
-    src\protobuf\google\protobuf\generated_message_util.cc \
-    src\protobuf\google\protobuf\io\coded_stream.cc \
-    src\protobuf\google\protobuf\io\strtod.cc \
-    src\protobuf\google\protobuf\io\tokenizer.cc \
-    src\protobuf\google\protobuf\io\zero_copy_stream.cc \
-    src\protobuf\google\protobuf\io\zero_copy_stream_impl.cc \
-    src\protobuf\google\protobuf\io\zero_copy_stream_impl_lite.cc \
-    src\protobuf\google\protobuf\map_field.cc \
-    src\protobuf\google\protobuf\message.cc \
-    src\protobuf\google\protobuf\message_lite.cc \
-    src\protobuf\google\protobuf\reflection_ops.cc \
-    src\protobuf\google\protobuf\repeated_field.cc \
-    src\protobuf\google\protobuf\stubs\atomicops_internals_x86_msvc.cc \
-    src\protobuf\google\protobuf\stubs\common.cc \
-    src\protobuf\google\protobuf\stubs\int128.cc \
-    src\protobuf\google\protobuf\stubs\io_win32.cc \
-    src\protobuf\google\protobuf\stubs\once.cc \
-    src\protobuf\google\protobuf\stubs\status.cc \
-    src\protobuf\google\protobuf\stubs\stringpiece.cc \
-    src\protobuf\google\protobuf\stubs\stringprintf.cc \
-    src\protobuf\google\protobuf\stubs\structurally_valid.cc \
-    src\protobuf\google\protobuf\stubs\strutil.cc \
-    src\protobuf\google\protobuf\stubs\substitute.cc \
-    src\protobuf\google\protobuf\text_format.cc \
-    src\protobuf\google\protobuf\unknown_field_set.cc \
-    src\protobuf\google\protobuf\wire_format.cc \
-    src\protobuf\google\protobuf\wire_format_lite.cc \
-    src\addrdb.cpp \
+SOURCES += src\addrdb.cpp \
     src\addrman.cpp \
     src\alert.cpp \
     src\amount.cpp \
@@ -555,7 +518,7 @@ Debug:LIBS += -lD:\pthreads-master\dll\x64\Debug\pthreads
     LIBS += -lrt -ldl
 }
 
-QMAKE_CXXFLAGS += -O2 -bigobj -Zp8 -GS -wd4800 -wd4100 -wd4267 -wd4244 -wd4101 -w14100 -wd4146 -wd4189 -wd4018 -wd4290 -wd4334 -wd4996
-QMAKE_CFLAGS += -O2 -bigobj -Zp8 -GS -wd4800 -wd4100 -wd4267 -wd4244 -wd4101 -w14100 -wd4146 -wd4189 -wd4018 -wd4290 -wd4334 -wd4996
+QMAKE_CXXFLAGS += -O2 
+QMAKE_CFLAGS += -O2 
 
 system($$QMAKE_LRELEASE -silent $$_PRO_FILE_)

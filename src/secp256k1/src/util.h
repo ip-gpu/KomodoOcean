@@ -17,12 +17,12 @@
 
 #ifdef DETERMINISTIC
 #define TEST_FAILURE(msg) do { \
-    printf( "%s\n", msg); \
+    fprintf(stderr, "%s\n", msg); \
     abort(); \
 } while(0);
 #else
 #define TEST_FAILURE(msg) do { \
-    printf( "%s:%d: %s\n", __FILE__, __LINE__, msg); \
+    fprintf(stderr, "%s:%d: %s\n", __FILE__, __LINE__, msg); \
     abort(); \
 } while(0)
 #endif

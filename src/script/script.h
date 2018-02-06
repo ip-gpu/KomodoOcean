@@ -285,11 +285,18 @@ public:
 
     int getint() const
     {
-        if (m_value > std::numeric_limits<int64_t>::max())
+
+	/*        if (m_value > std::numeric_limits<int64_t>::max())
             return std::numeric_limits<int64_t>::max();
         else if (m_value < std::numeric_limits<int64_t>::min())
             return std::numeric_limits<int64_t>::min();
         return (int)m_value;
+	*/
+        if (m_value > std::numeric_limits<int>::max())
+            return std::numeric_limits<int>::max();
+        else if (m_value < std::numeric_limits<int>::min())
+            return std::numeric_limits<int>::min();
+        return m_value;
     }
 
     std::vector<unsigned char> getvch() const
