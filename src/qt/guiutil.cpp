@@ -714,7 +714,8 @@ fs::path static GetAutostartDir()
 
 fs::path static GetAutostartFilePath()
 {
-    std::string chain = ChainNameFromCommandLine();
+//    std::string chain = ChainNameFromCommandLine();
+    CBaseChainParams::Network chain = NetworkIdFromCommandLine();
     if (chain == CBaseChainParams::MAIN)
         return GetAutostartDir() / "komodo.desktop";
     return GetAutostartDir() / strprintf("komodo-%s.lnk", chain);
@@ -756,7 +757,8 @@ bool SetStartOnSystemStartup(bool fAutoStart)
         fs::ofstream optionFile(GetAutostartFilePath(), std::ios_base::out|std::ios_base::trunc);
         if (!optionFile.good())
             return false;
-        std::string chain = ChainNameFromCommandLine();
+//        std::string chain = ChainNameFromCommandLine();
+        CBaseChainParams::Network chain = NetworkIdFromCommandLine();
         // Write a komodo.desktop file to the autostart directory:
         optionFile << "[Desktop Entry]\n";
         optionFile << "Type=Application\n";
@@ -764,7 +766,7 @@ bool SetStartOnSystemStartup(bool fAutoStart)
             optionFile << "Name=Komodo\n";
         else
             optionFile << strprintf("Name=Komodo (%s)\n", chain);
-        optionFile << "Exec=" << pszExePath << strprintf(" -min -testnet=%d -regtest=%d\n", gArgs.GetBoolArg("-testnet", false), gArgs.GetBoolArg("-regtest", false));
+        optionFile << "Exec=" << pszExePath << strprintf(" -min -testnet=%d -regtest=%d\n", GetBoolArg("-testnet", false), GetBoolArg("-regtest", false));
         optionFile << "Terminal=false\n";
         optionFile << "Hidden=false\n";
         optionFile.close();
