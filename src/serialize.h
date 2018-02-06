@@ -943,6 +943,7 @@ void Unserialize(Stream& is, std::list<T, A>& l, int nType, int nVersion)
 /**
  * shared_ptr
  */
+/*
 template<typename Stream, typename T> void
 Serialize(Stream& os, const std::shared_ptr<const T>& p)
 {
@@ -954,7 +955,7 @@ void Unserialize(Stream& is, std::shared_ptr<const T>& p)
 {
     p = std::make_shared<const T>(deserialize, is);
 }
-
+*/
 
 /**
  * Support for ADD_SERIALIZE_METHODS and READWRITE macro

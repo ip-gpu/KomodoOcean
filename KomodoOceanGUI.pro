@@ -6,15 +6,15 @@ INCLUDEPATH += src src\qt src\libsnark src\protobuf src\secp256k1 src\secp256k1\
 
 MINIUPNPC_INCLUDE_PATH = src\miniupnpc
 
-windows:INCLUDEPATH += D:\libgmp_6.1.1_msvc14\include
-windows:INCLUDEPATH += D:\BDB_6.2.32\include D:\db-6.2.23\build_windows
-windows:INCLUDEPATH += D:\libsodium-1.0.15-msvc\include
-windows:INCLUDEPATH += D:\boost_1_65_1 D:\boost_1_65_1\boost
-windows:INCLUDEPATH += D:\pthreads-master
-windows:INCLUDEPATH += D:\openssl-1.1.0f-vs2015\include64 D:\openssl\crypto
+windows:INCLUDEPATH += depends\libgmp_6.1.1_msvc14\include
+windows:INCLUDEPATH += depends\BDB_6.2.32\include depends\db-6.2.23\build_windows
+windows:INCLUDEPATH += depends\libsodium-1.0.15-msvc\include
+windows:INCLUDEPATH += depends\boost_1_65_1 depends\boost_1_65_1\boost
+windows:INCLUDEPATH += depends\pthreads-master
+windows:INCLUDEPATH += depends\openssl-1.1.0f-vs2015\include64 depends\openssl\crypto
 
-windows:BOOST_LIB_PATH = D:\boost_1_65_1\lib64-msvc-14.0
-windows:OPENSSL_LIB_PATH = D:\openssl-1.1.0f-vs2015\lib64
+windows:BOOST_LIB_PATH = depends\boost_1_65_1\lib64-msvc-14.0
+windows:OPENSSL_LIB_PATH = depends\openssl-1.1.0f-vs2015\lib64
 
 QT_VERSION = 0x050902
 QT += network widgets
@@ -536,19 +536,19 @@ windows:LIBS += -lws2_32 -lshlwapi -lmswsock -lole32 -loleaut32 -luuid -lgdi32 -
 LIBS += -lboost_system$$BOOST_LIB_SUFFIX -lboost_filesystem$$BOOST_LIB_SUFFIX -lboost_program_options$$BOOST_LIB_SUFFIX -lboost_thread$$BOOST_THREAD_LIB_SUFFIX
 windows:LIBS += -lboost_chrono$$BOOST_LIB_SUFFIX
 
-Release:LIBS += -lD:\libgmp_6.1.1_msvc14\lib\x64\gmp
-Release:LIBS += -lD:\libsodium-1.0.15-msvc\x64\Release\v140\dynamic\libsodium
-Release:LIBS += -lD:\libcurl-master\lib\dll-release-x64\libcurl
-Release:LIBS += -lD:\db-6.2.23\build_windows\x64\Release\libdb62
+Release:LIBS += -ldepends\libgmp_6.1.1_msvc14\lib\x64\gmp
+Release:LIBS += -ldepends\libsodium-1.0.15-msvc\x64\Release\v140\dynamic\libsodium
+Release:LIBS += -ldepends\libcurl-master\lib\dll-release-x64\libcurl
+Release:LIBS += -ldepends\db-6.2.23\build_windows\x64\Release\libdb62
 Release:LIBS += -llibcryptoMD -llibsslMD
-Release:LIBS += -lD:\pthreads-master\dll\x64\Release\pthreads
+Release:LIBS += -ldepends\pthreads-master\dll\x64\Release\pthreads
 
-Debug:LIBS += -lD:\libgmp_6.1.1_msvc14\lib\x64\gmp
-Debug:LIBS += -lD:\libsodium-1.0.15-msvc\x64\Debug\v140\dynamic\libsodium
-Debug:LIBS += -lD:\libcurl-master\lib\dll-debug-x64\libcurl_debug
-Debug:LIBS += -lD:\db-6.2.23\build_windows\x64\Debug\libdb62d
+Debug:LIBS += -ldepends\libgmp_6.1.1_msvc14\lib\x64\gmp
+Debug:LIBS += -ldepends\libsodium-1.0.15-msvc\x64\Debug\v140\dynamic\libsodium
+Debug:LIBS += -lldepends\libcurl-master\lib\dll-debug-x64\libcurl_debug
+Debug:LIBS += -ldepends\db-6.2.23\build_windows\x64\Debug\libdb62d
 Debug:LIBS += -llibcryptoMDd -llibsslMDd
-Debug:LIBS += -lD:\pthreads-master\dll\x64\Debug\pthreads
+Debug:LIBS += -lldepends\pthreads-master\dll\x64\Debug\pthreads
 
 !windows:!macx {
     DEFINES += LINUX
