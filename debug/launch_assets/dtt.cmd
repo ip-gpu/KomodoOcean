@@ -1,0 +1,1 @@
+start ..\KomodoOceanGUI.exe -ac_name=DTT -ac_supply=31536000 -addnode=62.141.56.111 -gen=1

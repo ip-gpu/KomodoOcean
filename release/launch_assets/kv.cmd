@@ -1,0 +1,1 @@
+start ..\KomodoOceanGUI.exe -ac_name=KV -ac_supply=1000000 -addnode=78.47.196.146

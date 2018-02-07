@@ -1,0 +1,1 @@
+start ..\KomodoOceanGUI.exe -ac_name=JUMBLR -ac_supply=999999 -addnode=78.47.196.146

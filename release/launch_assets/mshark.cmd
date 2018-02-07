@@ -1,0 +1,1 @@
+start ..\KomodoOceanGUI.exe -ac_name=MSHARK -ac_supply=1400000 -addnode=78.47.196.146

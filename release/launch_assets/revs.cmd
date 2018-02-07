@@ -1,0 +1,1 @@
+start ..\KomodoOceanGUI.exe -ac_name=REVS -ac_supply=1300000 -addnode=78.47.196.146

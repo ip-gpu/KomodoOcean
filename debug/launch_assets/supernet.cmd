@@ -1,0 +1,1 @@
+start ..\KomodoOceanGUI.exe -ac_name=SUPERNET -ac_supply=816061 -addnode=78.47.196.146

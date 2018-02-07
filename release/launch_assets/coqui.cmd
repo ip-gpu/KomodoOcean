@@ -1,0 +1,1 @@
+start ..\KomodoOceanGUI.exe -ac_name=COQUI -ac_supply=72000000 -addnode=78.47.196.146
