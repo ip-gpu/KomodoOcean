@@ -1,0 +1,1 @@
+start ..\KomodoOceanGUI.exe -ac_name=ETOMIC -ac_supply=100000000 -addnode=78.47.196.146

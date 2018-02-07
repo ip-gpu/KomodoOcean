@@ -1,0 +1,1 @@
+start ..\KomodoOceanGUI.exe -ac_name=MNZ -ac_supply=257142858 -addnode=51.15.138.138

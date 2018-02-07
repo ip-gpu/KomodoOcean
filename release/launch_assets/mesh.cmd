@@ -1,0 +1,1 @@
+start ..\KomodoOceanGUI.exe -ac_name=MESH -ac_supply=1000007 -addnode=78.47.196.146
