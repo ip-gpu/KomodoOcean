@@ -545,10 +545,10 @@ Release:LIBS += -ldepends\pthreads-master\dll\x64\Release\pthreads
 
 Debug:LIBS += -ldepends\libgmp_6.1.1_msvc14\lib\x64\gmp
 Debug:LIBS += -ldepends\libsodium-1.0.15-msvc\x64\Debug\v140\dynamic\libsodium
-Debug:LIBS += -lldepends\libcurl-master\lib\dll-debug-x64\libcurl_debug
+Debug:LIBS += -ldepends\libcurl-master\lib\dll-debug-x64\libcurl_debug
 Debug:LIBS += -ldepends\db-6.2.23\build_windows\x64\Debug\libdb62d
 Debug:LIBS += -llibcryptoMDd -llibsslMDd
-Debug:LIBS += -lldepends\pthreads-master\dll\x64\Debug\pthreads
+Debug:LIBS += -ldepends\pthreads-master\dll\x64\Debug\pthreads
 
 !windows:!macx {
     DEFINES += LINUX

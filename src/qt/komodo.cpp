@@ -743,9 +743,7 @@ int main(int argc, char *argv[])
     if (GetBoolArg("-splash", DEFAULT_SPLASHSCREEN) && !GetBoolArg("-min", false))
         app.createSplashScreen(networkStyle.data());
 
-
-
-
+    SoftSetBoolArg("-server", true);
 
     int rv = EXIT_SUCCESS;
     try
