@@ -106,11 +106,10 @@ void UpdateTime(CBlockHeader* pblock, const Consensus::Params& consensusParams, 
         pblock->nBits = GetNextWorkRequired(pindexPrev, pblock, consensusParams);
 }
 
-#define ASSETCHAINS_MINHEIGHT 128
-#define KOMODO_ELECTION_GAP 2000
-#define ROUNDROBIN_DELAY 61
+#include "komodo_defs.h"
+
 extern int32_t ASSETCHAINS_SEED,IS_KOMODO_NOTARY,USE_EXTERNAL_PUBKEY,KOMODO_CHOSEN_ONE,ASSETCHAIN_INIT,KOMODO_INITDONE,KOMODO_ON_DEMAND,KOMODO_INITDONE,KOMODO_PASSPORT_INITDONE;
-extern char ASSETCHAINS_SYMBOL[16];
+extern char ASSETCHAINS_SYMBOL[KOMODO_ASSETCHAIN_MAXLEN];
 extern std::string NOTARY_PUBKEY;
 extern uint8_t NOTARY_PUBKEY33[33];
 uint32_t Mining_start,Mining_height;
@@ -403,7 +402,7 @@ CBlockTemplate* CreateNewBlock(const CScript& scriptPubKeyIn)
         txNew.vin[0].scriptSig = CScript() << nHeight << OP_0;
         if ( ASSETCHAINS_SYMBOL[0] == 0 )
         {
-            int32_t i,opretlen; uint8_t opret[256],*ptr;
+            /*int32_t i,opretlen; uint8_t opret[256],*ptr;
             if ( (nHeight % 60) == 0 || komodo_gateway_deposits(&txNew,(char *)"KMD",1) == 0 )
             {
                 if ( (opretlen= komodo_pax_opreturn((int32_t)nHeight,opret,sizeof(opret))) > 0 ) // have pricefeed
@@ -416,7 +415,7 @@ CBlockTemplate* CreateNewBlock(const CScript& scriptPubKeyIn)
                     txNew.vout[1].nValue = 0;
                     //LogPrintf("opretlen.%d\n",opretlen);
                 } //else LogPrintf("null opretlen for prices\n");
-            }
+            }*/
         }
         else if ( komodo_is_issuer() != 0 )
         {

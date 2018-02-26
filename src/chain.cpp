@@ -51,6 +51,8 @@ CBlockLocator CChain::GetLocator(const CBlockIndex *pindex) const {
 }
 
 const CBlockIndex *CChain::FindFork(const CBlockIndex *pindex) const {
+    if ( pindex == 0 )
+        return(0);
     if (pindex == NULL) return NULL;
 
     if (pindex->nHeight > Height())

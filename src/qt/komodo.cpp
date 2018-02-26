@@ -7,8 +7,10 @@
 #endif
 
 #include "komodooceangui.h"
+#include "komodo_defs.h"
 
-extern char ASSETCHAINS_SYMBOL[16];
+#define KOMODO_ASSETCHAIN_MAXLEN 65
+extern char ASSETCHAINS_SYMBOL[KOMODO_ASSETCHAIN_MAXLEN];
 extern int32_t ASSETCHAIN_INIT;
 extern std::string NOTARY_PUBKEY;
 void komodo_passport_iteration();
@@ -637,15 +639,15 @@ int main(int argc, char *argv[])
         return EXIT_SUCCESS;
     }
 
-        void komodo_args();
-        komodo_args();
-        LogPrintf("call komodo_args NOTARY_PUBKEY.(%s)\n",NOTARY_PUBKEY.c_str());
+        void komodo_args(char *argv0);
+        komodo_args(argv[0]);
+        LogPrintf("call komodo_args.(%s) NOTARY_PUBKEY.(%s)\n",argv[0],NOTARY_PUBKEY.c_str());
         while ( ASSETCHAIN_INIT == 0 )
         {
             //if ( komodo_is_issuer() != 0 )
             //    komodo_passport_iteration();
 #ifdef WIN32
-            Sleep(1*1000);
+            boost::this_thread::sleep_for(boost::chrono::seconds(1));
 #else
             sleep(1);
 #endif

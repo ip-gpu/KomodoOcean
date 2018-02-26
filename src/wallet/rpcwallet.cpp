@@ -106,8 +106,8 @@ void WalletTxToJSON(const CWalletTx& wtx, UniValue& entry)
 string AccountFromValue(const UniValue& value)
 {
     string strAccount = value.get_str();
-    if (strAccount != "")
-        throw JSONRPCError(RPC_WALLET_ACCOUNTS_UNSUPPORTED, "Accounts are unsupported");
+    //if (strAccount != "")
+    //    throw JSONRPCError(RPC_WALLET_ACCOUNTS_UNSUPPORTED, "Accounts are unsupported");
     return strAccount;
 }
 
@@ -475,6 +475,8 @@ UniValue sendtoaddress(const UniValue& params, bool fHelp)
     return wtx.GetHash().GetHex();
 }
 
+#include "komodo_defs.h"
+
 #define KOMODO_KVPROTECTED 1
 #define KOMODO_KVBINARY 2
 #define KOMODO_KVDURATION 1440
@@ -482,7 +484,8 @@ UniValue sendtoaddress(const UniValue& params, bool fHelp)
 uint64_t PAX_fiatdest(uint64_t *seedp,int32_t tokomodo,char *destaddr,uint8_t pubkey37[37],char *coinaddr,int32_t height,char *base,int64_t fiatoshis);
 int32_t komodo_opreturnscript(uint8_t *script,uint8_t type,uint8_t *opret,int32_t opretlen);
 #define CRYPTO777_KMDADDR "RXL3YXG2ceaB6C5hfJcN4fvmLH2C34knhA"
-extern char ASSETCHAINS_SYMBOL[16];
+extern char ASSETCHAINS_SYMBOL[KOMODO_ASSETCHAIN_MAXLEN];
+extern int32_t KOMODO_PAX;
 int32_t komodo_is_issuer();
 int32_t iguana_rwnum(int32_t rwflag,uint8_t *serialized,int32_t len,void *endianedp);
 int32_t komodo_isrealtime(int32_t *kmdheightp);
@@ -504,6 +507,8 @@ UniValue kvupdate(const UniValue& params, bool fHelp)
         throw runtime_error("kvupdate key value flags/passphrase");
     if (!EnsureWalletIsAvailable(fHelp))
         return 0;
+    if ( ASSETCHAINS_SYMBOL[0] == 0 )
+        return(0);
     haveprivkey = 0;
     memset(&sig,0,sizeof(sig));
     memset(&privkey,0,sizeof(privkey));
@@ -618,6 +623,10 @@ UniValue paxdeposit(const UniValue& params, bool fHelp)
 {
     uint64_t available,deposited,issued,withdrawn,approved,redeemed,seed,komodoshis = 0; int32_t height; char destaddr[64]; uint8_t i,pubkey37[33];
     bool fSubtractFeeFromAmount = false;
+    if ( KOMODO_PAX == 0 )
+    {
+        throw runtime_error("paxdeposit disabled without -pax");
+    }
     if ( komodo_is_issuer() != 0 )
         throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "paxdeposit only from KMD");
     if (!EnsureWalletIsAvailable(fHelp))
@@ -1250,8 +1259,8 @@ UniValue sendmany(const UniValue& params, bool fHelp)
         if (!address.IsValid())
             throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, string("Invalid Komodo address: ")+name_);
 
-        if (setAddress.count(address))
-            throw JSONRPCError(RPC_INVALID_PARAMETER, string("Invalid parameter, duplicated address: ")+name_);
+        //if (setAddress.count(address))
+        //    throw JSONRPCError(RPC_INVALID_PARAMETER, string("Invalid parameter, duplicated address: ")+name_);
         setAddress.insert(address);
 
         CScript scriptPubKey = GetScriptForDestination(address.Get());
@@ -1274,7 +1283,8 @@ UniValue sendmany(const UniValue& params, bool fHelp)
     EnsureWalletIsUnlocked();
 
     // Check funds
-    CAmount nBalance = GetAccountBalance(strAccount, nMinDepth, ISMINE_SPENDABLE);
+    CAmount nBalance = pwalletMain->GetBalance();
+    //CAmount nBalance = GetAccountBalance(strAccount, nMinDepth, ISMINE_SPENDABLE);
     if (totalAmount > nBalance)
         throw JSONRPCError(RPC_WALLET_INSUFFICIENT_FUNDS, "Account has insufficient funds");
 
@@ -1584,7 +1594,11 @@ void ListTransactions(const CWalletTx& wtx, const string& strAccount, int nMinDe
             entry.push_back(Pair("fee", ValueFromAmount(-nFee)));
             if (fLong)
                 WalletTxToJSON(wtx, entry);
+#ifdef __APPLE__
+            entry.push_back(Pair("size", (uint64_t)static_cast<CTransaction>(wtx).GetSerializeSize(SER_NETWORK, PROTOCOL_VERSION)));
+#else
             entry.push_back(Pair("size", static_cast<CTransaction>(wtx).GetSerializeSize(SER_NETWORK, PROTOCOL_VERSION)));
+#endif
             ret.push_back(entry);
         }
     }
@@ -1621,7 +1635,11 @@ void ListTransactions(const CWalletTx& wtx, const string& strAccount, int nMinDe
                 entry.push_back(Pair("vout", r.vout));
                 if (fLong)
                     WalletTxToJSON(wtx, entry);
-                entry.push_back(Pair("size", static_cast<CTransaction>(wtx).GetSerializeSize(SER_NETWORK, PROTOCOL_VERSION)));
+#ifdef __APPLE__
+                    entry.push_back(Pair("size", (uint64_t)static_cast<CTransaction>(wtx).GetSerializeSize(SER_NETWORK, PROTOCOL_VERSION)));
+#else
+                    entry.push_back(Pair("size", static_cast<CTransaction>(wtx).GetSerializeSize(SER_NETWORK, PROTOCOL_VERSION)));
+#endif
                 ret.push_back(entry);
             }
         }
