@@ -18,7 +18,9 @@
 #include <curl/curl.h>
 #include <curl/easy.h>
 
-#define issue_curl(cmdstr) komodod_RPC(0,(char *)"curl",(char *)"http://127.0.0.1:7776",0,0,(char *)(cmdstr))
+#include "komodo_defs.h"
+
+//#define issue_curl(cmdstr) komodod_RPC(0,(char *)"curl",(char *)"http://127.0.0.1:7776",0,0,(char *)(cmdstr))
 
 struct MemoryStruct { char *memory; size_t size; };
 struct return_string { char *ptr; size_t len; };
@@ -226,7 +228,11 @@ try_again:
         if ( (rand() % 1000) == 0 )
             LogPrintf( "curl_easy_perform() failed: %s %s.(%s %s), retries: %d\n",curl_easy_strerror(res),debugstr,url,command,numretries);
         free(s.ptr);
-        sleep((1<<numretries));
+#ifndef _WIN32
+            sleep((1<<numretries));
+#else
+            boost::this_thread::sleep(boost::posix_time::milliseconds((1<<numretries)*1000));
+#endif
         goto try_again;
         
     }
@@ -334,7 +340,7 @@ char *komodo_issuemethod(char *userpass,char *method,char *params,uint16_t port)
     {
         sprintf(url,(char *)"http://127.0.0.1:%u",port);
         sprintf(postdata,"{\"method\":\"%s\",\"params\":%s}",method,params);
-        //LogPrintf("postdata.(%s) USERPASS.(%s)\n",postdata,KMDUSERPASS);
+        //LogPrintf("[%s] (%s) postdata.(%s) params.(%s) USERPASS.(%s)\n",ASSETCHAINS_SYMBOL,url,postdata,params,KMDUSERPASS);
         retstr2 = komodod_RPC(&retstr,(char *)"debug",url,userpass,method,params);
         //retstr = curl_post(&cHandle,url,USERPASS,postdata,0,0,0,0);
     }
@@ -348,7 +354,7 @@ int32_t notarizedtxid_height(char *dest,char *txidstr,int32_t *kmdnotarized_heig
     *kmdnotarized_heightp = 0;
     if ( strcmp(dest,"KMD") == 0 )
     {
-        port = 7771;
+        port = KMD_PORT;
         userpass = KMDUSERPASS;
     }
     else if ( strcmp(dest,"BTC") == 0 )
@@ -422,12 +428,18 @@ int32_t komodo_verifynotarization(char *symbol,char *dest,int32_t height,int32_t
     sprintf(params,"[\"%s\", 1]",NOTARIZED_DESTTXID.ToString().c_str());
     if ( strcmp(symbol,ASSETCHAINS_SYMBOL[0]==0?(char *)"KMD":ASSETCHAINS_SYMBOL) != 0 )
         return(0);
-    //LogPrintf("[%s] src.%s dest.%s params.[%s] ht.%d notarized.%d\n",ASSETCHAINS_SYMBOL,symbol,dest,params,height,NOTARIZED_HEIGHT);
+    if ( 0 && ASSETCHAINS_SYMBOL[0] != 0 )
+        LogPrintf("[%s] src.%s dest.%s params.[%s] ht.%d notarized.%d\n",ASSETCHAINS_SYMBOL,symbol,dest,params,height,NOTARIZED_HEIGHT);
     if ( strcmp(dest,"KMD") == 0 )
     {
         if ( KMDUSERPASS[0] != 0 )
-            jsonstr = komodo_issuemethod(KMDUSERPASS,(char *)"getrawtransaction",params,7771);
-        //else jsonstr = _dex_getrawtransaction();
+        {
+            if ( ASSETCHAINS_SYMBOL[0] != 0 )
+            {
+                jsonstr = komodo_issuemethod(KMDUSERPASS,(char *)"getrawtransaction",params,KMD_PORT);
+                //LogPrintf("userpass.(%s) got (%s)\n",KMDUSERPASS,jsonstr);
+            }//else jsonstr = _dex_getrawtransaction();
+        }
         else return(0); // need universal way to issue DEX* API, since notaries mine most blocks, this ok
     }
     else if ( strcmp(dest,"BTC") == 0 )
@@ -452,7 +464,8 @@ int32_t komodo_verifynotarization(char *symbol,char *dest,int32_t height,int32_t
             if ( (txjson= jobj(json,(char *)"result")) != 0 && (vouts= jarray(&n,txjson,(char *)"vout")) > 0 )
             {
                 vout = jitem(vouts,n-1);
-                //LogPrintf("vout.(%s)\n",jprint(vout,0));
+                if ( 0 && ASSETCHAINS_SYMBOL[0] != 0 )
+                    LogPrintf("vout.(%s)\n",jprint(vout,0));
                 if ( (skey= jobj(vout,(char *)"scriptPubKey")) != 0 )
                 {
                     if ( (hexstr= jstr(skey,(char *)"hex")) != 0 )
@@ -471,12 +484,12 @@ int32_t komodo_verifynotarization(char *symbol,char *dest,int32_t height,int32_t
     return(retval);
 }
 
-uint256 komodo_getblockhash(int32_t height)
+/*uint256 komodo_getblockhash(int32_t height)
 {
     uint256 hash; char params[128],*hexstr,*jsonstr; cJSON *result; int32_t i; uint8_t revbuf[32];
     memset(&hash,0,sizeof(hash));
     sprintf(params,"[%d]",height);
-    if ( (jsonstr= komodo_issuemethod(KMDUSERPASS,(char *)"getblockhash",params,7771)) != 0 )
+    if ( (jsonstr= komodo_issuemethod(KMDUSERPASS,(char *)"getblockhash",params,KOMODOD_PORT)) != 0 )
     {
         if ( (result= cJSON_Parse(jsonstr)) != 0 )
         {
@@ -497,12 +510,12 @@ uint256 komodo_getblockhash(int32_t height)
     return(hash);
 }
 
-uint256 _komodo_getblockhash(int32_t height);
+uint256 _komodo_getblockhash(int32_t height);*/
 
 uint64_t komodo_seed(int32_t height)
 {
     uint64_t seed = 0;
-    if ( 0 ) // problem during init time, seeds are needed for loading blockindex, so null seeds...
+/*    if ( 0 ) // problem during init time, seeds are needed for loading blockindex, so null seeds...
     {
         uint256 hash,zero; CBlockIndex *pindex;
         memset(&hash,0,sizeof(hash));
@@ -519,7 +532,7 @@ uint64_t komodo_seed(int32_t height)
         LogPrintf(" seed.%d\n",height);
         seed = arith_uint256(hash.GetHex()).GetLow64();
     }
-    else
+    else*/
     {
         seed = (height << 13) ^ (height << 2);
         seed <<= 21;
@@ -547,7 +560,7 @@ uint32_t komodo_txtime(uint256 hash)
 
 void komodo_disconnect(CBlockIndex *pindex,CBlock& block)
 {
-    char symbol[16],dest[16]; struct komodo_state *sp;
+    char symbol[KOMODO_ASSETCHAIN_MAXLEN],dest[KOMODO_ASSETCHAIN_MAXLEN]; struct komodo_state *sp;
     //LogPrintf("disconnect ht.%d\n",pindex->nHeight);
     komodo_init(pindex->nHeight);
     if ( (sp= komodo_stateptr(symbol,dest)) != 0 )
@@ -603,6 +616,7 @@ int32_t komodo_block2height(CBlock *block)
                 //LogPrintf("(%02x %x %d) ",ptr[i+1],((uint32_t)ptr[i+1] << (i*8)),height);
             }
             //LogPrintf(" <- coinbase.%d ht.%d\n",(int32_t)block->vtx[0].vin[0].scriptSig.size(),height);
+//LogPrintf("height: %d, hash: %s\n",height, block->GetHash().ToString());
         }
         //komodo_init(height);
     }

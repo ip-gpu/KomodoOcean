@@ -14,8 +14,11 @@
  ******************************************************************************/
 #include <sys/time.h>
 
-#ifdef WIN32
-#define sleep(a) Sleep(a*1000)
+#include "komodo_defs.h"
+#ifdef _WIN32
+#include <sodium.h>
+#include <boost/date_time/posix_time/posix_time.hpp>
+#include <boost/thread.hpp>
 #endif
 
 #define SATOSHIDEN ((uint64_t)100000000L)
@@ -30,8 +33,8 @@ struct queueitem { struct queueitem *next,*prev; uint32_t allocsize,type;  };
 
 typedef struct queue
 {
-	struct queueitem *list;
-	pthread_mutex_t mutex;
+    struct queueitem *list;
+    pthread_mutex_t mutex;
     char name[64],initflag;
 } queue_t;
 
@@ -113,13 +116,13 @@ static inline int32_t sha256_vcompress(struct sha256_vstate * md,uint8_t *buf)
         LOAD32H(W[i],buf + (4*i));
     for (i=16; i<64; i++) // fill W[16..63]
         W[i] = Gamma1(W[i - 2]) + W[i - 7] + Gamma0(W[i - 15]) + W[i - 16];
-    
+
 #define RND(a,b,c,d,e,f,g,h,i,ki)                    \
 t0 = h + Sigma1(e) + Ch(e, f, g) + ki + W[i];   \
 t1 = Sigma0(a) + Maj(a, b, c);                  \
 d += t0;                                        \
 h  = t0 + t1;
-    
+
     RND(S[0],S[1],S[2],S[3],S[4],S[5],S[6],S[7],0,0x428a2f98);
     RND(S[7],S[0],S[1],S[2],S[3],S[4],S[5],S[6],1,0x71374491);
     RND(S[6],S[7],S[0],S[1],S[2],S[3],S[4],S[5],2,0xb5c0fbcf);
@@ -350,19 +353,19 @@ static int32_t rmd160_vcompress(struct rmd160_vstate *md,uint8_t *buf)
 {
     uint32_t aa,bb,cc,dd,ee,aaa,bbb,ccc,ddd,eee,X[16];
     int i;
-    
+
     /* load words X */
     for (i = 0; i < 16; i++){
         LOAD32L(X[i], buf + (4 * i));
     }
-    
+
     /* load state */
     aa = aaa = md->state[0];
     bb = bbb = md->state[1];
     cc = ccc = md->state[2];
     dd = ddd = md->state[3];
     ee = eee = md->state[4];
-    
+
     /* round 1 */
     FF(aa, bb, cc, dd, ee, X[ 0], 11);
     FF(ee, aa, bb, cc, dd, X[ 1], 14);
@@ -380,7 +383,7 @@ static int32_t rmd160_vcompress(struct rmd160_vstate *md,uint8_t *buf)
     FF(cc, dd, ee, aa, bb, X[13],  7);
     FF(bb, cc, dd, ee, aa, X[14],  9);
     FF(aa, bb, cc, dd, ee, X[15],  8);
-    
+
     /* round 2 */
     GG(ee, aa, bb, cc, dd, X[ 7],  7);
     GG(dd, ee, aa, bb, cc, X[ 4],  6);
@@ -398,7 +401,7 @@ static int32_t rmd160_vcompress(struct rmd160_vstate *md,uint8_t *buf)
     GG(bb, cc, dd, ee, aa, X[14],  7);
     GG(aa, bb, cc, dd, ee, X[11], 13);
     GG(ee, aa, bb, cc, dd, X[ 8], 12);
-    
+
     /* round 3 */
     HH(dd, ee, aa, bb, cc, X[ 3], 11);
     HH(cc, dd, ee, aa, bb, X[10], 13);
@@ -416,7 +419,7 @@ static int32_t rmd160_vcompress(struct rmd160_vstate *md,uint8_t *buf)
     HH(aa, bb, cc, dd, ee, X[11], 12);
     HH(ee, aa, bb, cc, dd, X[ 5],  7);
     HH(dd, ee, aa, bb, cc, X[12],  5);
-    
+
     /* round 4 */
     II(cc, dd, ee, aa, bb, X[ 1], 11);
     II(bb, cc, dd, ee, aa, X[ 9], 12);
@@ -434,7 +437,7 @@ static int32_t rmd160_vcompress(struct rmd160_vstate *md,uint8_t *buf)
     II(ee, aa, bb, cc, dd, X[ 5],  6);
     II(dd, ee, aa, bb, cc, X[ 6],  5);
     II(cc, dd, ee, aa, bb, X[ 2], 12);
-    
+
     /* round 5 */
     JJ(bb, cc, dd, ee, aa, X[ 4],  9);
     JJ(aa, bb, cc, dd, ee, X[ 0], 15);
@@ -452,7 +455,7 @@ static int32_t rmd160_vcompress(struct rmd160_vstate *md,uint8_t *buf)
     JJ(dd, ee, aa, bb, cc, X[ 6],  8);
     JJ(cc, dd, ee, aa, bb, X[15],  5);
     JJ(bb, cc, dd, ee, aa, X[13],  6);
-    
+
     /* parallel round 1 */
     JJJ(aaa, bbb, ccc, ddd, eee, X[ 5],  8);
     JJJ(eee, aaa, bbb, ccc, ddd, X[14],  9);
@@ -470,7 +473,7 @@ static int32_t rmd160_vcompress(struct rmd160_vstate *md,uint8_t *buf)
     JJJ(ccc, ddd, eee, aaa, bbb, X[10], 14);
     JJJ(bbb, ccc, ddd, eee, aaa, X[ 3], 12);
     JJJ(aaa, bbb, ccc, ddd, eee, X[12],  6);
-    
+
     /* parallel round 2 */
     III(eee, aaa, bbb, ccc, ddd, X[ 6],  9);
     III(ddd, eee, aaa, bbb, ccc, X[11], 13);
@@ -488,7 +491,7 @@ static int32_t rmd160_vcompress(struct rmd160_vstate *md,uint8_t *buf)
     III(bbb, ccc, ddd, eee, aaa, X[ 9], 15);
     III(aaa, bbb, ccc, ddd, eee, X[ 1], 13);
     III(eee, aaa, bbb, ccc, ddd, X[ 2], 11);
-    
+
     /* parallel round 3 */
     HHH(ddd, eee, aaa, bbb, ccc, X[15],  9);
     HHH(ccc, ddd, eee, aaa, bbb, X[ 5],  7);
@@ -506,7 +509,7 @@ static int32_t rmd160_vcompress(struct rmd160_vstate *md,uint8_t *buf)
     HHH(aaa, bbb, ccc, ddd, eee, X[ 0], 13);
     HHH(eee, aaa, bbb, ccc, ddd, X[ 4],  7);
     HHH(ddd, eee, aaa, bbb, ccc, X[13],  5);
-    
+
     /* parallel round 4 */
     GGG(ccc, ddd, eee, aaa, bbb, X[ 8], 15);
     GGG(bbb, ccc, ddd, eee, aaa, X[ 6],  5);
@@ -524,7 +527,7 @@ static int32_t rmd160_vcompress(struct rmd160_vstate *md,uint8_t *buf)
     GGG(eee, aaa, bbb, ccc, ddd, X[ 7],  5);
     GGG(ddd, eee, aaa, bbb, ccc, X[10], 15);
     GGG(ccc, ddd, eee, aaa, bbb, X[14],  8);
-    
+
     /* parallel round 5 */
     FFF(bbb, ccc, ddd, eee, aaa, X[12] ,  8);
     FFF(aaa, bbb, ccc, ddd, eee, X[15] ,  5);
@@ -542,7 +545,7 @@ static int32_t rmd160_vcompress(struct rmd160_vstate *md,uint8_t *buf)
     FFF(ddd, eee, aaa, bbb, ccc, X[ 3] , 13);
     FFF(ccc, ddd, eee, aaa, bbb, X[ 9] , 11);
     FFF(bbb, ccc, ddd, eee, aaa, X[11] , 11);
-    
+
     /* combine results */
     ddd += cc + md->state[1];               /* final result for md->state[0] */
     md->state[1] = md->state[2] + dd + eee;
@@ -550,7 +553,7 @@ static int32_t rmd160_vcompress(struct rmd160_vstate *md,uint8_t *buf)
     md->state[3] = md->state[4] + aa + bbb;
     md->state[4] = md->state[0] + bb + ccc;
     md->state[0] = ddd;
-    
+
     return 0;
 }
 
@@ -627,10 +630,10 @@ int rmd160_vdone(struct rmd160_vstate * md, unsigned char *out)
     }
     /* increase the length of the message */
     md->length += md->curlen * 8;
-    
+
     /* append the '1' bit */
     md->buf[md->curlen++] = (unsigned char)0x80;
-    
+
     /* if the length is currently above 56 bytes we append zeros
      * then compress.  Then we can fall back to padding zeros and length
      * encoding like normal.
@@ -681,62 +684,62 @@ void calc_rmd160(char deprecated[41],uint8_t buf[20],uint8_t *msg,int32_t len)
 #undef JJJ
 
 static const uint32_t crc32_tab[] = {
-	0x00000000, 0x77073096, 0xee0e612c, 0x990951ba, 0x076dc419, 0x706af48f,
-	0xe963a535, 0x9e6495a3,	0x0edb8832, 0x79dcb8a4, 0xe0d5e91e, 0x97d2d988,
-	0x09b64c2b, 0x7eb17cbd, 0xe7b82d07, 0x90bf1d91, 0x1db71064, 0x6ab020f2,
-	0xf3b97148, 0x84be41de,	0x1adad47d, 0x6ddde4eb, 0xf4d4b551, 0x83d385c7,
-	0x136c9856, 0x646ba8c0, 0xfd62f97a, 0x8a65c9ec,	0x14015c4f, 0x63066cd9,
-	0xfa0f3d63, 0x8d080df5,	0x3b6e20c8, 0x4c69105e, 0xd56041e4, 0xa2677172,
-	0x3c03e4d1, 0x4b04d447, 0xd20d85fd, 0xa50ab56b,	0x35b5a8fa, 0x42b2986c,
-	0xdbbbc9d6, 0xacbcf940,	0x32d86ce3, 0x45df5c75, 0xdcd60dcf, 0xabd13d59,
-	0x26d930ac, 0x51de003a, 0xc8d75180, 0xbfd06116, 0x21b4f4b5, 0x56b3c423,
-	0xcfba9599, 0xb8bda50f, 0x2802b89e, 0x5f058808, 0xc60cd9b2, 0xb10be924,
-	0x2f6f7c87, 0x58684c11, 0xc1611dab, 0xb6662d3d,	0x76dc4190, 0x01db7106,
-	0x98d220bc, 0xefd5102a, 0x71b18589, 0x06b6b51f, 0x9fbfe4a5, 0xe8b8d433,
-	0x7807c9a2, 0x0f00f934, 0x9609a88e, 0xe10e9818, 0x7f6a0dbb, 0x086d3d2d,
-	0x91646c97, 0xe6635c01, 0x6b6b51f4, 0x1c6c6162, 0x856530d8, 0xf262004e,
-	0x6c0695ed, 0x1b01a57b, 0x8208f4c1, 0xf50fc457, 0x65b0d9c6, 0x12b7e950,
-	0x8bbeb8ea, 0xfcb9887c, 0x62dd1ddf, 0x15da2d49, 0x8cd37cf3, 0xfbd44c65,
-	0x4db26158, 0x3ab551ce, 0xa3bc0074, 0xd4bb30e2, 0x4adfa541, 0x3dd895d7,
-	0xa4d1c46d, 0xd3d6f4fb, 0x4369e96a, 0x346ed9fc, 0xad678846, 0xda60b8d0,
-	0x44042d73, 0x33031de5, 0xaa0a4c5f, 0xdd0d7cc9, 0x5005713c, 0x270241aa,
-	0xbe0b1010, 0xc90c2086, 0x5768b525, 0x206f85b3, 0xb966d409, 0xce61e49f,
-	0x5edef90e, 0x29d9c998, 0xb0d09822, 0xc7d7a8b4, 0x59b33d17, 0x2eb40d81,
-	0xb7bd5c3b, 0xc0ba6cad, 0xedb88320, 0x9abfb3b6, 0x03b6e20c, 0x74b1d29a,
-	0xead54739, 0x9dd277af, 0x04db2615, 0x73dc1683, 0xe3630b12, 0x94643b84,
-	0x0d6d6a3e, 0x7a6a5aa8, 0xe40ecf0b, 0x9309ff9d, 0x0a00ae27, 0x7d079eb1,
-	0xf00f9344, 0x8708a3d2, 0x1e01f268, 0x6906c2fe, 0xf762575d, 0x806567cb,
-	0x196c3671, 0x6e6b06e7, 0xfed41b76, 0x89d32be0, 0x10da7a5a, 0x67dd4acc,
-	0xf9b9df6f, 0x8ebeeff9, 0x17b7be43, 0x60b08ed5, 0xd6d6a3e8, 0xa1d1937e,
-	0x38d8c2c4, 0x4fdff252, 0xd1bb67f1, 0xa6bc5767, 0x3fb506dd, 0x48b2364b,
-	0xd80d2bda, 0xaf0a1b4c, 0x36034af6, 0x41047a60, 0xdf60efc3, 0xa867df55,
-	0x316e8eef, 0x4669be79, 0xcb61b38c, 0xbc66831a, 0x256fd2a0, 0x5268e236,
-	0xcc0c7795, 0xbb0b4703, 0x220216b9, 0x5505262f, 0xc5ba3bbe, 0xb2bd0b28,
-	0x2bb45a92, 0x5cb36a04, 0xc2d7ffa7, 0xb5d0cf31, 0x2cd99e8b, 0x5bdeae1d,
-	0x9b64c2b0, 0xec63f226, 0x756aa39c, 0x026d930a, 0x9c0906a9, 0xeb0e363f,
-	0x72076785, 0x05005713, 0x95bf4a82, 0xe2b87a14, 0x7bb12bae, 0x0cb61b38,
-	0x92d28e9b, 0xe5d5be0d, 0x7cdcefb7, 0x0bdbdf21, 0x86d3d2d4, 0xf1d4e242,
-	0x68ddb3f8, 0x1fda836e, 0x81be16cd, 0xf6b9265b, 0x6fb077e1, 0x18b74777,
-	0x88085ae6, 0xff0f6a70, 0x66063bca, 0x11010b5c, 0x8f659eff, 0xf862ae69,
-	0x616bffd3, 0x166ccf45, 0xa00ae278, 0xd70dd2ee, 0x4e048354, 0x3903b3c2,
-	0xa7672661, 0xd06016f7, 0x4969474d, 0x3e6e77db, 0xaed16a4a, 0xd9d65adc,
-	0x40df0b66, 0x37d83bf0, 0xa9bcae53, 0xdebb9ec5, 0x47b2cf7f, 0x30b5ffe9,
-	0xbdbdf21c, 0xcabac28a, 0x53b39330, 0x24b4a3a6, 0xbad03605, 0xcdd70693,
-	0x54de5729, 0x23d967bf, 0xb3667a2e, 0xc4614ab8, 0x5d681b02, 0x2a6f2b94,
-	0xb40bbe37, 0xc30c8ea1, 0x5a05df1b, 0x2d02ef8d
+    0x00000000, 0x77073096, 0xee0e612c, 0x990951ba, 0x076dc419, 0x706af48f,
+    0xe963a535, 0x9e6495a3,	0x0edb8832, 0x79dcb8a4, 0xe0d5e91e, 0x97d2d988,
+    0x09b64c2b, 0x7eb17cbd, 0xe7b82d07, 0x90bf1d91, 0x1db71064, 0x6ab020f2,
+    0xf3b97148, 0x84be41de,	0x1adad47d, 0x6ddde4eb, 0xf4d4b551, 0x83d385c7,
+    0x136c9856, 0x646ba8c0, 0xfd62f97a, 0x8a65c9ec,	0x14015c4f, 0x63066cd9,
+    0xfa0f3d63, 0x8d080df5,	0x3b6e20c8, 0x4c69105e, 0xd56041e4, 0xa2677172,
+    0x3c03e4d1, 0x4b04d447, 0xd20d85fd, 0xa50ab56b,	0x35b5a8fa, 0x42b2986c,
+    0xdbbbc9d6, 0xacbcf940,	0x32d86ce3, 0x45df5c75, 0xdcd60dcf, 0xabd13d59,
+    0x26d930ac, 0x51de003a, 0xc8d75180, 0xbfd06116, 0x21b4f4b5, 0x56b3c423,
+    0xcfba9599, 0xb8bda50f, 0x2802b89e, 0x5f058808, 0xc60cd9b2, 0xb10be924,
+    0x2f6f7c87, 0x58684c11, 0xc1611dab, 0xb6662d3d,	0x76dc4190, 0x01db7106,
+    0x98d220bc, 0xefd5102a, 0x71b18589, 0x06b6b51f, 0x9fbfe4a5, 0xe8b8d433,
+    0x7807c9a2, 0x0f00f934, 0x9609a88e, 0xe10e9818, 0x7f6a0dbb, 0x086d3d2d,
+    0x91646c97, 0xe6635c01, 0x6b6b51f4, 0x1c6c6162, 0x856530d8, 0xf262004e,
+    0x6c0695ed, 0x1b01a57b, 0x8208f4c1, 0xf50fc457, 0x65b0d9c6, 0x12b7e950,
+    0x8bbeb8ea, 0xfcb9887c, 0x62dd1ddf, 0x15da2d49, 0x8cd37cf3, 0xfbd44c65,
+    0x4db26158, 0x3ab551ce, 0xa3bc0074, 0xd4bb30e2, 0x4adfa541, 0x3dd895d7,
+    0xa4d1c46d, 0xd3d6f4fb, 0x4369e96a, 0x346ed9fc, 0xad678846, 0xda60b8d0,
+    0x44042d73, 0x33031de5, 0xaa0a4c5f, 0xdd0d7cc9, 0x5005713c, 0x270241aa,
+    0xbe0b1010, 0xc90c2086, 0x5768b525, 0x206f85b3, 0xb966d409, 0xce61e49f,
+    0x5edef90e, 0x29d9c998, 0xb0d09822, 0xc7d7a8b4, 0x59b33d17, 0x2eb40d81,
+    0xb7bd5c3b, 0xc0ba6cad, 0xedb88320, 0x9abfb3b6, 0x03b6e20c, 0x74b1d29a,
+    0xead54739, 0x9dd277af, 0x04db2615, 0x73dc1683, 0xe3630b12, 0x94643b84,
+    0x0d6d6a3e, 0x7a6a5aa8, 0xe40ecf0b, 0x9309ff9d, 0x0a00ae27, 0x7d079eb1,
+    0xf00f9344, 0x8708a3d2, 0x1e01f268, 0x6906c2fe, 0xf762575d, 0x806567cb,
+    0x196c3671, 0x6e6b06e7, 0xfed41b76, 0x89d32be0, 0x10da7a5a, 0x67dd4acc,
+    0xf9b9df6f, 0x8ebeeff9, 0x17b7be43, 0x60b08ed5, 0xd6d6a3e8, 0xa1d1937e,
+    0x38d8c2c4, 0x4fdff252, 0xd1bb67f1, 0xa6bc5767, 0x3fb506dd, 0x48b2364b,
+    0xd80d2bda, 0xaf0a1b4c, 0x36034af6, 0x41047a60, 0xdf60efc3, 0xa867df55,
+    0x316e8eef, 0x4669be79, 0xcb61b38c, 0xbc66831a, 0x256fd2a0, 0x5268e236,
+    0xcc0c7795, 0xbb0b4703, 0x220216b9, 0x5505262f, 0xc5ba3bbe, 0xb2bd0b28,
+    0x2bb45a92, 0x5cb36a04, 0xc2d7ffa7, 0xb5d0cf31, 0x2cd99e8b, 0x5bdeae1d,
+    0x9b64c2b0, 0xec63f226, 0x756aa39c, 0x026d930a, 0x9c0906a9, 0xeb0e363f,
+    0x72076785, 0x05005713, 0x95bf4a82, 0xe2b87a14, 0x7bb12bae, 0x0cb61b38,
+    0x92d28e9b, 0xe5d5be0d, 0x7cdcefb7, 0x0bdbdf21, 0x86d3d2d4, 0xf1d4e242,
+    0x68ddb3f8, 0x1fda836e, 0x81be16cd, 0xf6b9265b, 0x6fb077e1, 0x18b74777,
+    0x88085ae6, 0xff0f6a70, 0x66063bca, 0x11010b5c, 0x8f659eff, 0xf862ae69,
+    0x616bffd3, 0x166ccf45, 0xa00ae278, 0xd70dd2ee, 0x4e048354, 0x3903b3c2,
+    0xa7672661, 0xd06016f7, 0x4969474d, 0x3e6e77db, 0xaed16a4a, 0xd9d65adc,
+    0x40df0b66, 0x37d83bf0, 0xa9bcae53, 0xdebb9ec5, 0x47b2cf7f, 0x30b5ffe9,
+    0xbdbdf21c, 0xcabac28a, 0x53b39330, 0x24b4a3a6, 0xbad03605, 0xcdd70693,
+    0x54de5729, 0x23d967bf, 0xb3667a2e, 0xc4614ab8, 0x5d681b02, 0x2a6f2b94,
+    0xb40bbe37, 0xc30c8ea1, 0x5a05df1b, 0x2d02ef8d
 };
 
 uint32_t calc_crc32(uint32_t crc,const void *buf,size_t size)
 {
-	const uint8_t *p;
-    
-	p = (const uint8_t *)buf;
-	crc = crc ^ ~0U;
-    
-	while (size--)
-		crc = crc32_tab[(crc ^ *p++) & 0xFF] ^ (crc >> 8);
-    
-	return crc ^ ~0U;
+    const uint8_t *p;
+
+    p = (const uint8_t *)buf;
+    crc = crc ^ ~0U;
+
+    while (size--)
+        crc = crc32_tab[(crc ^ *p++) & 0xFF] ^ (crc >> 8);
+
+    return crc ^ ~0U;
 }
 
 void calc_rmd160_sha256(uint8_t rmd160[20],uint8_t *data,int32_t datalen)
@@ -775,7 +778,7 @@ int32_t komodo_addr2rmd160(uint8_t *addrtypep,uint8_t rmd160[20],char *coinaddr)
             LogPrintf("\nhex checkhash.(%s) len.%d mismatch %02x %02x %02x %02x vs %02x %02x %02x %02x\n",coinaddr,len,buf[len-1]&0xff,buf[len-2]&0xff,buf[len-3]&0xff,buf[len-4]&0xff,hash.bytes[31],hash.bytes[30],hash.bytes[29],hash.bytes[28]);
         }
     }
-	return(0);
+    return(0);
 }
 
 char *komodo_address(char *coinaddr,uint8_t addrtype,uint8_t *pubkey_or_rmd160,int32_t len)
@@ -1115,9 +1118,9 @@ double OS_milliseconds()
 #include <wincrypt.h>
 #endif
 
+#ifndef _WIN32
 void OS_randombytes(unsigned char *x,long xlen)
 {
-#ifndef WIN32
     static int fd = -1;
     int32_t i;
     if (fd == -1) {
@@ -1144,21 +1147,8 @@ void OS_randombytes(unsigned char *x,long xlen)
         x += i;
         xlen -= i;
     }
-#else
-    HCRYPTPROV p;
-    ULONG     i;
-
-    if (CryptAcquireContext(&p, NULL, NULL, PROV_RSA_FULL, CRYPT_VERIFYCONTEXT) == FALSE) {
-      throw runtime_error{"RandBtyes(): CryptAcquireContext failed."};
-    }
-
-    if (CryptGenRandom(p, xlen, (BYTE*)x) == FALSE) {
-      throw runtime_error{"RandBytes(): CryptGenRandom failed."};
-    }
-
-    CryptReleaseContext(p, 0);
-#endif
 }
+#endif
 
 void lock_queue(queue_t *queue)
 {
@@ -1167,7 +1157,7 @@ void lock_queue(queue_t *queue)
         portable_mutex_init(&queue->mutex);
         queue->initflag = 1;
     }
-	portable_mutex_lock(&queue->mutex);
+    portable_mutex_lock(&queue->mutex);
 }
 
 void queue_enqueue(char *name,queue_t *queue,struct queueitem *item)
@@ -1193,7 +1183,7 @@ struct queueitem *queue_dequeue(queue_t *queue)
         item = queue->list;
         DL_DELETE(queue->list,item);
     }
-	portable_mutex_unlock(&queue->mutex);
+    portable_mutex_unlock(&queue->mutex);
     return(item);
 }
 
@@ -1205,7 +1195,11 @@ void *queue_delete(queue_t *queue,struct queueitem *copy,int32_t copysize)
     {
         DL_FOREACH(queue->list,item)
         {
+#ifdef _WIN32
+            if ( item == copy || (item->allocsize == copysize && memcmp((void *)((intptr_t)item + sizeof(struct queueitem)),(void *)((intptr_t)copy + sizeof(struct queueitem)),copysize) == 0) )
+#else
             if ( item == copy || (item->allocsize == copysize && memcmp((void *)((long)item + sizeof(struct queueitem)),(void *)((long)copy + sizeof(struct queueitem)),copysize) == 0) )
+#endif
             {
                 DL_DELETE(queue->list,item);
                 portable_mutex_unlock(&queue->mutex);
@@ -1214,7 +1208,7 @@ void *queue_delete(queue_t *queue,struct queueitem *copy,int32_t copysize)
             }
         }
     }
-	portable_mutex_unlock(&queue->mutex);
+    portable_mutex_unlock(&queue->mutex);
     return(0);
 }
 
@@ -1231,7 +1225,7 @@ void *queue_free(queue_t *queue)
         }
         //LogPrintf("name.(%s) dequeue.%p list.%p\n",queue->name,item,queue->list);
     }
-	portable_mutex_unlock(&queue->mutex);
+    portable_mutex_unlock(&queue->mutex);
     return(0);
 }
 
@@ -1249,7 +1243,7 @@ void *queue_clone(queue_t *clone,queue_t *queue,int32_t size)
         }
         //LogPrintf("name.(%s) dequeue.%p list.%p\n",queue->name,item,queue->list);
     }
-	portable_mutex_unlock(&queue->mutex);
+    portable_mutex_unlock(&queue->mutex);
     return(0);
 }
 
@@ -1260,7 +1254,7 @@ int32_t queue_size(queue_t *queue)
     lock_queue(queue);
     DL_COUNT(queue->list,tmp,count);
     portable_mutex_unlock(&queue->mutex);
-	return count;
+    return count;
 }
 
 void iguana_initQ(queue_t *Q,char *name)
@@ -1274,9 +1268,9 @@ void iguana_initQ(queue_t *Q,char *name)
         free(item);
 }
 
-void komodo_userpass(char *username,char *password,FILE *fp)
+uint16_t komodo_userpass(char *username,char *password,FILE *fp)
 {
-    char *rpcuser,*rpcpassword,*str,line[8192];
+    char *rpcuser,*rpcpassword,*str,line[8192]; uint16_t port = 0;
     rpcuser = rpcpassword = 0;
     username[0] = password[0] = 0;
     while ( fgets(line,sizeof(line),fp) != 0 )
@@ -1288,6 +1282,11 @@ void komodo_userpass(char *username,char *password,FILE *fp)
             rpcuser = parse_conf_line(str,(char *)"rpcuser");
         else if ( (str= strstr(line,(char *)"rpcpassword")) != 0 )
             rpcpassword = parse_conf_line(str,(char *)"rpcpassword");
+        else if ( (str= strstr(line,(char *)"rpcport")) != 0 )
+        {
+            port = atoi(parse_conf_line(str,(char *)"rpcport"));
+            //LogPrintf("rpcport.%u in file\n",port);
+        }
     }
     if ( rpcuser != 0 && rpcpassword != 0 )
     {
@@ -1299,6 +1298,7 @@ void komodo_userpass(char *username,char *password,FILE *fp)
         free(rpcuser);
     if ( rpcpassword != 0 )
         free(rpcpassword);
+    return(port);
 }
 
 void komodo_statefname(char *fname,char *symbol,char *str)
@@ -1342,7 +1342,7 @@ void komodo_statefname(char *fname,char *symbol,char *str)
 void komodo_configfile(char *symbol,uint16_t port)
 {
     static char myusername[512],mypassword[8192];
-    FILE *fp; uint8_t buf2[33]; char fname[512],buf[128],username[512],password[8192]; uint32_t crc,r,r2,i;
+    FILE *fp; uint16_t kmdport; uint8_t buf2[33]; char fname[512],buf[128],username[512],password[8192]; uint32_t crc,r,r2,i;
     if ( symbol != 0 && port != 0 )
     {
         r = (uint32_t)time(NULL);
@@ -1351,7 +1351,11 @@ void komodo_configfile(char *symbol,uint16_t port)
         memcpy(&buf[sizeof(r)],&r2,sizeof(r2));
         memcpy(&buf[sizeof(r)+sizeof(r2)],symbol,strlen(symbol));
         crc = calc_crc32(0,(uint8_t *)buf,(int32_t)(sizeof(r)+sizeof(r2)+strlen(symbol)));
+#ifdef _WIN32
+        randombytes_buf(buf2,sizeof(buf2));
+#else
         OS_randombytes(buf2,sizeof(buf2));
+#endif
         for (i=0; i<sizeof(buf2); i++)
             sprintf(&password[i*2],"%02x",buf2[i]);
         password[i*2] = 0;
@@ -1366,7 +1370,7 @@ void komodo_configfile(char *symbol,uint16_t port)
         {
             if ( (fp= fopen(fname,"wb")) != 0 )
             {
-                fprintf(fp,"rpcuser=user%u\nrpcpassword=pass%s\nrpcport=%u\nserver=1\ntxindex=1\n\n",crc,password,port);
+                fprintf(fp,"rpcuser=user%u\nrpcpassword=pass%s\nrpcport=%u\nserver=1\ntxindex=1\nrpcworkqueue=64\n",crc,password,port);
                 fclose(fp);
                 LogPrintf("Created (%s)\n",fname);
             } else LogPrintf("Couldnt create (%s)\n",fname);
@@ -1397,15 +1401,17 @@ void komodo_configfile(char *symbol,uint16_t port)
     if ( (fp= fopen(fname,"rb")) != 0 )
     {
         komodo_userpass(username,password,fp);
+        if ( (kmdport= komodo_userpass(username,password,fp)) != 0 )
+            KMD_PORT = kmdport;
         sprintf(KMDUSERPASS,"%s:%s",username,password);
         fclose(fp);
 //LogPrintf("KOMODO.(%s) -> userpass.(%s)\n",fname,KMDUSERPASS);
-    } else LogPrintf("couldnt open.(%s)\n",fname);
+    } //else LogPrintf("couldnt open.(%s)\n",fname);
 }
 
-int32_t komodo_userpass(char *userpass,char *symbol)
+uint16_t komodo_userpass(char *userpass,char *symbol)
 {
-    FILE *fp; char fname[512],username[512],password[512],confname[16];
+    FILE *fp; uint16_t port = 0; char fname[512],username[512],password[512],confname[KOMODO_ASSETCHAIN_MAXLEN];
     userpass[0] = 0;
     if ( strcmp("KMD",symbol) == 0 )
     {
@@ -1419,12 +1425,12 @@ int32_t komodo_userpass(char *userpass,char *symbol)
     komodo_statefname(fname,symbol,confname);
     if ( (fp= fopen(fname,"rb")) != 0 )
     {
-        komodo_userpass(username,password,fp);
+        port = komodo_userpass(username,password,fp);
         sprintf(userpass,"%s:%s",username,password);
         fclose(fp);
         return((int32_t)strlen(userpass));
     }
-    return(-1);
+    return(port);
 }
 
 uint32_t komodo_assetmagic(char *symbol,uint64_t supply)
@@ -1485,7 +1491,7 @@ char *iguanafmtstr = (char *)"curl --url \"http://127.0.0.1:7778\" --data \"{\\\
 
 int32_t komodo_whoami(char *pubkeystr,int32_t height)
 {
-    int32_t i,notaryid; 
+    int32_t i,notaryid;
     for (i=0; i<33; i++)
         sprintf(&pubkeystr[i<<1],"%02x",NOTARY_PUBKEY33[i]);
     pubkeystr[66] = 0;
@@ -1493,10 +1499,20 @@ int32_t komodo_whoami(char *pubkeystr,int32_t height)
     return(notaryid);
 }
 
-void komodo_args()
+char *argv0suffix[] =
+{
+    (char *)"mnzd", (char *)"mnz-cli", (char *)"mnzd.exe", (char *)"mnz-cli.exe", (char *)"btchd", (char *)"btch-cli", (char *)"btchd.exe", (char *)"btch-cli.exe"
+};
+
+char *argv0names[] =
+{
+    (char *)"MNZ", (char *)"MNZ", (char *)"MNZ", (char *)"MNZ", (char *)"BTCH", (char *)"BTCH", (char *)"BTCH", (char *)"BTCH"
+};
+
+void komodo_args(char *argv0)
 {
     extern int64_t MAX_MONEY;
-    std::string name,addn; char *dirname,fname[512],magicstr[9]; uint8_t magic[4]; FILE *fp; int32_t i,baseid,len;
+    std::string name,addn; char *dirname,fname[512],arg0str[64],magicstr[9]; uint8_t magic[4]; FILE *fp; int32_t i,baseid,len,n;
     IS_KOMODO_NOTARY = GetBoolArg("-notary", false);
     if ( (KOMODO_EXCHANGEWALLET= GetBoolArg("-exchange", false)) != 0 )
         LogPrintf("KOMODO_EXCHANGEWALLET mode active\n");
@@ -1507,6 +1523,20 @@ void komodo_args()
         KOMODO_PAX = 1;
     } else KOMODO_PAX = GetArg("-pax",0);
     name = GetArg("-ac_name","");
+    if ( argv0 != 0 )
+    {
+        len = (int32_t)strlen(argv0);
+        for (i=0; i<sizeof(argv0suffix)/sizeof(*argv0suffix); i++)
+        {
+            n = (int32_t)strlen(argv0suffix[i]);
+            if ( strcmp(&argv0[len - n],argv0suffix[i]) == 0 )
+            {
+                //printf("ARGV0.(%s) -> matches suffix (%s) -> ac_name.(%s)\n",argv0,argv0suffix[i],argv0names[i]);
+                name = argv0names[i];
+                break;
+            }
+        }
+    }
     if ( (KOMODO_REWIND= GetArg("-rewind",0)) != 0 )
     {
         LogPrintf("KOMODO_REWIND %d\n",KOMODO_REWIND);
@@ -1526,10 +1556,10 @@ void komodo_args()
         while ( (dirname= (char *)GetDataDir(false).string().c_str()) == 0 || dirname[0] == 0 )
         {
             LogPrintf("waiting for datadir\n");
-#ifndef WIN32
+#ifndef _WIN32
             sleep(3);
 #else
-            Sleep(3*1000);
+            boost::this_thread::sleep(boost::posix_time::milliseconds(3000));
 #endif
         }
         //LogPrintf("Got datadir.(%s)\n",dirname);
@@ -1539,6 +1569,7 @@ void komodo_args()
             extern int COINBASE_MATURITY;
             komodo_configfile(ASSETCHAINS_SYMBOL,ASSETCHAINS_PORT + 1);
             COINBASE_MATURITY = 1;
+            LogPrintf("ASSETCHAINS_PORT %s %u\n",ASSETCHAINS_SYMBOL,ASSETCHAINS_PORT);
         }
         ASSETCHAINS_NOTARIES = GetArg("-ac_notaries","");
         komodo_assetchain_pubkeys((char *)ASSETCHAINS_NOTARIES.c_str());
@@ -1565,8 +1596,8 @@ void komodo_args()
             while ( fname[strlen(fname)-1] != '\\' )
                 fname[strlen(fname)-1] = 0;
             if ( iter == 0 )
-                strcat(fname,".komodo\\komodo.conf");
-            else strcat(fname,".bitcoin\\bitcoin.conf");
+                strcat(fname,"Komodo\\komodo.conf");
+            else strcat(fname,"Bitcoin\\bitcoin.conf");
 #else
             while ( fname[strlen(fname)-1] != '/' )
                 fname[strlen(fname)-1] = 0;
@@ -1586,12 +1617,13 @@ void komodo_args()
                 sprintf(iter == 0 ? KMDUSERPASS : BTCUSERPASS,"%s:%s",username,password);
                 fclose(fp);
                 //LogPrintf("KOMODO.(%s) -> userpass.(%s)\n",fname,KMDUSERPASS);
-            } else LogPrintf("couldnt open.(%s)\n",fname);
+            } //else LogPrintf("couldnt open.(%s)\n",fname);
             if ( IS_KOMODO_NOTARY == 0 )
                 break;
         }
     }
     //LogPrintf("%s chain params initialized\n",ASSETCHAINS_SYMBOL);
+    KOMODOD_PORT = GetArg("-rpcport", BaseParams().RPCPort());
 }
 
 void komodo_nameset(char *symbol,char *dest,char *source)

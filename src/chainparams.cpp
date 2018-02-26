@@ -30,7 +30,10 @@ using namespace std;
  * + Contains no strange transactions
  */
 void *chainparams_commandline(void *ptr);
-extern char ASSETCHAINS_SYMBOL[16];
+
+#include "komodo_defs.h"
+
+extern char ASSETCHAINS_SYMBOL[KOMODO_ASSETCHAIN_MAXLEN];
 extern uint16_t ASSETCHAINS_PORT;
 extern int32_t ASSETCHAIN_INIT;
 extern uint32_t ASSETCHAINS_MAGIC;
@@ -162,7 +165,7 @@ void *chainparams_commandline(void *ptr)
     while ( ASSETCHAINS_PORT == 0 )
     {
 #ifdef WIN32
-        Sleep(1*1000);
+        boost::this_thread::sleep(boost::posix_time::milliseconds(1000));
 #else
         sleep(1);
 #endif
