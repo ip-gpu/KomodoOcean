@@ -15,7 +15,10 @@
 #include <boost/thread/synchronized_value.hpp>
 #include <string>
 
-#ifndef WIN32
+#ifdef _WIN32
+#include <io.h>
+#include <windows.h>
+#else
 #include <sys/ioctl.h>
 #endif
 
@@ -412,12 +415,16 @@ void ThreadShowMetricsScreen()
 
         // Get current window size
         if (isTTY) {
-#ifndef WIN32
-            struct winsize w;
-            w.ws_col = 0;
-            if (ioctl(STDOUT_FILENO, TIOCGWINSZ, &w) != -1 && w.ws_col != 0) {
-                cols = w.ws_col;
-            }
+#ifdef WIN32
+          CONSOLE_SCREEN_BUFFER_INFO csbi;
+          GetConsoleScreenBufferInfo(GetStdHandle(STD_OUTPUT_HANDLE), &csbi);
+          cols = csbi.srWindow.Right - csbi.srWindow.Left + 1;
+#else
+          struct winsize w;
+          w.ws_col = 0;
+          if (ioctl(STDOUT_FILENO, TIOCGWINSZ, &w) != -1 && w.ws_col != 0) {
+            cols = w.ws_col;
+          }
 #endif
         }
 

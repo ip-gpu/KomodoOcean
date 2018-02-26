@@ -112,13 +112,8 @@ bool AppInit(int argc, char* argv[])
 
     try
     {
-        /* [!] Todo ... 
         void komodo_args(char *argv0);
         komodo_args(argv[0]);
-        */
-	void komodo_args();
-        komodo_args();
-
         fprintf(stderr,"call komodo_args.(%s) NOTARY_PUBKEY.(%s)\n",argv[0],NOTARY_PUBKEY.c_str());
         while ( ASSETCHAIN_INIT == 0 )
         {

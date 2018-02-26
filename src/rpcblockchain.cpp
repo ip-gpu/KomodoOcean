@@ -309,7 +309,7 @@ UniValue getblockhash(const UniValue& params, bool fHelp)
     return pblockindex->GetBlockHash().GetHex();
 }
 
-uint256 _komodo_getblockhash(int32_t nHeight)
+/*uint256 _komodo_getblockhash(int32_t nHeight)
 {
     uint256 hash;
     LOCK(cs_main);
@@ -323,7 +323,7 @@ uint256 _komodo_getblockhash(int32_t nHeight)
         LogPrintf(" blockhash.%d\n",nHeight);
     } else memset(&hash,0,sizeof(hash));
     return(hash);
-}
+}*/
 
 UniValue getblockheader(const UniValue& params, bool fHelp)
 {
@@ -512,10 +512,12 @@ UniValue gettxoutsetinfo(const UniValue& params, bool fHelp)
     return ret;
 }
 
+#include "komodo_defs.h"
+
 #define IGUANA_MAXSCRIPTSIZE 10001
 #define KOMODO_KVDURATION 1440
 #define KOMODO_KVBINARY 2
-extern char ASSETCHAINS_SYMBOL[16];
+extern char ASSETCHAINS_SYMBOL[KOMODO_ASSETCHAIN_MAXLEN];
 uint64_t komodo_interest(int32_t txheight,uint64_t nValue,uint32_t nLockTime,uint32_t tiptime);
 uint32_t komodo_txtime(uint256 hash);
 uint64_t komodo_paxprice(uint64_t *seedp,int32_t height,char *base,char *rel,uint64_t basevolume);
@@ -976,7 +978,11 @@ UniValue getblockchaininfo(const UniValue& params, bool fHelp)
 
     ZCIncrementalMerkleTree tree;
     pcoinsTip->GetAnchorAt(pcoinsTip->GetBestAnchor(), tree);
+#ifdef __APPLE__
+    obj.push_back(Pair("commitments",           (uint64_t)tree.size()));
+#else
     obj.push_back(Pair("commitments",           tree.size()));
+#endif
 
     const Consensus::Params& consensusParams = Params().GetConsensus();
     CBlockIndex* tip = chainActive.Tip();
@@ -1055,7 +1061,9 @@ UniValue getchaintips(const UniValue& params, bool fHelp)
         setTips.insert(item.second);
     BOOST_FOREACH(const PAIRTYPE(const uint256, CBlockIndex*)& item, mapBlockIndex)
     {
-        const CBlockIndex* pprev = item.second->pprev;
+        const CBlockIndex* pprev=0;
+        if ( item.second != 0 )
+            pprev = item.second->pprev;
         if (pprev)
             setTips.erase(pprev);
     }
@@ -1064,39 +1072,41 @@ UniValue getchaintips(const UniValue& params, bool fHelp)
     setTips.insert(chainActive.Tip());
 
     /* Construct the output array.  */
-    UniValue res(UniValue::VARR);
+    UniValue res(UniValue::VARR); const CBlockIndex *forked;
     BOOST_FOREACH(const CBlockIndex* block, setTips)
     {
-        UniValue obj(UniValue::VOBJ);
-        obj.push_back(Pair("height", block->nHeight));
-        obj.push_back(Pair("hash", block->phashBlock->GetHex()));
+            UniValue obj(UniValue::VOBJ);
+            obj.push_back(Pair("height", block->nHeight));
+            obj.push_back(Pair("hash", block->phashBlock->GetHex()));
+            forked = chainActive.FindFork(block);
+            if ( forked != 0 )
+            {
+                const int branchLen = block->nHeight - forked->nHeight;
+                obj.push_back(Pair("branchlen", branchLen));
 
-        const int branchLen = block->nHeight - chainActive.FindFork(block)->nHeight;
-        obj.push_back(Pair("branchlen", branchLen));
-
-        string status;
-        if (chainActive.Contains(block)) {
-            // This block is part of the currently active chain.
-            status = "active";
-        } else if (block->nStatus & BLOCK_FAILED_MASK) {
-            // This block or one of its ancestors is invalid.
-            status = "invalid";
-        } else if (block->nChainTx == 0) {
-            // This block cannot be connected because full block data for it or one of its parents is missing.
-            status = "headers-only";
-        } else if (block->IsValid(BLOCK_VALID_SCRIPTS)) {
-            // This block is fully validated, but no longer part of the active chain. It was probably the active block once, but was reorganized.
-            status = "valid-fork";
-        } else if (block->IsValid(BLOCK_VALID_TREE)) {
-            // The headers for this block are valid, but it has not been validated. It was probably never part of the most-work chain.
-            status = "valid-headers";
-        } else {
-            // No clue.
-            status = "unknown";
-        }
-        obj.push_back(Pair("status", status));
-
-        res.push_back(obj);
+                string status;
+                if (chainActive.Contains(block)) {
+                    // This block is part of the currently active chain.
+                    status = "active";
+                } else if (block->nStatus & BLOCK_FAILED_MASK) {
+                    // This block or one of its ancestors is invalid.
+                    status = "invalid";
+                } else if (block->nChainTx == 0) {
+                    // This block cannot be connected because full block data for it or one of its parents is missing.
+                    status = "headers-only";
+                } else if (block->IsValid(BLOCK_VALID_SCRIPTS)) {
+                    // This block is fully validated, but no longer part of the active chain. It was probably the active block once, but was reorganized.
+                    status = "valid-fork";
+                } else if (block->IsValid(BLOCK_VALID_TREE)) {
+                    // The headers for this block are valid, but it has not been validated. It was probably never part of the most-work chain.
+                    status = "valid-headers";
+                } else {
+                    // No clue.
+                    status = "unknown";
+                }
+                obj.push_back(Pair("status", status));
+            }
+            res.push_back(obj);
     }
 
     return res;

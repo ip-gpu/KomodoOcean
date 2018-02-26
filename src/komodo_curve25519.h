@@ -21,6 +21,10 @@
 #include <memory.h>
 #include <string.h>
 
+#ifdef _WIN32
+#include <sodium.h>
+#endif
+
 bits320 fmul(const bits320 in2,const bits320 in);
 bits320 fexpand(bits256 basepoint);
 bits256 fcontract(const bits320 input);
@@ -1039,12 +1043,18 @@ inline bits320 crecip(const bits320 z)
     /* 2^255 - 21 */ return(fmul(t0, a));
 }
 
-void OS_randombytes(unsigned char *x,long xlen);
+#ifndef _WIN32
+ void OS_randombytes(unsigned char *x,long xlen);
+#endif
 
 bits256 rand256(int32_t privkeyflag)
 {
     bits256 randval;
+    #ifndef _WIN32
     OS_randombytes(randval.bytes,sizeof(randval));
+    #else
+    randombytes_buf(randval.bytes,sizeof(randval));
+    #endif
     if ( privkeyflag != 0 )
         randval.bytes[0] &= 0xf8, randval.bytes[31] &= 0x7f, randval.bytes[31] |= 0x40;
     return(randval);

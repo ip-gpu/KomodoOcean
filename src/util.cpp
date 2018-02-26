@@ -15,6 +15,7 @@
 #include "sync.h"
 #include "utilstrencodings.h"
 #include "utiltime.h"
+#include "komodo_defs.h"
 
 #include <stdarg.h>
 
@@ -454,13 +455,13 @@ void PrintExceptionContinue(const std::exception* pex, const char* pszThread)
     strMiscWarning = message;
 }
 
-extern char ASSETCHAINS_SYMBOL[16];
+extern char ASSETCHAINS_SYMBOL[KOMODO_ASSETCHAIN_MAXLEN];
 //int64_t MAX_MONEY = 200000000 * 100000000LL;
 
 boost::filesystem::path GetDefaultDataDir()
 {
     namespace fs = boost::filesystem;
-    char symbol[16];
+    char symbol[KOMODO_ASSETCHAIN_MAXLEN];
     if ( ASSETCHAINS_SYMBOL[0] != 0 )
         strcpy(symbol,ASSETCHAINS_SYMBOL);
     else symbol[0] = 0;
@@ -618,7 +619,14 @@ boost::filesystem::path GetConfigFile()
     char confname[512];
     if ( ASSETCHAINS_SYMBOL[0] != 0 )
         sprintf(confname,"%s.conf",ASSETCHAINS_SYMBOL);
-    else strcpy(confname,"komodo.conf");
+    else
+    {
+#ifdef __APPLE__
+        strcpy(confname,"Komodo.conf");
+#else
+        strcpy(confname,"komodo.conf");
+#endif
+    }
     boost::filesystem::path pathConfigFile(GetArg("-conf",confname));
     if (!pathConfigFile.is_complete())
         pathConfigFile = GetDataDir(false) / pathConfigFile;
@@ -650,6 +658,8 @@ void ReadConfigFile(map<string, string>& mapSettingsRet,
     }
     // If datadir is changed in .conf file:
     ClearDatadirCache();
+    extern uint16_t KOMODOD_PORT;
+    KOMODOD_PORT = GetArg("-rpcport",BaseParams().RPCPort());
 }
 
 #ifndef WIN32
