@@ -2,13 +2,13 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#ifndef KOMODO_QT_ADDRESSTABLEMODEL_H
-#define KOMODO_QT_ADDRESSTABLEMODEL_H
+#ifndef KOMODO_QT_ZADDRESSTABLEMODEL_H
+#define KOMODO_QT_ZADDRESSTABLEMODEL_H
 
 #include <QAbstractTableModel>
 #include <QStringList>
 
-class AddressTablePriv;
+class ZAddressTablePriv;
 class WalletModel;
 class PlatformStyle;
 
@@ -17,20 +17,19 @@ class CWallet;
 /**
    Qt model of the address book in the core. This allows views to access and modify the address book.
  */
-class AddressTableModel : public QAbstractTableModel
+class ZAddressTableModel : public QAbstractTableModel
 {
     Q_OBJECT
 
 public:
-    explicit AddressTableModel(const PlatformStyle *platformStyle, CWallet *wallet, WalletModel *parent = 0);
-    ~AddressTableModel();
+    explicit ZAddressTableModel(const PlatformStyle *platformStyle, CWallet *wallet, WalletModel *parent = 0);
+    ~ZAddressTableModel();
 
     enum ColumnIndex {
         isMine = 0,
-        isWatchOnly = 1,
-        Balance = 2,
-        Label = 3,   /**< User specified label */
-        Address = 4  /**< Komodo address */
+        Balance = 1,
+        Label = 2,   /**< User specified label */
+        Address = 3  /**< Komodo z-address */
     };
 
     enum RoleIndex {
@@ -81,7 +80,7 @@ public:
 private:
     WalletModel *walletModel;
     CWallet *wallet;
-    AddressTablePriv *priv;
+    ZAddressTablePriv *priv;
     QStringList columns;
     EditStatus editStatus;
     const PlatformStyle *platformStyle;
@@ -94,7 +93,7 @@ public Q_SLOTS:
      */
     void updateEntry(const QString &address, const QString &label, bool isMine, const QString &purpose, int status);
 
-    friend class AddressTablePriv;
+    friend class ZAddressTablePriv;
 };
 
-#endif // KOMODO_QT_ADDRESSTABLEMODEL_H
+#endif // KOMODO_QT_ZADDRESSTABLEMODEL_H

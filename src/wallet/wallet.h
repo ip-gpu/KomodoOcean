@@ -844,6 +844,7 @@ public:
     std::map<uint256, int> mapRequestCount;
 
     std::map<CTxDestination, CAddressBookData> mapAddressBook;
+    std::map<libzcash::PaymentAddress, CAddressBookData> mapZAddressBook;
 
     CPubKey vchDefaultKey;
 
@@ -1033,8 +1034,10 @@ public:
     DBErrors ZapWalletTx(std::vector<CWalletTx>& vWtx);
 
     bool SetAddressBook(const CTxDestination& address, const std::string& strName, const std::string& purpose);
+    bool SetZAddressBook(const libzcash::PaymentAddress& address, const std::string& strName, const std::string& purpose);
 
     bool DelAddressBook(const CTxDestination& address);
+    bool DelZAddressBook(const libzcash::PaymentAddress& address);
 
     void UpdatedTransaction(const uint256 &hashTx);
 
@@ -1082,6 +1085,11 @@ public:
             &address, const std::string &label, bool isMine,
             const std::string &purpose,
             ChangeType status)> NotifyAddressBookChanged;
+
+    boost::signals2::signal<void (CWallet *wallet, const libzcash::PaymentAddress
+            &address, const std::string &label, bool isMine,
+            const std::string &purpose,
+            ChangeType status)> NotifyZAddressBookChanged;
 
     /** 
      * Wallet transaction added, removed or updated.

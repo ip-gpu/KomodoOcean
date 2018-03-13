@@ -3236,8 +3236,13 @@ UniValue z_getnewaddress(const UniValue& params, bool fHelp)
 
     EnsureWalletIsUnlocked();
 
+    string strAccount = AccountFromValue("");
+
     CZCPaymentAddress pubaddr = pwalletMain->GenerateNewZKey();
     std::string result = pubaddr.ToString();
+
+    pwalletMain->SetZAddressBook(pubaddr.Get(), strAccount, "receive");
+
     return result;
 }
 
