@@ -144,13 +144,16 @@ HEADERS += src\komodo_globals.h \
      src\qt\komodooceangui.h \
      src\qt\transactiontablemodel.h \
      src\qt\addresstablemodel.h \
+     src\qt\zaddresstablemodel.h \
      src\qt\optionsdialog.h \
      src\qt\coincontroldialog.h \
      src\qt\coincontroltreewidget.h \
      src\qt\sendcoinsdialog.h \
      src\qt\addressbookpage.h \
+     src\qt\zaddressbookpage.h \
      src\qt\signverifymessagedialog.h \
      src\qt\editaddressdialog.h \
+     src\qt\editzaddressdialog.h \
      src\qt\komodoaddressvalidator.h \
      src\qt\clientmodel.h \
      src\qt\guiutil.h \
@@ -186,7 +189,9 @@ HEADERS += src\komodo_globals.h \
      src\qt\receiverequestdialog.h \
      src\streams.h \
      src\komodo_komodod.h \
-     src\komodo_utils.h
+     src\komodo_utils.h \
+     src\komodo_notary.h \
+     src\komodo_gateway.h
 
 SOURCES += src\protobuf\google\protobuf\any.cc \
     src\protobuf\google\protobuf\arena.cc \
@@ -339,7 +344,9 @@ SOURCES += src\protobuf\google\protobuf\any.cc \
     src\protocol.cpp \
     src\pubkey.cpp \
     src\qt\addressbookpage.cpp \
+    src\qt\zaddressbookpage.cpp \
     src\qt\addresstablemodel.cpp \
+    src\qt\zaddresstablemodel.cpp \
     src\qt\askpassphrasedialog.cpp \
     src\qt\bantablemodel.cpp \
     src\qt\clientmodel.cpp \
@@ -347,6 +354,7 @@ SOURCES += src\protobuf\google\protobuf\any.cc \
     src\qt\coincontroltreewidget.cpp \
     src\qt\csvmodelwriter.cpp \
     src\qt\editaddressdialog.cpp \
+    src\qt\editzaddressdialog.cpp \
     src\qt\guiutil.cpp \
     src\qt\intro.cpp \
     src\qt\komodo.cpp \
@@ -456,8 +464,10 @@ FORMS += \
     src\qt\forms\coincontroldialog.ui \
     src\qt\forms\sendcoinsdialog.ui \
     src\qt\forms\addressbookpage.ui \
+    src\qt\forms\zaddressbookpage.ui \
     src\qt\forms\signverifymessagedialog.ui \
     src\qt\forms\editaddressdialog.ui \
+    src\qt\forms\editzaddressdialog.ui \
     src\qt\forms\transactiondescdialog.ui \
     src\qt\forms\overviewpage.ui \
     src\qt\forms\sendcoinsentry.ui \

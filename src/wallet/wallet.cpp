@@ -3146,6 +3146,29 @@ bool CWallet::SetAddressBook(const CTxDestination& address, const string& strNam
     return CWalletDB(strWalletFile).WriteName(CKomodoAddress(address).ToString(), strName);
 }
 
+bool CWallet::SetZAddressBook(const libzcash::PaymentAddress& address, const string& strName, const string& strPurpose)
+{
+    bool fUpdated = false;
+    {
+        LOCK(cs_wallet); // mapZAddressBook
+        std::map<libzcash::PaymentAddress, CAddressBookData>::iterator mi = mapZAddressBook.find(address);
+        fUpdated = mi != mapZAddressBook.end();
+        mapZAddressBook[address].name = strName;
+        if (!strPurpose.empty()) /* update purpose only if requested */
+            mapZAddressBook[address].purpose = strPurpose;
+    }
+    NotifyZAddressBookChanged(this, address, strName, this->HaveSpendingKey(address),
+                              strPurpose, (fUpdated ? CT_UPDATED : CT_NEW) );
+    if (!fFileBacked)
+        return false;
+
+//!!!!! wallet db doesn't have name and purpose for z-addresses
+//    if (!strPurpose.empty() && !CWalletDB(strWalletFile).WritePurpose(CZCPaymentAddress(address).ToString(), strPurpose))
+//        return false;
+//    return CWalletDB(strWalletFile).WriteName(CZCPaymentAddress(address).ToString(), strName);
+    return true;
+}
+
 bool CWallet::DelAddressBook(const CTxDestination& address)
 {
     {
@@ -3169,6 +3192,34 @@ bool CWallet::DelAddressBook(const CTxDestination& address)
         return false;
     CWalletDB(strWalletFile).ErasePurpose(CKomodoAddress(address).ToString());
     return CWalletDB(strWalletFile).EraseName(CKomodoAddress(address).ToString());
+}
+
+bool CWallet::DelZAddressBook(const libzcash::PaymentAddress& address)
+{
+    {
+        LOCK(cs_wallet); // mapZAddressBook
+
+        if(fFileBacked)
+        {
+            // Delete destdata tuples associated with address
+            std::string strAddress = CZCPaymentAddress(address).ToString();
+//!!!!! we don't delete data for z-addresses for now
+//            BOOST_FOREACH(const PAIRTYPE(string, string) &item, mapZAddressBook[address].destdata)
+//            {
+//                CWalletDB(strWalletFile).EraseDestData(strAddress, item.first);
+//            }
+        }
+        mapZAddressBook.erase(address);
+    }
+
+    NotifyZAddressBookChanged(this, address, "", this->HaveSpendingKey(address), "", CT_DELETED);
+
+    if (!fFileBacked)
+        return false;
+//!!!!! we don't delete data for z-addresses for now
+//    CWalletDB(strWalletFile).ErasePurpose(CKomodoAddress(address).ToString());
+//    return CWalletDB(strWalletFile).EraseName(CKomodoAddress(address).ToString());
+    return true;
 }
 
 bool CWallet::SetDefaultKey(const CPubKey &vchPubKey)
