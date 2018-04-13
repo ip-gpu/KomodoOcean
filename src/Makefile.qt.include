@@ -115,11 +115,15 @@ QT_FORMS_UI = \
   qt/forms/sendcoinsdialog.ui \
   qt/forms/sendcoinsentry.ui \
   qt/forms/signverifymessagedialog.ui \
-  qt/forms/transactiondescdialog.ui
+  qt/forms/transactiondescdialog.ui \
+  qt/forms/zaddressbookpage.ui \
+  qt/forms/editzaddressdialog.ui
 
 QT_MOC_CPP = \
   qt/moc_addressbookpage.cpp \
+  qt/moc_zaddressbookpage.cpp \
   qt/moc_addresstablemodel.cpp \
+  qt/moc_zaddresstablemodel.cpp \
   qt/moc_askpassphrasedialog.cpp \
   qt/moc_bantablemodel.cpp \
   qt/moc_komodoaddressvalidator.cpp \
@@ -132,6 +136,7 @@ QT_MOC_CPP = \
   qt/moc_coincontroltreewidget.cpp \
   qt/moc_csvmodelwriter.cpp \
   qt/moc_editaddressdialog.cpp \
+  qt/moc_editzaddressdialog.cpp \
   qt/moc_guiutil.cpp \
   qt/moc_intro.cpp \
   qt/moc_macdockiconhandler.cpp \
@@ -188,7 +193,9 @@ PROTOBUF_PROTO = qt/paymentrequest.proto
 
 KOMODO_QT_H = \
   qt/addressbookpage.h \
+  qt/zaddressbookpage.h \
   qt/addresstablemodel.h \
+  qt/zaddresstablemodel.h \
   qt/askpassphrasedialog.h \
   qt/bantablemodel.h \
   qt/komodoaddressvalidator.h \
@@ -201,6 +208,7 @@ KOMODO_QT_H = \
   qt/coincontroltreewidget.h \
   qt/csvmodelwriter.h \
   qt/editaddressdialog.h \
+  qt/editzaddressdialog.h \
   qt/guiconstants.h \
   qt/guiutil.h \
   qt/intro.h \
@@ -326,11 +334,14 @@ KOMODO_QT_WINDOWS_CPP = qt/winshutdownmonitor.cpp
 
 KOMODO_QT_WALLET_CPP = \
   qt/addressbookpage.cpp \
+  qt/zaddressbookpage.cpp \
   qt/addresstablemodel.cpp \
+  qt/zaddresstablemodel.cpp \
   qt/askpassphrasedialog.cpp \
   qt/coincontroldialog.cpp \
   qt/coincontroltreewidget.cpp \
   qt/editaddressdialog.cpp \
+  qt/editzaddressdialog.cpp \
   qt/openuridialog.cpp \
   qt/overviewpage.cpp \
   qt/paymentrequestplus.cpp \

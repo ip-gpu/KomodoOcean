@@ -5,6 +5,7 @@
 #include "walletview.h"
 
 #include "addressbookpage.h"
+#include "zaddressbookpage.h"
 #include "askpassphrasedialog.h"
 #include "komodooceangui.h"
 #include "clientmodel.h"
@@ -58,6 +59,7 @@ WalletView::WalletView(const PlatformStyle *_platformStyle, QWidget *parent):
 
     usedSendingAddressesPage = new AddressBookPage(platformStyle, AddressBookPage::ForEditing, AddressBookPage::SendingTab, this);
     usedReceivingAddressesPage = new AddressBookPage(platformStyle, AddressBookPage::ForEditing, AddressBookPage::ReceivingTab, this);
+    usedReceivingZAddressesPage = new ZAddressBookPage(platformStyle, ZAddressBookPage::ForEditing, ZAddressBookPage::ReceivingTab, this);
 
     addWidget(overviewPage);
     addWidget(transactionsPage);
@@ -123,6 +125,7 @@ void WalletView::setWalletModel(WalletModel *_walletModel)
     receiveCoinsPage->setModel(_walletModel);
     sendCoinsPage->setModel(_walletModel);
     usedReceivingAddressesPage->setModel(_walletModel->getAddressTableModel());
+    usedReceivingZAddressesPage->setModel(_walletModel->getZAddressTableModel());
     usedSendingAddressesPage->setModel(_walletModel->getAddressTableModel());
 
     if (_walletModel)
@@ -299,6 +302,16 @@ void WalletView::usedReceivingAddresses()
     usedReceivingAddressesPage->show();
     usedReceivingAddressesPage->raise();
     usedReceivingAddressesPage->activateWindow();
+}
+
+void WalletView::usedReceivingZAddresses()
+{
+    if(!walletModel)
+        return;
+
+    usedReceivingZAddressesPage->show();
+    usedReceivingZAddressesPage->raise();
+    usedReceivingZAddressesPage->activateWindow();
 }
 
 void WalletView::showProgress(const QString &title, int nProgress)

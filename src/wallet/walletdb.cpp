@@ -484,6 +484,10 @@ ReadKeyValue(CWallet* pwallet, CDataStream& ssKey, CDataStream& ssValue,
                 return false;
             }
 
+//!!!!! there is no label and purpose in DB for z-addresses for now
+            pwallet->mapZAddressBook[addr].name = "z-address";
+            pwallet->mapZAddressBook[addr].purpose = "unknown";
+
             wss.nZKeys++;
         }
         else if (strType == "key" || strType == "wkey")
@@ -597,6 +601,11 @@ ReadKeyValue(CWallet* pwallet, CDataStream& ssKey, CDataStream& ssValue,
                 strErr = "Error reading wallet database: LoadCryptedZKey failed";
                 return false;
             }
+
+//!!!!! there is no label and purpose in DB for z-addresses for now
+            pwallet->mapZAddressBook[addr].name = "z-address";
+            pwallet->mapZAddressBook[addr].purpose = "unknown";
+
             wss.fIsEncrypted = true;
         }
         else if (strType == "keymeta")
@@ -623,6 +632,10 @@ ReadKeyValue(CWallet* pwallet, CDataStream& ssKey, CDataStream& ssValue,
             wss.nZKeyMeta++;
 
             pwallet->LoadZKeyMetadata(addr, keyMeta);
+
+//!!!!! there is no label and purpose in DB for z-addresses for now
+            pwallet->mapZAddressBook[addr].name = "z-address";
+            pwallet->mapZAddressBook[addr].purpose = "unknown";
 
             // ignore earliest key creation time as taddr will exist before any zaddr
         }

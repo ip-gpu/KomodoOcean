@@ -5,6 +5,7 @@
 #include "walletmodel.h"
 
 #include "addresstablemodel.h"
+#include "zaddresstablemodel.h"
 #include "consensus/validation.h"
 #include "guiconstants.h"
 #include "guiutil.h"
@@ -36,7 +37,7 @@
 
 
 WalletModel::WalletModel(const PlatformStyle *platformStyle, CWallet *_wallet, OptionsModel *_optionsModel, QObject *parent) :
-    QObject(parent), wallet(_wallet), optionsModel(_optionsModel), addressTableModel(0),
+    QObject(parent), wallet(_wallet), optionsModel(_optionsModel), addressTableModel(0), zaddressTableModel(0),
     transactionTableModel(0),
     recentRequestsTableModel(0),
     cachedBalance(0), cachedUnconfirmedBalance(0), cachedImmatureBalance(0),
@@ -47,6 +48,7 @@ WalletModel::WalletModel(const PlatformStyle *platformStyle, CWallet *_wallet, O
     fForceCheckBalanceChanged = false;
 
     addressTableModel = new AddressTableModel(platformStyle, wallet, this);
+    zaddressTableModel = new ZAddressTableModel(platformStyle, wallet, this);
     transactionTableModel = new TransactionTableModel(platformStyle, wallet, this);
     recentRequestsTableModel = new RecentRequestsTableModel(wallet, this);
 
@@ -176,6 +178,13 @@ void WalletModel::updateAddressBook(const QString &address, const QString &label
 {
     if(addressTableModel)
         addressTableModel->updateEntry(address, label, isMine, purpose, status);
+}
+
+void WalletModel::updateZAddressBook(const QString &address, const QString &label,
+        bool isMine, const QString &purpose, int status)
+{
+    if(zaddressTableModel)
+        zaddressTableModel->updateEntry(address, label, isMine, purpose, status);
 }
 
 void WalletModel::updateWatchOnlyFlag(bool fHaveWatchonly)
@@ -381,6 +390,11 @@ AddressTableModel *WalletModel::getAddressTableModel()
     return addressTableModel;
 }
 
+ZAddressTableModel *WalletModel::getZAddressTableModel()
+{
+    return zaddressTableModel;
+}
+
 TransactionTableModel *WalletModel::getTransactionTableModel()
 {
     return transactionTableModel;
@@ -475,6 +489,23 @@ static void NotifyAddressBookChanged(WalletModel *walletmodel, CWallet *wallet,
                               Q_ARG(int, status));
 }
 
+static void NotifyZAddressBookChanged(WalletModel *walletmodel, CWallet *wallet,
+        const libzcash::PaymentAddress &address, const std::string &label, bool isMine,
+        const std::string &purpose, ChangeType status)
+{
+    QString strAddress = QString::fromStdString(CZCPaymentAddress(address).ToString());
+    QString strLabel = QString::fromStdString(label);
+    QString strPurpose = QString::fromStdString(purpose);
+
+    qDebug() << "NotifyZAddressBookChanged: " + strAddress + " " + strLabel + " isMine=" + QString::number(isMine) + " purpose=" + strPurpose + " status=" + QString::number(status);
+    QMetaObject::invokeMethod(walletmodel, "updateZAddressBook", Qt::QueuedConnection,
+                              Q_ARG(QString, strAddress),
+                              Q_ARG(QString, strLabel),
+                              Q_ARG(bool, isMine),
+                              Q_ARG(QString, strPurpose),
+                              Q_ARG(int, status));
+}
+
 static void NotifyTransactionChanged(WalletModel *walletmodel, CWallet *wallet, const uint256 &hash, ChangeType status)
 {
     Q_UNUSED(wallet);
@@ -502,6 +533,7 @@ void WalletModel::subscribeToCoreSignals()
     // Connect signals to wallet
     wallet->NotifyStatusChanged.connect(boost::bind(&NotifyKeyStoreStatusChanged, this, _1));
     wallet->NotifyAddressBookChanged.connect(boost::bind(NotifyAddressBookChanged, this, _1, _2, _3, _4, _5, _6));
+    wallet->NotifyZAddressBookChanged.connect(boost::bind(NotifyZAddressBookChanged, this, _1, _2, _3, _4, _5, _6));
     wallet->NotifyTransactionChanged.connect(boost::bind(NotifyTransactionChanged, this, _1, _2, _3));
     wallet->ShowProgress.connect(boost::bind(ShowProgress, this, _1, _2));
     wallet->NotifyWatchonlyChanged.connect(boost::bind(NotifyWatchonlyChanged, this, _1));
@@ -512,6 +544,7 @@ void WalletModel::unsubscribeFromCoreSignals()
     // Disconnect signals from wallet
     wallet->NotifyStatusChanged.disconnect(boost::bind(&NotifyKeyStoreStatusChanged, this, _1));
     wallet->NotifyAddressBookChanged.disconnect(boost::bind(NotifyAddressBookChanged, this, _1, _2, _3, _4, _5, _6));
+    wallet->NotifyZAddressBookChanged.disconnect(boost::bind(NotifyZAddressBookChanged, this, _1, _2, _3, _4, _5, _6));
     wallet->NotifyTransactionChanged.disconnect(boost::bind(NotifyTransactionChanged, this, _1, _2, _3));
     wallet->ShowProgress.disconnect(boost::bind(ShowProgress, this, _1, _2));
     wallet->NotifyWatchonlyChanged.disconnect(boost::bind(NotifyWatchonlyChanged, this, _1));
