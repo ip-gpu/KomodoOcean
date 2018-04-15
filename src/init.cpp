@@ -65,6 +65,7 @@
 using namespace std;
 
 extern void ThreadSendAlert();
+extern int32_t KOMODO_LOADINGBLOCKS;
 
 ZCJoinSplit* pzcashParams = NULL;
 
@@ -605,6 +606,7 @@ void ThreadImport(std::vector<boost::filesystem::path> vImportFiles)
         LogPrintf("Reindexing finished\n");
         // To avoid ending up in a situation without genesis block, re-try initializing (no-op if reindexing worked):
         InitBlockIndex();
+        KOMODO_LOADINGBLOCKS = 0;
     }
 
     // hardcoded $DATADIR/bootstrap.dat
@@ -1348,6 +1350,7 @@ bool AppInit2(boost::thread_group& threadGroup, CScheduler& scheduler)
                     strLoadError = _("Error initializing block database");
                     break;
                 }
+                KOMODO_LOADINGBLOCKS = 0;
 
                 // Check for changed -txindex state
                 if (fTxIndex != GetBoolArg("-txindex", true)) {
@@ -1402,6 +1405,7 @@ bool AppInit2(boost::thread_group& threadGroup, CScheduler& scheduler)
             }
         }
     }
+    KOMODO_LOADINGBLOCKS = 0;
 
     // As LoadBlockIndex can take several minutes, it's possible the user
     // requested to kill the GUI during the last operation. If so, exit.
