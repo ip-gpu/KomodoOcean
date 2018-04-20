@@ -1,5 +1,7 @@
 #include "Proof.hpp"
 
+#include "crypto/common.h"
+
 #include <boost/static_assert.hpp>
 #include <mutex>
 

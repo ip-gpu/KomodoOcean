@@ -7,7 +7,6 @@
 #define KOMODO_CHAINPARAMS_H
 
 #include "chainparamsbase.h"
-#include "checkpoints.h"
 #include "consensus/params.h"
 #include "primitives/block.h"
 #include "protocol.h"
@@ -25,6 +24,8 @@ struct SeedSpec6 {
     uint8_t addr[16];
     uint16_t port;
 };
+
+typedef std::map<int, uint256> MapCheckpoints;
 
 struct ChainTxData {
     int64_t nTime;
@@ -51,8 +52,15 @@ public:
 
         ZCPAYMENT_ADDRRESS,
         ZCSPENDING_KEY,
+        ZCVIEWING_KEY,
 
         MAX_BASE58_TYPES
+    };
+    struct CCheckpointData {
+        MapCheckpoints mapCheckpoints;
+        int64_t nTimeLastCheckpoint;
+        int64_t nTransactionsLastCheckpoint;
+        double fTransactionsPerDay;
     };
 
     const Consensus::Params& GetConsensus() const { return consensus; }
@@ -60,8 +68,6 @@ public:
     const std::vector<unsigned char>& AlertKey() const { return vAlertPubKey; }
     int GetDefaultPort() const { return nDefaultPort; }
 
-    /** Used if GenerateKomodos is called with a negative number of threads */
-    int DefaultMinerThreads() const { return nMinerThreads; }
     const CBlock& GenesisBlock() const { return genesis; }
     /** Make miner wait to have peers to avoid wasting work */
     bool MiningRequiresPeers() const { return fMiningRequiresPeers; }
@@ -83,7 +89,7 @@ public:
     const std::vector<CDNSSeedData>& DNSSeeds() const { return vSeeds; }
     const std::vector<unsigned char>& Base58Prefix(Base58Type type) const { return base58Prefixes[type]; }
     const std::vector<SeedSpec6>& FixedSeeds() const { return vFixedSeeds; }
-    const Checkpoints::CCheckpointData& Checkpoints() const { return checkpointData; }
+    const CCheckpointData& Checkpoints() const { return checkpointData; }
     const ChainTxData& TxData() const { return chainTxData; }
     /** Return the founder's reward address and script for a given block height */
     std::string GetFoundersRewardAddressAtHeight(int height) const;
@@ -94,7 +100,7 @@ public:
     const std::string& Bech32HRP() const { return bech32_hrp; }
 
     void SetDefaultPort(uint16_t port) { nDefaultPort = port; }
-    void SetCheckpointData(Checkpoints::CCheckpointData checkpointData);
+    void SetCheckpointData(CCheckpointData checkpointData);
 
     //void setnonce(uint32_t nonce) { memcpy(&genesis.nNonce,&nonce,sizeof(nonce)); }
     //void settimestamp(uint32_t timestamp) { genesis.nTime = timestamp; }
@@ -126,7 +132,7 @@ protected:
     bool fRequireStandard = false;
     bool fMineBlocksOnDemand = false;
     bool fTestnetToBeDeprecatedFieldRPC = false;
-    Checkpoints::CCheckpointData checkpointData;
+    CCheckpointData checkpointData;
     std::vector<std::string> vFoundersRewardAddress;
     ChainTxData chainTxData;
 };
@@ -155,5 +161,10 @@ void SelectParams(CBaseChainParams::Network network);
  * Returns false if an invalid combination is given.
  */
 bool SelectParamsFromCommandLine();
+
+/**
+ * Allows modifying the network upgrade regtest parameters.
+ */
+void UpdateNetworkUpgradeParameters(Consensus::UpgradeIndex idx, int nActivationHeight);
 
 #endif // KOMODO_CHAINPARAMS_H

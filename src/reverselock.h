@@ -15,10 +15,12 @@ public:
 
     explicit reverse_lock(Lock& lock) : lock(lock) {
         lock.unlock();
+        lock.swap(templock);
     }
 
-    ~reverse_lock() noexcept(false) {
-        lock.lock();
+    ~reverse_lock() {
+        templock.lock();
+        templock.swap(lock);
     }
 
 private:
@@ -26,6 +28,7 @@ private:
     reverse_lock& operator=(reverse_lock const&);
 
     Lock& lock;
+    Lock templock;
 };
 
 #endif // KOMODO_REVERSELOCK_H

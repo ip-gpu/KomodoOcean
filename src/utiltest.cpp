@@ -3,6 +3,7 @@
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #include "utiltest.h"
+#include "consensus/upgrades.h"
 
 CWalletTx GetValidReceive(ZCJoinSplit& params,
                           const libzcash::SpendingKey& sk, CAmount value,
@@ -45,9 +46,10 @@ CWalletTx GetValidReceive(ZCJoinSplit& params,
     mtx.vjoinsplit.push_back(jsdesc);
 
     // Empty output script.
+    uint32_t consensusBranchId = SPROUT_BRANCH_ID;
     CScript scriptCode;
     CTransaction signTx(mtx);
-    uint256 dataToBeSigned = SignatureHash(scriptCode, signTx, NOT_AN_INPUT, SIGHASH_ALL);
+    uint256 dataToBeSigned = SignatureHash(scriptCode, signTx, NOT_AN_INPUT, SIGHASH_ALL, 0, consensusBranchId);
 
     // Add the signature
     assert(crypto_sign_detached(&mtx.joinSplitSig[0], NULL,
@@ -63,7 +65,7 @@ CWalletTx GetValidReceive(ZCJoinSplit& params,
 libzcash::Note GetNote(ZCJoinSplit& params,
                        const libzcash::SpendingKey& sk,
                        const CTransaction& tx, size_t js, size_t n) {
-    ZCNoteDecryption decryptor {sk.viewing_key()};
+    ZCNoteDecryption decryptor {sk.receiving_key()};
     auto hSig = tx.vjoinsplit[js].h_sig(params, tx.joinSplitPubKey);
     auto note_pt = libzcash::NotePlaintext::decrypt(
         decryptor,
@@ -129,9 +131,10 @@ CWalletTx GetValidSpend(ZCJoinSplit& params,
     mtx.vjoinsplit.push_back(jsdesc);
 
     // Empty output script.
+    uint32_t consensusBranchId = SPROUT_BRANCH_ID;
     CScript scriptCode;
     CTransaction signTx(mtx);
-    uint256 dataToBeSigned = SignatureHash(scriptCode, signTx, NOT_AN_INPUT, SIGHASH_ALL);
+    uint256 dataToBeSigned = SignatureHash(scriptCode, signTx, NOT_AN_INPUT, SIGHASH_ALL, 0, consensusBranchId);
 
     // Add the signature
     assert(crypto_sign_detached(&mtx.joinSplitSig[0], NULL,

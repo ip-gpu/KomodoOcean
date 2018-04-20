@@ -182,7 +182,8 @@ void komodo_kvupdate(uint8_t *opretbuf,int32_t opretlen,uint64_t value)
                     ptr->value = (uint8_t *)calloc(1,valuesize);
                     memcpy(ptr->value,valueptr,valuesize);
                 }
-            }
+            } else LogPrintf("newflag.%d zero or protected %d\n",newflag,(ptr->flags & KOMODO_KVPROTECTED));
+
             /*for (i=0; i<32; i++)
                 LogPrintf("%02x",((uint8_t *)&ptr->pubkey)[i]);
             LogPrintf(" <- ");
@@ -191,10 +192,10 @@ void komodo_kvupdate(uint8_t *opretbuf,int32_t opretlen,uint64_t value)
             LogPrintf(" new pubkey\n");*/
             memcpy(&ptr->pubkey,&pubkey,sizeof(ptr->pubkey));
             ptr->height = height;
-            ptr->flags = flags | 1;
+            ptr->flags = flags; // jl777 used to or in KVPROTECTED
             portable_mutex_unlock(&KOMODO_KV_mutex);
-        } //else LogPrintf("size mismatch %d vs %d\n",opretlen,coresize);
-    } 
+        } else LogPrintf("size mismatch %d vs %d\n",opretlen,coresize);
+    } else LogPrintf("not enough fee\n");
 }
 
 #endif

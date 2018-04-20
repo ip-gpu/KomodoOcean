@@ -59,7 +59,7 @@ struct AddressTableEntryLessThan
     }
 };
 
-extern CAmount getBalanceZaddr(std::string transparentAddress, int minDepth=1);
+extern CAmount getBalanceZaddr(std::string address, int minDepth = 1, bool ignoreUnspendable=true);
 
 /* Determine address type from address purpose */
 static AddressTableEntry::Type translateTransactionType(const QString &strPurpose, bool isMine)
@@ -94,7 +94,7 @@ public:
             for (const std::pair<libzcash::PaymentAddress, CAddressBookData>& item : wallet->mapZAddressBook)
             {
                 const libzcash::PaymentAddress& address = item.first;
-                bool fMine = wallet->HaveSpendingKey(address);
+                bool fMine = wallet->HaveSpendingKey(address) | wallet->HaveViewingKey(address);
                 AddressTableEntry::Type addressType = translateTransactionType(
                         QString::fromStdString(item.second.purpose), fMine);
                 const std::string& strName = item.second.name;
@@ -222,7 +222,7 @@ QVariant ZAddressTableModel::data(const QModelIndex &index, int role) const
                 if (isValid)
                 {
                     libzcash::PaymentAddress dest = address.Get();
-                    if (wallet->HaveSpendingKey(dest)) mine = ISMINE_SPENDABLE;
+                    if (wallet->HaveSpendingKey(dest) || wallet->HaveViewingKey(dest)) mine = ISMINE_SPENDABLE;
                     else mine = ISMINE_NO;
                 }
             }
@@ -263,7 +263,7 @@ QVariant ZAddressTableModel::data(const QModelIndex &index, int role) const
             return rec->address;
         case Balance:
             {
-                CAmount nBalance = getBalanceZaddr(rec->address.toStdString(), 1);
+                CAmount nBalance = getBalanceZaddr(rec->address.toStdString(), 1, false);
                 return QString::number(ValueFromAmount(nBalance).get_real(),'f',8);
             }
         }
