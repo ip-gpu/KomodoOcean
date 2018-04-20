@@ -2,7 +2,7 @@ TEMPLATE = app
 TARGET = KomodoOceanGUI
 VERSION = 0.1.0.0
 
-INCLUDEPATH += src src\qt src\libsnark src\protobuf src\secp256k1 src\secp256k1\include src\leveldb\include src\leveldb\helpers\memenv src\leveldb src\univalue\include src\libevent\include src\libevent\compat
+INCLUDEPATH += src src\qt src\libsnark src\protobuf src\secp256k1 src\secp256k1\include src\leveldb\include src\leveldb\helpers\memenv src\leveldb src\univalue\include src\libevent\include src\libevent\compat src\cryptoconditions\include src\cryptoconditions src\cryptoconditions\src\asn
 
 MINIUPNPC_INCLUDE_PATH = src\miniupnpc
 
@@ -24,7 +24,7 @@ DEFINES += BOOST_THREAD_USE_LIB BOOST_HAS_PTHREADS
 DEFINES += _TIMESPEC_DEFINED BINARY_OUTPUT MONTGOMERY_OUTPUT NO_PT_COMPRESSION
 DEFINES += MULTICORE NO_PROCPS NO_GTEST NO_DOCS STATIC NO_SUPERCOP
 DEFINES += _AMD64_ _MT __STDC_FORMAT_MACROS __amd64__ __x86_64__ HAVE_WORKING_BOOST_SLEEP_FOR
-DEFINES += HAVE_CONFIG_H HAVE_DECL_STRNLEN
+DEFINES += HAVE_CONFIG_H HAVE_DECL_STRNLEN ENABLE_MODULE_ECDH ENABLE_MODULE_RECOVERY
 DEFINES += CURVE_ALT_BN128 _REENTRANT __USE_MINGW_ANSI_STDIO=1 LEVELDB_ATOMIC_PRESENT
 
 windows:DEFINES += _WINDOWS 
@@ -256,8 +256,6 @@ SOURCES += src\protobuf\google\protobuf\any.cc \
     src\crypto\sha1.cpp \
     src\crypto\sha256.cpp \
     src\crypto\sha512.cpp \
-    src\eccryptoverify.cpp \
-    src\ecwrapper.cpp \
     src\fs.cpp \
     src\hash_komodo.cpp \
     src\httprpc.cpp \
@@ -411,7 +409,7 @@ SOURCES += src\protobuf\google\protobuf\any.cc \
     src\script\interpreter.cpp \
     src\script\script.cpp \
     src\script\script_error.cpp \
-    src\script\sigcache.cpp \
+    src\script\serverchecker.cpp \
     src\script\sign.cpp \
     src\script\standard.cpp \
     src\secp256k1\src\secp256k1.c \
@@ -454,7 +452,69 @@ SOURCES += src\protobuf\google\protobuf\any.cc \
     src\zcash\Proof.cpp \
     src\zcash\util_zcash.cpp \
     src\zcbenchmarks.cpp \
-    src\chainparams.cpp
+    src\chainparams.cpp \
+    src\cc\betprotocol.cpp \
+    src\cc\disputepayout.cpp \
+    src\cc\eval.cpp \
+    src\cc\importpayout.cpp \
+    src\consensus\upgrades.cpp \
+    src\deprecation.cpp \
+    src\paymentdisclosure.cpp \
+    src\paymentdisclosuredb.cpp \
+    src\script\cc.cpp \
+    src\wallet\asyncrpcoperation_mergetoaddress.cpp \
+    src\wallet\asyncrpcoperation_shieldcoinbase.cpp \
+    src\wallet\rpcdisclosure.cpp \
+    src\cryptoconditions\src\cryptoconditions.cpp \
+    src\cryptoconditions\src\asn\Condition.c	\
+    src\cryptoconditions\src\asn\SimpleSha256Condition.c	\
+    src\cryptoconditions\src\asn\CompoundSha256Condition.c	\
+    src\cryptoconditions\src\asn\ConditionTypes.c	\
+    src\cryptoconditions\src\asn\Fulfillment.c	\
+    src\cryptoconditions\src\asn\PreimageFulfillment.c	\
+    src\cryptoconditions\src\asn\PrefixFulfillment.c	\
+    src\cryptoconditions\src\asn\ThresholdFulfillment.c	\
+    src\cryptoconditions\src\asn\RsaSha256Fulfillment.c	\
+    src\cryptoconditions\src\asn\Ed25519Sha512Fulfillment.c	\
+    src\cryptoconditions\src\asn\Secp256k1Fulfillment.c	\
+    src\cryptoconditions\src\asn\EvalFulfillment.c	\
+    src\cryptoconditions\src\asn\PrefixFingerprintContents.c	\
+    src\cryptoconditions\src\asn\ThresholdFingerprintContents.c	\
+    src\cryptoconditions\src\asn\RsaFingerprintContents.c	\
+    src\cryptoconditions\src\asn\Ed25519FingerprintContents.c	\
+    src\cryptoconditions\src\asn\Secp256k1FingerprintContents.c \
+    src\cryptoconditions\src\asn\INTEGER.c \
+    src\cryptoconditions\src\asn\NativeEnumerated.c \
+    src\cryptoconditions\src\asn\NativeInteger.c \
+    src\cryptoconditions\src\asn\asn_SET_OF.c \
+    src\cryptoconditions\src\asn\constr_CHOICE.c \
+    src\cryptoconditions\src\asn\constr_SEQUENCE.c \
+    src\cryptoconditions\src\asn\constr_SET_OF.c \
+    src\cryptoconditions\src\asn\OCTET_STRING.c \
+    src\cryptoconditions\src\asn\BIT_STRING.c \
+    src\cryptoconditions\src\asn\asn_codecs_prim.c \
+    src\cryptoconditions\src\asn\ber_tlv_length.c \
+    src\cryptoconditions\src\asn\ber_tlv_tag.c \
+    src\cryptoconditions\src\asn\ber_decoder.c \
+    src\cryptoconditions\src\asn\der_encoder.c \
+    src\cryptoconditions\src\asn\constr_TYPE.c \
+    src\cryptoconditions\src\asn\constraints.c \
+    src\cryptoconditions\src\asn\xer_support.c \
+    src\cryptoconditions\src\asn\xer_decoder.c \
+    src\cryptoconditions\src\asn\xer_encoder.c \
+    src\cryptoconditions\src\asn\per_support.c \
+    src\cryptoconditions\src\asn\per_decoder.c \
+    src\cryptoconditions\src\asn\per_encoder.c \
+    src\cryptoconditions\src\asn\per_opentype.c \
+    src\cryptoconditions\src\cryptoconditions_utils.cpp \
+    src\cryptoconditions\src\include\cryptoconditions_sha256.c \
+    src\cryptoconditions\src\include\ed25519\src\keypair.cpp \
+    src\cryptoconditions\src\include\ed25519\src\cryptoconditions_sign.cpp \
+    src\cryptoconditions\src\include\ed25519\src\verify.cpp \
+    src\cryptoconditions\src\include\ed25519\src\cryptoconditions_sha512.cpp \
+    src\cryptoconditions\src\include\ed25519\src\ge.cpp \
+    src\cryptoconditions\src\include\ed25519\src\sc.cpp \
+    src\cryptoconditions\src\include\ed25519\src\fe.cpp 
 
 RESOURCES += \
     src\qt\komodo.qrc \

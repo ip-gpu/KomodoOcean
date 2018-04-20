@@ -47,7 +47,6 @@ void komodo_connectblock(CBlockIndex *pindex,CBlock& block);
 #include "komodo_notary.h"
 
 int32_t komodo_parsestatefile(struct komodo_state *sp,FILE *fp,char *symbol,char *dest);
-int32_t komodo_parsestatefile(struct komodo_state *sp,char *symbol,char *dest);
 #include "komodo_kv.h"
 #include "komodo_jumblr.h"
 #include "komodo_gateway.h"
@@ -71,7 +70,7 @@ int32_t komodo_currentheight()
 int32_t komodo_parsestatefile(struct komodo_state *sp,FILE *fp,char *symbol,char *dest)
 {
     static int32_t errs;
-    int32_t func,ht,notarized_height,num,matched=0; uint256 notarized_hash,notarized_desttxid; uint8_t pubkeys[64][33];
+    int32_t func,ht,notarized_height,num,matched=0,MoMdepth; uint256 MoM,notarized_hash,notarized_desttxid; uint8_t pubkeys[64][33];
     if ( (func= fgetc(fp)) != EOF )
     {
         if ( ASSETCHAINS_SYMBOL[0] == 0 && strcmp(symbol,"KMD") == 0 )
@@ -95,7 +94,7 @@ int32_t komodo_parsestatefile(struct komodo_state *sp,FILE *fp,char *symbol,char
                 }
             } else LogPrintf("illegal num.%d\n",num);
         }
-        else if ( func == 'N' )
+        else if ( func == 'N' || func == 'M' )
         {
             if ( fread(&notarized_height,1,sizeof(notarized_height),fp) != sizeof(notarized_height) )
                 errs++;
@@ -103,10 +102,22 @@ int32_t komodo_parsestatefile(struct komodo_state *sp,FILE *fp,char *symbol,char
                 errs++;
             if ( fread(&notarized_desttxid,1,sizeof(notarized_desttxid),fp) != sizeof(notarized_desttxid) )
                 errs++;
-            if ( 0 && ASSETCHAINS_SYMBOL[0] != 0 && sp != 0 )
-                LogPrintf("%s load[%s.%d -> %s] NOTARIZED %d %s\n",ASSETCHAINS_SYMBOL,symbol,sp->NUM_NPOINTS,dest,notarized_height,notarized_hash.ToString().c_str());
+            if ( func == 'M' )
+            {
+                if ( fread(&MoM,1,sizeof(MoM),fp) != sizeof(MoM) )
+                    errs++;
+                if ( fread(&MoMdepth,1,sizeof(MoMdepth),fp) != sizeof(MoMdepth) )
+                    errs++;
+                if ( 1 && ASSETCHAINS_SYMBOL[0] != 0 && sp != 0 )
+                    LogPrintf("%s load[%s.%d -> %s] NOTARIZED %d %s MoM.%s %d\n",ASSETCHAINS_SYMBOL,symbol,sp->NUM_NPOINTS,dest,notarized_height,notarized_hash.ToString().c_str(),MoM.ToString().c_str(),MoMdepth);
+            }
+            else
+            {
+                memset(&MoM,0,sizeof(MoM));
+                MoMdepth = 0;
+            }
             //if ( matched != 0 ) global independent states -> inside *sp
-            komodo_eventadd_notarized(sp,symbol,ht,dest,notarized_hash,notarized_desttxid,notarized_height);
+            komodo_eventadd_notarized(sp,symbol,ht,dest,notarized_hash,notarized_desttxid,notarized_height);//,MoM,MoMdepth);
         }
         else if ( func == 'U' ) // deprecated
         {
@@ -187,7 +198,7 @@ int32_t komodo_parsestatefile(struct komodo_state *sp,FILE *fp,char *symbol,char
                 //LogPrintf("load pvals ht.%d numpvals.%d\n",ht,numpvals);
             } else LogPrintf("error loading pvals[%d]\n",numpvals);
         }
-        //else LogPrintf("[%s] %s illegal func.(%d %c)\n",ASSETCHAINS_SYMBOL,symbol,func,func);
+        else LogPrintf("[%s] %s illegal func.(%d %c)\n",ASSETCHAINS_SYMBOL,symbol,func,func);
         return(func);
     } else return(-1);
 }
@@ -206,7 +217,7 @@ int32_t memread(void *dest,int32_t size,uint8_t *filedata,long *fposp,long datal
 int32_t komodo_parsestatefiledata(struct komodo_state *sp,uint8_t *filedata,long *fposp,long datalen,char *symbol,char *dest)
 {
     static int32_t errs;
-    int32_t func= -1,ht,notarized_height,num,matched=0; uint256 notarized_hash,notarized_desttxid; uint8_t pubkeys[64][33]; long fpos = *fposp;
+    int32_t func= -1,ht,notarized_height,MoMdepth,num,matched=0; uint256 MoM,notarized_hash,notarized_desttxid; uint8_t pubkeys[64][33]; long fpos = *fposp;
     if ( fpos < datalen )
     {
         func = filedata[fpos++];
@@ -229,7 +240,7 @@ int32_t komodo_parsestatefiledata(struct komodo_state *sp,uint8_t *filedata,long
                 }
             } else LogPrintf("illegal num.%d\n",num);
         }
-        else if ( func == 'N' )
+        else if ( func == 'N' || func == 'M' )
         {
             if ( memread(&notarized_height,sizeof(notarized_height),filedata,&fpos,datalen) != sizeof(notarized_height) )
                 errs++;
@@ -237,10 +248,21 @@ int32_t komodo_parsestatefiledata(struct komodo_state *sp,uint8_t *filedata,long
                 errs++;
             if ( memread(&notarized_desttxid,sizeof(notarized_desttxid),filedata,&fpos,datalen) != sizeof(notarized_desttxid) )
                 errs++;
-            if ( 0 && ASSETCHAINS_SYMBOL[0] != 0 && sp != 0 )
-                LogPrintf("%s load[%s.%d -> %s] NOTARIZED %d %s\n",ASSETCHAINS_SYMBOL,symbol,sp->NUM_NPOINTS,dest,notarized_height,notarized_hash.ToString().c_str());
-            //if ( matched != 0 ) global independent states -> inside *sp
-            komodo_eventadd_notarized(sp,symbol,ht,dest,notarized_hash,notarized_desttxid,notarized_height);
+            if ( func == 'M' )
+            {
+                if ( memread(&MoM,sizeof(MoM),filedata,&fpos,datalen) != sizeof(MoM) )
+                    errs++;
+                if ( memread(&MoMdepth,sizeof(MoMdepth),filedata,&fpos,datalen) != sizeof(MoMdepth) )
+                    errs++;
+                if ( 1 && ASSETCHAINS_SYMBOL[0] != 0 && sp != 0 )
+                    LogPrintf("%s load[%s.%d -> %s] NOTARIZED %d %s MoM.%s %d\n",ASSETCHAINS_SYMBOL,symbol,sp->NUM_NPOINTS,dest,notarized_height,notarized_hash.ToString().c_str(),MoM.ToString().c_str(),MoMdepth);
+            }
+            else
+            {
+                memset(&MoM,0,sizeof(MoM));
+                MoMdepth = 0;
+            }
+            komodo_eventadd_notarized(sp,symbol,ht,dest,notarized_hash,notarized_desttxid,notarized_height);//,MoM,MoMdepth);
         }
         else if ( func == 'U' ) // deprecated
         {
@@ -317,220 +339,16 @@ int32_t komodo_parsestatefiledata(struct komodo_state *sp,uint8_t *filedata,long
                 //LogPrintf("load pvals ht.%d numpvals.%d\n",ht,numpvals);
             } else LogPrintf("error loading pvals[%d]\n",numpvals);
         }
-        //else LogPrintf("[%s] %s illegal func.(%d %c)\n",ASSETCHAINS_SYMBOL,symbol,func,func);
+        else LogPrintf("[%s] %s illegal func.(%d %c)\n",ASSETCHAINS_SYMBOL,symbol,func,func);
         *fposp = fpos;
         return(func);
     }
     return(-1);
 }
 
-unsigned char *mp;
-int32_t mpos;
-int32_t fsize;
-
-int32_t komodo_parsestatefile(struct komodo_state *sp,char *symbol,char *dest)
+void komodo_stateupdate(int32_t height,uint8_t notarypubs[][33],uint8_t numnotaries,uint8_t notaryid,uint256 txhash,uint64_t voutmask,uint8_t numvouts,uint32_t *pvals,uint8_t numpvals,int32_t KMDheight,uint32_t KMDtimestamp,uint64_t opretvalue,uint8_t *opretbuf,uint16_t opretlen,uint16_t vout)//,uint256 MoM,int32_t MoMdepth)
 {
-    static int32_t errs;
-    int32_t func,ht,notarized_height,num,matched=0; uint256 notarized_hash,notarized_desttxid; uint8_t pubkeys[64][33];
-    if ( mpos < fsize )
-    {
-        func = mp[mpos++];
-
-        if ( ASSETCHAINS_SYMBOL[0] == 0 && strcmp(symbol,"KMD") == 0 )
-            matched = 1;
-        else matched = (strcmp(symbol,ASSETCHAINS_SYMBOL) == 0);
-
-        if ( mpos+sizeof(ht) > fsize ) errs++;
-        else
-        {
-            memcpy(&ht,&mp[mpos],sizeof(ht));
-            mpos+=sizeof(ht);
-        }
-        //LogPrintf("fpos.%ld func.(%d %c) ht.%d ",ftell(fp),func,func,ht);
-        if ( func == 'P' )
-        {
-            if ( (num = mp[mpos++]) <= 64 )
-            {
-                if ( mpos+33*num > fsize ) errs++;
-                else
-                {
-                    memcpy(pubkeys,&mp[mpos],33*num);
-                    mpos+=33*num;
-
-                    //LogPrintf("updated %d pubkeys at %s ht.%d\n",num,symbol,ht);
-                    if ( (KOMODO_EXTERNAL_NOTARIES != 0 && matched != 0) || (strcmp(symbol,"KMD") == 0 && KOMODO_EXTERNAL_NOTARIES == 0) )
-                        komodo_eventadd_pubkeys(sp,symbol,ht,num,pubkeys);
-                }
-            } else LogPrintf("illegal num.%d\n",num);
-        }
-        else if ( func == 'N' )
-        {
-            if ( mpos+sizeof(notarized_height) > fsize ) errs++;
-            else
-            {
-                memcpy(&notarized_height,&mp[mpos],sizeof(notarized_height));
-                mpos+=sizeof(notarized_height);
-            }
-
-            if ( mpos+sizeof(notarized_hash) > fsize ) errs++;
-            else
-            {
-                memcpy(&notarized_hash,&mp[mpos],sizeof(notarized_hash));
-                mpos+=sizeof(notarized_hash);
-            }
-
-            if ( mpos+sizeof(notarized_desttxid) > fsize ) errs++;
-            else
-            {
-                memcpy(&notarized_desttxid,&mp[mpos],sizeof(notarized_desttxid));
-                mpos+=sizeof(notarized_desttxid);
-            }
-
-            if ( 0 && sp != 0 )
-                LogPrintf("%s load[%s.%d] NOTARIZED %d %s\n",ASSETCHAINS_SYMBOL,symbol,sp->NUM_NPOINTS,notarized_height,notarized_hash.ToString().c_str());
-            //if ( matched != 0 ) global independent states -> inside *sp
-            komodo_eventadd_notarized(sp,symbol,ht,dest,notarized_hash,notarized_desttxid,notarized_height);
-        }
-        else if ( func == 'U' ) // deprecated
-        {
-            uint8_t n,nid; uint256 hash; uint64_t mask;
-            n = mp[mpos++];
-            nid = mp[mpos++];
-
-            //LogPrintf("U %d %d\n",n,nid);
-            if ( mpos+sizeof(mask) > fsize ) errs++;
-            else
-            {
-                memcpy(&mask,&mp[mpos],sizeof(mask));
-                mpos+=sizeof(mask);
-            }
-
-            if ( mpos+sizeof(hash) > fsize ) errs++;
-            else
-            {
-                memcpy(&hash,&mp[mpos],sizeof(hash));
-                mpos+=sizeof(hash);
-            }
-
-            //if ( matched != 0 )
-            //    komodo_eventadd_utxo(sp,symbol,ht,nid,hash,mask,n);
-        }
-        else if ( func == 'K' )
-        {
-            int32_t kheight;
-            if ( mpos+sizeof(kheight) > fsize ) errs++;
-            else
-            {
-                memcpy(&kheight,&mp[mpos],sizeof(kheight));
-                mpos+=sizeof(kheight);
-            }
-
-            //if ( matched != 0 ) global independent states -> inside *sp
-            //LogPrintf("%s.%d load[%s] ht.%d\n",ASSETCHAINS_SYMBOL,ht,symbol,kheight);
-            komodo_eventadd_kmdheight(sp,symbol,ht,kheight,0);
-        }
-        else if ( func == 'T' )
-        {
-            int32_t kheight,ktimestamp;
-            if ( mpos+sizeof(kheight) > fsize ) errs++;
-            else
-            {
-                memcpy(&kheight,&mp[mpos],sizeof(kheight));
-                mpos+=sizeof(kheight);
-            }
-
-            if ( mpos+sizeof(ktimestamp) > fsize ) errs++;
-            else
-            {
-                memcpy(&ktimestamp,&mp[mpos],sizeof(ktimestamp));
-                mpos+=sizeof(ktimestamp);
-            }
-
-            //if ( matched != 0 ) global independent states -> inside *sp
-            //LogPrintf("%s.%d load[%s] ht.%d t.%u\n",ASSETCHAINS_SYMBOL,ht,symbol,kheight,ktimestamp);
-            komodo_eventadd_kmdheight(sp,symbol,ht,kheight,ktimestamp);
-        }
-        else if ( func == 'R' )
-        {
-            uint16_t olen,v; uint64_t ovalue; uint256 txid; uint8_t opret[16384];
-            if ( mpos+sizeof(txid) > fsize ) errs++;
-            else
-            {
-                memcpy(&txid,&mp[mpos],sizeof(txid));
-                mpos+=sizeof(txid);
-            }
-
-            if ( mpos+sizeof(v) > fsize ) errs++;
-            else
-            {
-                memcpy(&v,&mp[mpos],sizeof(v));
-                mpos+=sizeof(v);
-            }
-
-            if ( mpos+sizeof(ovalue) > fsize ) errs++;
-            else
-            {
-                memcpy(&ovalue,&mp[mpos],sizeof(ovalue));
-                mpos+=sizeof(ovalue);
-            }
-
-            if ( mpos+sizeof(olen) > fsize ) errs++;
-            else
-            {
-                memcpy(&olen,&mp[mpos],sizeof(olen));
-                mpos+=sizeof(olen);
-            }
-
-            if ( olen < sizeof(opret) )
-            {
-                if ( mpos+olen > fsize ) errs++;
-                else
-                {
-                    memcpy(opret,&mp[mpos],olen);
-                    mpos+=olen;
-                }
-
-                if ( ASSETCHAINS_SYMBOL[0] != 0 && matched != 0 )
-                {
-                    int32_t i;  for (i=0; i<olen; i++)
-                        LogPrintf("%02x",opret[i]);
-                    LogPrintf(" %s.%d load[%s] opret[%c] len.%d %.8f\n",ASSETCHAINS_SYMBOL,ht,symbol,opret[0],olen,(double)ovalue/COIN);
-                }
-                komodo_eventadd_opreturn(sp,symbol,ht,txid,ovalue,v,opret,olen); // global shared state -> global PAX
-            } else
-            {
-                mpos+=olen;
-                //LogPrintf("illegal olen.%u\n",olen);
-            }
-        }
-        else if ( func == 'D' )
-        {
-            LogPrintf("unexpected function D[%d]\n",ht);
-        }
-        else if ( func == 'V' )
-        {
-            int32_t numpvals; uint32_t pvals[128];
-            numpvals = mp[mpos++];
-
-            if ( numpvals*sizeof(uint32_t) <= sizeof(pvals) && mpos+numpvals*sizeof(uint32_t) <= fsize)
-            {
-                memcpy(pvals,&mp[mpos],numpvals*sizeof(uint32_t));
-                mpos+=numpvals*sizeof(uint32_t);
-
-                //if ( matched != 0 ) global shared state -> global PVALS
-                //LogPrintf("%s load[%s] prices %d\n",ASSETCHAINS_SYMBOL,symbol,ht);
-                komodo_eventadd_pricefeed(sp,symbol,ht,pvals,numpvals);
-                //LogPrintf("load pvals ht.%d numpvals.%d\n",ht,numpvals);
-            } else LogPrintf("error loading pvals[%d]\n",numpvals);
-        }
-        else LogPrintf("[%s] %s illegal func.(%d %c)\n",ASSETCHAINS_SYMBOL,symbol,func,func);
-        return(func);
-    } else return(-1);
-}
-
-void komodo_stateupdate(int32_t height,uint8_t notarypubs[][33],uint8_t numnotaries,uint8_t notaryid,uint256 txhash,uint64_t voutmask,uint8_t numvouts,uint32_t *pvals,uint8_t numpvals,int32_t KMDheight,uint32_t KMDtimestamp,uint64_t opretvalue,uint8_t *opretbuf,uint16_t opretlen,uint16_t vout)
-{
-    static FILE *fp; static int32_t errs,didinit;
+    static FILE *fp; static int32_t errs,didinit; static uint256 zero;
     struct komodo_state *sp; char fname[512],symbol[KOMODO_ASSETCHAIN_MAXLEN],dest[KOMODO_ASSETCHAIN_MAXLEN]; int32_t retval,ht,func; uint8_t num,pubkeys[64][33];
     if ( didinit == 0 )
     {
@@ -549,22 +367,6 @@ void komodo_stateupdate(int32_t height,uint8_t notarypubs[][33],uint8_t numnotar
         komodo_statefname(fname,ASSETCHAINS_SYMBOL,(char *)"komodostate");
         if ( (fp= fopen(fname,"rb+")) != 0 )
         {
-//            fseek(fp,0,SEEK_END);
-//            fsize = (int32_t)ftell(fp);
-//            rewind(fp);
-
-//            if (fsize != 0)
-//            {
-//                mp = (unsigned char*)malloc(fsize);
-//                if (mp)
-//                {
-//                    fread(mp,1,fsize,fp);
-//                    mpos = 0;
-
-//                    LogPrintf("%s: komodostate loaded...\n", __func__);
-
-//!!!!!!!!! turned off...
-
             if ( (retval= komodo_faststateinit(sp,fname,symbol,dest)) > 0 )
                 fseek(fp,0,SEEK_END);
             else
@@ -574,16 +376,6 @@ void komodo_stateupdate(int32_t height,uint8_t notarypubs[][33],uint8_t numnotar
                     ;
             }
 
-//                    while ( komodo_parsestatefile(sp,symbol,dest) >= 0 )
-//                    {
-//                        if (ShutdownRequested()) break;
-//                    }
-
-//                    free(mp);
-
-//                    LogPrintf("%s: komodostate parsed...\n", __func__);
-//                }
-//            }
         } else fp = fopen(fname,"wb+");
         KOMODO_INITDONE = (uint32_t)time(NULL);
     }
@@ -686,6 +478,9 @@ void komodo_stateupdate(int32_t height,uint8_t notarypubs[][33],uint8_t numnotar
             //LogPrintf("ht.%d func N ht.%d errs.%d\n",height,NOTARIZED_HEIGHT,errs);
             if ( sp != 0 )
             {
+                //if ( sp->MoMdepth > 0 && sp->MoM != zero )
+                //    fputc('M',fp);
+                //else
                 fputc('N',fp);
                 if ( fwrite(&height,1,sizeof(height),fp) != sizeof(height) )
                     errs++;
@@ -695,7 +490,14 @@ void komodo_stateupdate(int32_t height,uint8_t notarypubs[][33],uint8_t numnotar
                     errs++;
                 if ( fwrite(&sp->NOTARIZED_DESTTXID,1,sizeof(sp->NOTARIZED_DESTTXID),fp) != sizeof(sp->NOTARIZED_DESTTXID) )
                     errs++;
-                komodo_eventadd_notarized(sp,symbol,height,dest,sp->NOTARIZED_HASH,sp->NOTARIZED_DESTTXID,sp->NOTARIZED_HEIGHT);
+                /*if ( sp->MoMdepth > 0 && sp->MoM != zero )
+                {
+                    if ( fwrite(&sp->MoM,1,sizeof(sp->MoM),fp) != sizeof(sp->MoM) )
+                        errs++;
+                    if ( fwrite(&sp->MoMdepth,1,sizeof(sp->MoMdepth),fp) != sizeof(sp->MoMdepth) )
+                        errs++;
+                }*/
+                komodo_eventadd_notarized(sp,symbol,height,dest,sp->NOTARIZED_HASH,sp->NOTARIZED_DESTTXID,sp->NOTARIZED_HEIGHT);//,sp->MoM,sp->MoMdepth);
             }
         }
         fflush(fp);
@@ -705,7 +507,7 @@ void komodo_stateupdate(int32_t height,uint8_t notarypubs[][33],uint8_t numnotar
 int32_t komodo_voutupdate(int32_t *isratificationp,int32_t notaryid,uint8_t *scriptbuf,int32_t scriptlen,int32_t height,uint256 txhash,int32_t i,int32_t j,uint64_t *voutmaskp,int32_t *specialtxp,int32_t *notarizedheightp,uint64_t value,int32_t notarized,uint64_t signedmask,uint32_t timestamp)
 {
     static uint256 zero; static FILE *signedfp;
-    CBlockIndex *pindex; int32_t opretlen,nid,k,len = 0; uint256 kmdtxid,desttxid; uint8_t crypto777[33]; struct komodo_state *sp; char symbol[KOMODO_ASSETCHAIN_MAXLEN],dest[KOMODO_ASSETCHAIN_MAXLEN];
+    int32_t opretlen,nid,k,len = 0; uint256 srchash,desttxid; uint8_t crypto777[33]; struct komodo_state *sp; char symbol[KOMODO_ASSETCHAIN_MAXLEN],dest[KOMODO_ASSETCHAIN_MAXLEN];
     if ( (sp= komodo_stateptr(symbol,dest)) == 0 )
         return(-1);
     if ( scriptlen == 35 && scriptbuf[0] == 33 && scriptbuf[34] == 0xac )
@@ -763,23 +565,59 @@ int32_t komodo_voutupdate(int32_t *isratificationp,int32_t notaryid,uint8_t *scr
             LogPrintf("[%s] notarized.%d notarizedht.%d sp.Nht %d sp.ht %d opretlen.%d (%c %c %c)\n",ASSETCHAINS_SYMBOL,notarized,*notarizedheightp,sp->NOTARIZED_HEIGHT,sp->CURRENT_HEIGHT,opretlen,scriptbuf[len+32*2+4],scriptbuf[len+32*2+4+1],scriptbuf[len+32*2+4+2]);
         if ( j == 1 && opretlen >= 32*2+4 && strcmp(ASSETCHAINS_SYMBOL[0]==0?"KMD":ASSETCHAINS_SYMBOL,(char *)&scriptbuf[len+32*2+4]) == 0 )
         {
-            len += iguana_rwbignum(0,&scriptbuf[len],32,(uint8_t *)&kmdtxid);
+            len += iguana_rwbignum(0,&scriptbuf[len],32,(uint8_t *)&srchash);
             len += iguana_rwnum(0,&scriptbuf[len],sizeof(*notarizedheightp),(uint8_t *)notarizedheightp);
             len += iguana_rwbignum(0,&scriptbuf[len],32,(uint8_t *)&desttxid);
-            if ( notarized != 0 && IsInitialBlockDownload() == 0 && ((pindex= mapBlockIndex[kmdtxid]) == 0 || pindex->nHeight != *notarizedheightp) )
+            if ( strcmp("PIZZA",ASSETCHAINS_SYMBOL) == 0 && opretlen == 110 )
             {
-                LogPrintf("%s possible FORK detected. notarized.%d %s not in this chain! last notarization %d -> rewindtarget.%d\n",ASSETCHAINS_SYMBOL,*notarizedheightp,kmdtxid.ToString().c_str(),sp->NOTARIZED_HEIGHT,sp->NOTARIZED_HEIGHT);
-                notarized = 0;
+                notarized = 1;
             }
-            if ( notarized != 0 && *notarizedheightp > sp->NOTARIZED_HEIGHT && *notarizedheightp < height && (height < sp->CURRENT_HEIGHT-1000 || komodo_verifynotarization(ASSETCHAINS_SYMBOL[0]==0?(char *)"KMD":ASSETCHAINS_SYMBOL,(char *)(ASSETCHAINS_SYMBOL[0] == 0 ? "BTC" : "KMD"),height,*notarizedheightp,kmdtxid,desttxid) == 0) )
+            static int32_t last_rewind;
+            int32_t rewindtarget,validated = 0;
+            CBlockIndex *pindex;//
+            if ( IsInitialBlockDownload() == 0 && ((pindex= mapBlockIndex[srchash]) == 0 || pindex->nHeight != *notarizedheightp) )
             {
+                if ( sp->NOTARIZED_HEIGHT > 0 && sp->NOTARIZED_HEIGHT < *notarizedheightp )
+                    rewindtarget = sp->NOTARIZED_HEIGHT - 1;
+                else if ( *notarizedheightp > 101 )
+                    rewindtarget = *notarizedheightp - 101;
+                else rewindtarget = 0;
+                if ( rewindtarget != 0 && rewindtarget > KOMODO_REWIND && rewindtarget > last_rewind )
+                {
+                    if ( last_rewind != 0 )
+                    {
+                        //KOMODO_REWIND = rewindtarget;
+                        LogPrintf("%s FORK detected. notarized.%d %s not in this chain! last notarization %d -> rewindtarget.%d\n",ASSETCHAINS_SYMBOL,*notarizedheightp,srchash.ToString().c_str(),sp->NOTARIZED_HEIGHT,rewindtarget);
+                    }
+                    last_rewind = rewindtarget;
+                }
+            } else validated = 1;
+            if ( notarized != 0 && *notarizedheightp > sp->NOTARIZED_HEIGHT && *notarizedheightp < height && validated != 0 )
+            {
+                int32_t nameoffset = (int32_t)strlen(ASSETCHAINS_SYMBOL) + 1;
                 sp->NOTARIZED_HEIGHT = *notarizedheightp;
-                sp->NOTARIZED_HASH = kmdtxid;
+                sp->NOTARIZED_HASH = srchash;
                 sp->NOTARIZED_DESTTXID = desttxid;
-                komodo_stateupdate(height,0,0,0,zero,0,0,0,0,0,0,0,0,0,0);
-                len += 4;
-                if ( ASSETCHAINS_SYMBOL[0] != 0 )
-                    LogPrintf("[%s] ht.%d NOTARIZED.%d %s.%s %sTXID.%s lens.(%d %d)\n",ASSETCHAINS_SYMBOL,height,*notarizedheightp,ASSETCHAINS_SYMBOL[0]==0?"KMD":ASSETCHAINS_SYMBOL,kmdtxid.ToString().c_str(),ASSETCHAINS_SYMBOL[0]==0?"BTC":"KMD",desttxid.ToString().c_str(),opretlen,len);
+                /*memset(&sp->MoM,0,sizeof(sp->MoM));
+                sp->MoMdepth = 0;
+                if ( len+36 <= opretlen )
+                {
+                    len += iguana_rwbignum(0,&scriptbuf[len+nameoffset],32,(uint8_t *)&sp->MoM);
+                    len += iguana_rwnum(0,&scriptbuf[len+nameoffset],sizeof(sp->MoMdepth),(uint8_t *)&sp->MoMdepth);
+                    if ( sp->MoM == zero || sp->MoMdepth > 1440 || sp->MoMdepth < 0 )
+                    {
+                        memset(&sp->MoM,0,sizeof(sp->MoM));
+                        sp->MoMdepth = 0;
+                    }
+                    else
+                    {
+                        //printf("VALID %s MoM.%s [%d]\n",ASSETCHAINS_SYMBOL,sp->MoM.ToString().c_str(),sp->MoMdepth);
+                    }
+                }*/
+                komodo_stateupdate(height,0,0,0,zero,0,0,0,0,0,0,0,0,0,0);//,sp->MoM,sp->MoMdepth);
+                len += nameoffset;
+                //if ( ASSETCHAINS_SYMBOL[0] != 0 )
+                //    printf("[%s] ht.%d NOTARIZED.%d %s.%s %sTXID.%s lens.(%d %d) MoM.%s %d\n",ASSETCHAINS_SYMBOL,height,*notarizedheightp,ASSETCHAINS_SYMBOL[0]==0?"KMD":ASSETCHAINS_SYMBOL,srchash.ToString().c_str(),ASSETCHAINS_SYMBOL[0]==0?"BTC":"KMD",desttxid.ToString().c_str(),opretlen,len,sp->MoM.ToString().c_str(),sp->MoMdepth);
                 if ( ASSETCHAINS_SYMBOL[0] == 0 )
                 {
                     if ( signedfp == 0 )
@@ -801,11 +639,11 @@ int32_t komodo_voutupdate(int32_t *isratificationp,int32_t notaryid,uint8_t *scr
                         //for (i=0; i<opretlen-len; i++)
                         //    LogPrintf("%02x",scriptbuf[len+i]);
                         //LogPrintf(" Found extradata.[%d] %d - %d\n",opretlen-len,opretlen,len);
-                        komodo_stateupdate(height,0,0,0,txhash,0,0,0,0,0,0,value,&scriptbuf[len],opretlen-len+4+3+(scriptbuf[1] == 0x4d),j);
+                        komodo_stateupdate(height,0,0,0,txhash,0,0,0,0,0,0,value,&scriptbuf[len],opretlen-len+4+3+(scriptbuf[1] == 0x4d),j);//,zero,0);                     
                     }
                 }
-            } else if ( height >= KOMODO_MAINNET_START )
-                LogPrintf("notarized.%d %llx reject ht.%d NOTARIZED.%d prev.%d %s.%s DESTTXID.%s (%s)\n",notarized,(long long)signedmask,height,*notarizedheightp,sp->NOTARIZED_HEIGHT,ASSETCHAINS_SYMBOL[0]==0?"KMD":ASSETCHAINS_SYMBOL,kmdtxid.ToString().c_str(),desttxid.ToString().c_str(),(char *)&scriptbuf[len]);
+            } else if ( *notarizedheightp != sp->NOTARIZED_HEIGHT )
+                LogPrintf("validated.%d notarized.%d %llx reject ht.%d NOTARIZED.%d prev.%d %s.%s DESTTXID.%s (%s) len.%d opretlen.%d\n",validated,notarized,(long long)signedmask,height,*notarizedheightp,sp->NOTARIZED_HEIGHT,ASSETCHAINS_SYMBOL[0]==0?"KMD":ASSETCHAINS_SYMBOL,srchash.ToString().c_str(),desttxid.ToString().c_str(),(char *)&scriptbuf[len],len,opretlen);
         }
         else if ( i == 0 && j == 1 && opretlen == 149 )
         {
@@ -830,7 +668,7 @@ int32_t komodo_voutupdate(int32_t *isratificationp,int32_t notaryid,uint8_t *scr
             }
             
             if ( *isratificationp == 0 && (signedmask != 0 || (scriptbuf[len] != 'X' && scriptbuf[len] != 'A')) ) // && scriptbuf[len] != 'I')
-                komodo_stateupdate(height,0,0,0,txhash,0,0,0,0,0,0,value,&scriptbuf[len],opretlen,j);
+                komodo_stateupdate(height,0,0,0,txhash,0,0,0,0,0,0,value,&scriptbuf[len],opretlen,j);//,zero,0);
         }
     }
     return(notaryid);
@@ -869,7 +707,7 @@ void komodo_connectblock(CBlockIndex *pindex,CBlock& block)
 {
     static int32_t hwmheight;
     uint64_t signedmask,voutmask; char symbol[KOMODO_ASSETCHAIN_MAXLEN],dest[KOMODO_ASSETCHAIN_MAXLEN]; struct komodo_state *sp;
-    uint8_t scriptbuf[4096],pubkeys[64][33],rmd160[20],scriptPubKey[35]; uint256 kmdtxid,zero,btctxid,txhash;
+    uint8_t scriptbuf[10001],pubkeys[64][33],rmd160[20],scriptPubKey[35]; uint256 zero,btctxid,txhash;
     int32_t i,j,k,numnotaries,notarized,scriptlen,isratification,nid,numvalid,specialtx,notarizedheight,notaryid,len,numvouts,numvins,height,txn_count;
     memset(&zero,0,sizeof(zero));
     komodo_init(pindex->nHeight);
@@ -889,7 +727,7 @@ void komodo_connectblock(CBlockIndex *pindex,CBlock& block)
         if ( pindex->nHeight != hwmheight )
             LogPrintf("%s hwmheight.%d vs pindex->nHeight.%d t.%u reorg.%d\n",ASSETCHAINS_SYMBOL,hwmheight,pindex->nHeight,(uint32_t)pindex->nTime,hwmheight-pindex->nHeight);
         komodo_event_rewind(sp,symbol,pindex->nHeight);
-        komodo_stateupdate(pindex->nHeight,0,0,0,zero,0,0,0,0,-pindex->nHeight,pindex->nTime,0,0,0,0);
+        komodo_stateupdate(pindex->nHeight,0,0,0,zero,0,0,0,0,-pindex->nHeight,pindex->nTime,0,0,0,0);//,zero,0);
     }
     komodo_currentheight_set(chainActive.Tip()->nHeight);
     if ( pindex != 0 )
@@ -1022,7 +860,7 @@ void komodo_connectblock(CBlockIndex *pindex,CBlock& block)
                     if ( ((signedmask & 1) != 0 && numvalid >= KOMODO_MINRATIFY) || bitweight(signedmask) > (numnotaries/3) )
                     {
                         memset(&txhash,0,sizeof(txhash));
-                        komodo_stateupdate(height,pubkeys,numvalid,0,txhash,0,0,0,0,0,0,0,0,0,0);
+                        komodo_stateupdate(height,pubkeys,numvalid,0,txhash,0,0,0,0,0,0,0,0,0,0);//,zero,0);
                         LogPrintf("RATIFIED! >>>>>>>>>> new notaries.%d newheight.%d from height.%d\n",numvalid,(((height+KOMODO_ELECTION_GAP/2)/KOMODO_ELECTION_GAP)+1)*KOMODO_ELECTION_GAP,height);
                     } else LogPrintf("signedmask.%llx numvalid.%d wt.%d numnotaries.%d\n",(long long)signedmask,numvalid,bitweight(signedmask),numnotaries);
                 }
@@ -1031,7 +869,7 @@ void komodo_connectblock(CBlockIndex *pindex,CBlock& block)
         if ( NOTARY_PUBKEY33[0] != 0 && ASSETCHAINS_SYMBOL[0] == 0 )
             LogPrintf("%s ht.%d\n",ASSETCHAINS_SYMBOL[0] == 0 ? "KMD" : ASSETCHAINS_SYMBOL,height);
         if ( pindex->nHeight == hwmheight )
-            komodo_stateupdate(height,0,0,0,zero,0,0,0,0,height,(uint32_t)pindex->nTime,0,0,0,0);
+            komodo_stateupdate(height,0,0,0,zero,0,0,0,0,height,(uint32_t)pindex->nTime,0,0,0,0);//,zero,0);
     } else LogPrintf("komodo_connectblock: unexpected null pindex\n");
     //KOMODO_INITDONE = (uint32_t)time(NULL);
     //LogPrintf("%s end connect.%d\n",ASSETCHAINS_SYMBOL,pindex->nHeight);
