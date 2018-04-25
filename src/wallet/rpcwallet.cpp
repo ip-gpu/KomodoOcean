@@ -3959,7 +3959,11 @@ UniValue z_shieldcoinbase(const UniValue& params, bool fHelp)
     CAmount shieldedValue = 0;
     CAmount remainingValue = 0;
     size_t estimatedTxSize = 2000;  // 1802 joinsplit description + tx overhead + wiggle room
+#ifdef __LP64__
+    uint64_t utxoCounter = 0;
+#else
     size_t utxoCounter = 0;
+#endif
     bool maxedOutFlag = false;
     size_t mempoolLimit = (nLimit != 0) ? nLimit : (size_t)GetArg("-mempooltxinputlimit", 0);
 
@@ -4015,7 +4019,11 @@ UniValue z_shieldcoinbase(const UniValue& params, bool fHelp)
         }
     }
 
+#ifdef __LP64__
+    uint64_t numUtxos = inputs.size();
+#else
     size_t numUtxos = inputs.size();
+#endif
 
     if (numUtxos == 0) {
         throw JSONRPCError(RPC_WALLET_INSUFFICIENT_FUNDS, "Could not find any coinbase funds to shield.");
@@ -4252,8 +4260,13 @@ UniValue z_mergetoaddress(const UniValue& params, bool fHelp)
     CAmount mergedNoteValue = 0;
     CAmount remainingUTXOValue = 0;
     CAmount remainingNoteValue = 0;
+#ifdef __LP64__
+    uint64_t utxoCounter = 0;
+    uint64_t noteCounter = 0;
+#else
     size_t utxoCounter = 0;
     size_t noteCounter = 0;
+#endif
     bool maxedOutUTXOsFlag = false;
     bool maxedOutNotesFlag = false;
     size_t mempoolLimit = (nUTXOLimit != 0) ? nUTXOLimit : (size_t)GetArg("-mempooltxinputlimit", 0);
@@ -4340,8 +4353,13 @@ UniValue z_mergetoaddress(const UniValue& params, bool fHelp)
         }
     }
 
+#ifdef __LP64__
+    uint64_t numUtxos = utxoInputs.size(); //ca333
+    uint64_t numNotes = noteInputs.size();
+#else
     size_t numUtxos = utxoInputs.size();
     size_t numNotes = noteInputs.size();
+#endif
 
     if (numUtxos == 0 && numNotes == 0) {
         throw JSONRPCError(RPC_WALLET_INSUFFICIENT_FUNDS, "Could not find any funds to merge.");
@@ -4513,7 +4531,9 @@ int32_t komodo_staked(CMutableTransaction &txNew,uint32_t nBits,uint32_t *blockt
             if ( eligible > 0 )
             {
                 if ( eligible != komodo_stake(1,bnTarget,(uint32_t)tipindex->nHeight+1,out.tx->GetHash(),out.i,eligible,(uint32_t)tipindex->nTime,(char *)CKomodoAddress(address).ToString().c_str()) )
-                    LogPrintf("validation of winning blocktime failed %u -> eligible.%u\n",*blocktimep,eligible);
+                {
+                    //LogPrintf("validation of winning blocktime failed %u -> eligible.%u\n",*blocktimep,eligible);
+                }
                 else if ( earliest == 0 || eligible < earliest || (eligible == earliest && (*utxovaluep == 0 || nValue < *utxovaluep)) )
                 {
                     earliest = eligible;
@@ -4552,9 +4572,9 @@ int32_t komodo_staked(CMutableTransaction &txNew,uint32_t nBits,uint32_t *blockt
             ptr = (uint8_t *)sigdata.scriptSig.data();
             siglen = sigdata.scriptSig.size();
             for (i=0; i<siglen; i++)
-                utxosig[i] = ptr[i];//, fprintf(stderr,"%02x",ptr[i]);
-            //fprintf(stderr," siglen.%d\n",siglen);
-            LogPrintf("best %u from %u, gap %d\n",earliest,*blocktimep,(int32_t)(earliest - *blocktimep));
+                utxosig[i] = ptr[i];//, LogPrintf("%02x",ptr[i]);
+            //LogPrintf(" siglen.%d\n",siglen);
+            LogPrintf("best %u from %u, gap %d lag.%d\n",earliest,*blocktimep,(int32_t)(earliest - *blocktimep),(int32_t)(time(NULL) - *blocktimep));
             *blocktimep = earliest;
         }
     }

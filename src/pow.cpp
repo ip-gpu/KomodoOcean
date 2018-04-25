@@ -144,7 +144,7 @@ bool CheckProofOfWork(int32_t height,uint8_t *pubkey33,uint256 hash,unsigned int
     if ( height == 0 )
     {
         height = komodo_currentheight() + 1;
-        //fprintf(stderr,"set height to %d\n",height);
+        //LogPrintf("set height to %d\n",height);
     }
     if ( height > 34000 && ASSETCHAINS_SYMBOL[0] == 0 ) // 0 -> non-special notary
     {
@@ -156,7 +156,7 @@ bool CheckProofOfWork(int32_t height,uint8_t *pubkey33,uint256 hash,unsigned int
         }
         if ( nonz == 0 )
         {
-            //fprintf(stderr,"ht.%d null pubkey checkproof return\n",height);
+            //LogPrintf("ht.%d null pubkey checkproof return\n",height);
             return(true); // will come back via different path with pubkey set
         }
         flag = komodo_eligiblenotary(pubkeys,mids,blocktimes,&nonzpkeys,height);
@@ -179,7 +179,7 @@ bool CheckProofOfWork(int32_t height,uint8_t *pubkey33,uint256 hash,unsigned int
             }
             if ( (flag != 0 || special2 > 0) && special2 != -2 )
             {
-                //fprintf(stderr,"EASY MINING ht.%d\n",height);
+                //LogPrintf("EASY MINING ht.%d\n",height);
                 bnTarget.SetCompact(KOMODO_MINDIFF_NBITS,&fNegative,&fOverflow);
              }
         }
@@ -215,11 +215,11 @@ bool CheckProofOfWork(int32_t height,uint8_t *pubkey33,uint256 hash,unsigned int
         }
     }
     /*for (i=31; i>=0; i--)
-     fprintf(stderr,"%02x",((uint8_t *)&hash)[i]);
-     fprintf(stderr," hash vs ");
+     LogPrintf("%02x",((uint8_t *)&hash)[i]);
+     LogPrintf(" hash vs ");
      for (i=31; i>=0; i--)
-     fprintf(stderr,"%02x",((uint8_t *)&bnTarget)[i]);
-     fprintf(stderr," height.%d notaryid.%d PoW valid\n",height,notaryid);*/
+     LogPrintf("%02x",((uint8_t *)&bnTarget)[i]);
+     LogPrintf(" height.%d notaryid.%d PoW valid\n",height,notaryid);*/
     return true;
 }
 
