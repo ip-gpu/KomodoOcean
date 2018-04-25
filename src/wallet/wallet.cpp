@@ -2915,7 +2915,7 @@ bool CWallet::CreateTransaction(const vector<CRecipient>& vecSend, CWalletTx& wt
                         }
                         else
                         {
-                            //fprintf(stderr,"use notary pubkey\n");
+                            //LogPrintf("use notary pubkey\n");
                             scriptChange = CScript() << ParseHex(NOTARY_PUBKEY) << OP_CHECKSIG;
                         }
                     }
