@@ -812,7 +812,8 @@ echo 'Hunting for libsnark include directory...'
 if test -d "$LIBSNARK_INCDIR"; then
    echo "Found libsnark include directory: $LIBSNARK_INCDIR"
 else
-    AC_MSG_ERROR(libsnark include directory not found)
+#AC_MSG_ERROR(libsnark include directory not found)
+echo "libsnark include directory not found ($LIBSNARK_INCDIR)"
 fi
 
 CPPFLAGS="-I$LIBSNARK_INCDIR $CPPFLAGS"
@@ -830,7 +831,35 @@ if test x$enable_rust != xno; then
   RUST_LIBS="-lrustzcash"
 fi
 
-LIBZCASH_LIBS="-lsnark -lgmp -lgmpxx -lboost_system-mt -lcrypto -lsodium -fopenmp $RUST_LIBS"
+#LIBZCASH_LIBS="-lsnark -lgmp -lgmpxx -lboost_system-mt -lcrypto -lsodium -fopenmp $RUST_LIBS"
+
+dnl Check for OpenMP support
+AX_OPENMP(
+  [AC_DEFINE(HAVE_OPENMP, 1, [Define if OpenMP is enabled])
+   AM_CONDITIONAL([HAVE_OPENMP], [true])
+   CXXFLAGS="$CXXFLAGS $OPENMP_CXXFLAGS"],
+  [AC_MSG_WARN([OpenMP not supported, disabling multithreading])
+   AC_DEFINE(HAVE_OPENMP, 0, [Define if OpenMP is enabled])
+   AM_CONDITIONAL([HAVE_OPENMP], [false])])
+
+# Gitian uses a config.site that sets depends_prefix, and then sets --prefix=/
+# build.sh just uses --prefix
+if test x$depends_prefix != x; then
+  LIBSNARK_DEPINST="$depends_prefix"
+else
+  LIBSNARK_DEPINST="$prefix"
+fi
+
+# Additional Zcash flags
+AX_CHECK_COMPILE_FLAG([-fwrapv],[CXXFLAGS="$CXXFLAGS -fwrapv"])
+AX_CHECK_COMPILE_FLAG([-fno-strict-aliasing],[CXXFLAGS="$CXXFLAGS -fno-strict-aliasing"])
+AX_CHECK_COMPILE_FLAG([-Wno-builtin-declaration-mismatch],[CXXFLAGS="$CXXFLAGS -Wno-builtin-declaration-mismatch"],,[[$CXXFLAG_WERROR]])
+
+if test x$TARGET_OS != xwindows; then
+  LIBZCASH_LIBS="-lgmp -lgmpxx -lboost_system -lcrypto -lsodium $RUST_LIBS"
+else
+  LIBZCASH_LIBS="-lgmp -lgmpxx -lboost_system-mt-s -lcrypto -lsodium $RUST_LIBS"
+fi
 
 CXXFLAGS_TEMP="$CXXFLAGS"
 LIBS_TEMP="$LIBS"
@@ -1002,7 +1031,7 @@ AC_SUBST(MINIUPNPC_CPPFLAGS)
 AC_SUBST(MINIUPNPC_LIBS)
 AC_SUBST(GMP_LIBS)
 AC_SUBST(GMPXX_LIBS)
-AC_SUBST(LIBSNARK_LIBS)
+AC_SUBST(LIBSNARK_DEPINST)
 AC_SUBST(LIBZCASH_LIBS)
 AC_CONFIG_FILES([Makefile src/Makefile doc/man/Makefile share/setup.nsi src/test/buildenv.py])
 AC_CONFIG_FILES([qa/pull-tester/run-komodod-for-test.sh],[chmod +x qa/pull-tester/run-komodod-for-test.sh])
@@ -1032,7 +1061,7 @@ unset PKG_CONFIG_LIBDIR
 PKG_CONFIG_LIBDIR="$PKGCONFIG_LIBDIR_TEMP"
 
 ac_configure_args="${ac_configure_args} --disable-shared --with-pic --with-bignum=no --enable-module-recovery"
-AC_CONFIG_SUBDIRS([src/secp256k1 src/univalue src/cryptoconditions])
+AC_CONFIG_SUBDIRS([src/secp256k1 src/snark src/univalue src/cryptoconditions])
 
 AC_OUTPUT
 
