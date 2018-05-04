@@ -42,33 +42,25 @@
 			| ((l >> 24) & 0xff))
 
 #ifdef _MSC_VER			/* MSVS.Net */
-//#ifndef __cplusplus
-//#define inline __inline
-//#endif
-#ifndef	ASSUMESTDTYPES	/* Standard types have been defined elsewhere */
-#ifdef _WIN64
-#define ssize_t __int64
-#else
-#define ssize_t long
+#ifndef __cplusplus
+#define inline __inline
 #endif
-
-typedef signed char        int8_t;
-typedef short              int16_t;
-typedef int                int32_t;
-typedef long long          int64_t;
-typedef unsigned char      uint8_t;
-typedef unsigned short     uint16_t;
-typedef unsigned int       uint32_t;
-typedef unsigned long long uint64_t;
-
+#ifndef	ASSUMESTDTYPES	/* Standard types have been defined elsewhere */
+#define	ssize_t		SSIZE_T
+typedef	char		int8_t;
+typedef	short		int16_t;
+typedef	int		int32_t;
+typedef	unsigned char	uint8_t;
+typedef	unsigned short	uint16_t;
+typedef	unsigned int	uint32_t;
 #endif	/* ASSUMESTDTYPES */
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 #include <float.h>
-//#define isnan _isnan
+#define isnan _isnan
 #define finite _finite
 #define copysign _copysign
-//#define	ilogb	_logb
+#define	ilogb	_logb
 #else	/* !_MSC_VER */
 #include <stdint.h>
 #endif	/* _MSC_VER */

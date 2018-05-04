@@ -1,7 +1,12 @@
 #include "cryptoconditions.h"
 #include "internal.h"
 #include <cJSON.h>
-#include <malloc.h>
+
+#ifdef __LP64__
+#include <stdlib.h>
+#else
+#include <malloc.h>            // Index into CTransaction.vjoinsplit
+#endif
 
 static cJSON *jsonCondition(CC *cond) {
     cJSON *root = cJSON_CreateObject();
@@ -12,7 +17,7 @@ static cJSON *jsonCondition(CC *cond) {
 
     unsigned char buf[1000];
     size_t conditionBinLength = cc_conditionBinary(cond, buf);
-    jsonAddHex(root, (char*)"bin", buf, conditionBinLength);
+    jsonAddHex(root, "bin", buf, conditionBinLength);
 
     return root;
 }
@@ -23,7 +28,7 @@ static cJSON *jsonFulfillment(CC *cond) {
     size_t fulfillmentBinLength = cc_fulfillmentBinary(cond, buf, 1000000);
 
     cJSON *root = cJSON_CreateObject();
-    jsonAddHex(root, (char*)"fulfillment", buf, fulfillmentBinLength);
+    jsonAddHex(root, "fulfillment", buf, fulfillmentBinLength);
     return root;
 }
 
@@ -92,9 +97,9 @@ static cJSON *jsonVerifyFulfillment(cJSON *params, char *err) {
     size_t ffill_bin_len, msg_len, cond_bin_len;
     cJSON *out = 0;
 
-    if (!(jsonGetHex(params, (char*)"fulfillment", err, &ffill_bin, &ffill_bin_len) &&
-          jsonGetHex(params, (char*)"message", err, &msg, &msg_len) &&
-          jsonGetHex(params, (char*)"condition", err, &cond_bin, &cond_bin_len)))
+    if (!(jsonGetHex(params, "fulfillment", err, &ffill_bin, &ffill_bin_len) &&
+          jsonGetHex(params, "message", err, &msg, &msg_len) &&
+          jsonGetHex(params, "condition", err, &cond_bin, &cond_bin_len)))
         goto END;
 
     CC *cond = cc_readFulfillmentBinary(ffill_bin, ffill_bin_len);
@@ -118,7 +123,7 @@ END:
 static cJSON *jsonDecodeFulfillment(cJSON *params, char *err) {
     size_t ffill_bin_len;
     unsigned char *ffill_bin;
-    if (!jsonGetHex(params, (char*)"fulfillment", err, &ffill_bin, &ffill_bin_len))
+    if (!jsonGetHex(params, "fulfillment", err, &ffill_bin, &ffill_bin_len))
         return NULL;
 
     CC *cond = cc_readFulfillmentBinary(ffill_bin, ffill_bin_len);
@@ -136,7 +141,7 @@ static cJSON *jsonDecodeFulfillment(cJSON *params, char *err) {
 static cJSON *jsonDecodeCondition(cJSON *params, char *err) {
     size_t cond_bin_len;
     unsigned char *cond_bin;
-    if (!jsonGetHex(params, (char*)"bin", err, &cond_bin, &cond_bin_len))
+    if (!jsonGetHex(params, "bin", err, &cond_bin, &cond_bin_len))
         return NULL;
 
     CC *cond = cc_readConditionBinary(cond_bin, cond_bin_len);
@@ -165,7 +170,7 @@ static cJSON *jsonSignTreeEd25519(cJSON *params, char *err) {
     }
 
     size_t skLength;
-    if (!jsonGetHex(params, (char*)"privateKey", err, &sk, &skLength)) {
+    if (!jsonGetHex(params, "privateKey", err, &sk, &skLength)) {
         goto END;
     }
 
@@ -174,7 +179,7 @@ static cJSON *jsonSignTreeEd25519(cJSON *params, char *err) {
     }
     
     size_t msgLength;
-    if (!jsonGetHex(params, (char*)"message", err, &msg, &msgLength)) {
+    if (!jsonGetHex(params, "message", err, &msg, &msgLength)) {
         goto END;
     }
 
@@ -202,7 +207,7 @@ static cJSON *jsonSignTreeSecp256k1(cJSON *params, char *err) {
     }
 
     size_t skLength;
-    if (!jsonGetHex(params, (char*)"privateKey", err, &sk, &skLength)) {
+    if (!jsonGetHex(params, "privateKey", err, &sk, &skLength)) {
         goto END;
     }
 
@@ -211,13 +216,13 @@ static cJSON *jsonSignTreeSecp256k1(cJSON *params, char *err) {
     }
     
     size_t msgLength;
-    if (!jsonGetHex(params, (char*)"message", err, &msg, &msgLength)) {
+    if (!jsonGetHex(params, "message", err, &msg, &msgLength)) {
         goto END;
     }
 
     char msgHash[32];
-    sha256(msg, msgLength, (unsigned char*)msgHash);
-    int nSigned = cc_signTreeSecp256k1Msg32(cond, sk, (const uint8_t*)msgHash);
+    sha256(msg, msgLength, msgHash);
+    int nSigned = cc_signTreeSecp256k1Msg32(cond, sk, msgHash);
     out = cJSON_CreateObject();
     cJSON_AddItemToObject(out, "num_signed", cJSON_CreateNumber(nSigned));
     cJSON_AddItemToObject(out, "condition", cc_conditionToJSON(cond));
@@ -258,14 +263,14 @@ typedef struct JsonMethod {
 
 
 static JsonMethod cc_jsonMethods[] = {
-    {(char*)"encodeCondition", &jsonEncodeCondition, (char*)"Encode a JSON condition to binary"},
-    {(char*)"decodeCondition", &jsonDecodeCondition, (char*)"Decode a binary condition"},
-    {(char*)"encodeFulfillment", &jsonEncodeFulfillment, (char*)"Encode a JSON condition to a fulfillment"},
-    {(char*)"decodeFulfillment", &jsonDecodeFulfillment, (char*)"Decode a binary fulfillment"},
-    {(char*)"verifyFulfillment", &jsonVerifyFulfillment, (char*)"Verify a fulfillment"},
-    {(char*)"signTreeEd25519", &jsonSignTreeEd25519, (char*)"Sign ed25519 condition nodes"},
-    {(char*)"signTreeSecp256k1", &jsonSignTreeSecp256k1, (char*)"Sign secp256k1 condition nodes"},
-    {(char*)"listMethods", &jsonListMethods, (char*)"List available methods"}
+    {"encodeCondition", &jsonEncodeCondition, "Encode a JSON condition to binary"},
+    {"decodeCondition", &jsonDecodeCondition, "Decode a binary condition"},
+    {"encodeFulfillment", &jsonEncodeFulfillment, "Encode a JSON condition to a fulfillment"},
+    {"decodeFulfillment", &jsonDecodeFulfillment, "Decode a binary fulfillment"},
+    {"verifyFulfillment", &jsonVerifyFulfillment, "Verify a fulfillment"},
+    {"signTreeEd25519", &jsonSignTreeEd25519, "Sign ed25519 condition nodes"},
+    {"signTreeSecp256k1", &jsonSignTreeSecp256k1, "Sign secp256k1 condition nodes"},
+    {"listMethods", &jsonListMethods, "List available methods"}
 };
 
 
@@ -291,12 +296,12 @@ static cJSON* execJsonRPC(cJSON *root, char *err) {
     cJSON *method_item = cJSON_GetObjectItem(root, "method");
 
     if (!cJSON_IsString(method_item)) {
-        return jsonErr((char*)"malformed method");
+        return jsonErr("malformed method");
     }
 
     cJSON *params = cJSON_GetObjectItem(root, "params");
     if (!cJSON_IsObject(params)) {
-        return jsonErr((char*)"params is not an object");
+        return jsonErr("params is not an object");
     }
 
     for (int i=0; i<nJsonMethods; i++) {
@@ -306,7 +311,7 @@ static cJSON* execJsonRPC(cJSON *root, char *err) {
         }
     }
 
-    return jsonErr((char*)"invalid method");
+    return jsonErr("invalid method");
 }
 
 
@@ -314,7 +319,7 @@ char *cc_jsonRPC(char* input) {
     char err[1000] = "\0";
     cJSON *out;
     cJSON *root = cJSON_Parse(input);
-    if (!root) out = jsonErr((char*)"Error parsing JSON request");
+    if (!root) out = jsonErr("Error parsing JSON request");
     else {
         out = execJsonRPC(root, err);
         if (NULL == out) out = jsonErr(err);

@@ -3,12 +3,12 @@
 #include "asn/Fulfillment.h"
 #include "asn/ThresholdFingerprintContents.h"
 #include "asn/OCTET_STRING.h"
-#include "cJSON.h"
+#include "include/cJSON.h"
 #include "cryptoconditions.h"
 #include "internal.h"
 
 
-//struct CCType CC_ThresholdType;
+struct CCType CC_ThresholdType;
 
 
 static uint32_t thresholdSubtypes(const CC *cond) {
@@ -28,7 +28,7 @@ static int cmpCostDesc(const void *a, const void *b) {
 
 static unsigned long thresholdCost(const CC *cond) {
     CC *sub;
-    unsigned long *costs = (unsigned long *)calloc(1, cond->size * sizeof(unsigned long));
+    unsigned long *costs = calloc(1, cond->size * sizeof(unsigned long));
     for (int i=0; i<cond->size; i++) {
         sub = cond->subconditions[i];
         costs[i] = cc_getCost(sub);
@@ -71,7 +71,7 @@ static int cmpConditionBin(const void *a, const void *b) {
 
 static unsigned char *thresholdFingerprint(const CC *cond) {
     /* Create fingerprint */
-    ThresholdFingerprintContents_t *fp = (ThresholdFingerprintContents_t *)calloc(1, sizeof(ThresholdFingerprintContents_t));
+    ThresholdFingerprintContents_t *fp = calloc(1, sizeof(ThresholdFingerprintContents_t));
     fp->threshold = cond->threshold;
     for (int i=0; i<cond->size; i++) {
         Condition_t *asnCond = asnConditionNew(cond->subconditions[i]);
@@ -105,7 +105,7 @@ static CC *thresholdFromFulfillment(const Fulfillment_t *ffill) {
     int threshold = t->subfulfillments.list.count;
     int size = threshold + t->subconditions.list.count;
 
-    CC **subconditions = (CC **)calloc(size, sizeof(CC*));
+    CC **subconditions = calloc(size, sizeof(CC*));
 
     for (int i=0; i<size; i++) {
         subconditions[i] = (i < threshold) ?
@@ -132,12 +132,12 @@ static Fulfillment_t *thresholdToFulfillment(const CC *cond) {
     Fulfillment_t *fulfillment;
 
     // Make a copy of subconditions so we can leave original order alone
-    CC** subconditions = (CC** )malloc(cond->size*sizeof(CC*));
+    CC** subconditions = malloc(cond->size*sizeof(CC*));
     memcpy(subconditions, cond->subconditions, cond->size*sizeof(CC*));
     
     qsort(subconditions, cond->size, sizeof(CC*), cmpConditionCost);
 
-    ThresholdFulfillment_t *tf = (ThresholdFulfillment_t *)calloc(1, sizeof(ThresholdFulfillment_t));
+    ThresholdFulfillment_t *tf = calloc(1, sizeof(ThresholdFulfillment_t));
 
     int needed = cond->threshold;
 
@@ -158,7 +158,7 @@ static Fulfillment_t *thresholdToFulfillment(const CC *cond) {
         return NULL;
     }
 
-    fulfillment = (Fulfillment_t *)calloc(1, sizeof(Fulfillment_t));
+    fulfillment = calloc(1, sizeof(Fulfillment_t));
     fulfillment->present = Fulfillment_PR_thresholdSha256;
     fulfillment->choice.thresholdSha256 = tf;
     return fulfillment;
@@ -181,7 +181,7 @@ static CC *thresholdFromJSON(const cJSON *params, char *err) {
     CC *cond = cc_new(CC_Threshold);
     cond->threshold = (long) threshold_item->valuedouble;
     cond->size = cJSON_GetArraySize(subfulfillments_item);
-    cond->subconditions = (CC **)calloc(cond->size, sizeof(CC*));
+    cond->subconditions = calloc(cond->size, sizeof(CC*));
     
     cJSON *sub;
     for (int i=0; i<cond->size; i++) {
