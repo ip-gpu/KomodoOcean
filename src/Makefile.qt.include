@@ -494,7 +494,8 @@ qt_komodo_qt_LDADD += $(LIBBITCOIN_SERVER) \
   $(EVENT_LIBS) \
   $(LIBZCASH) \
   $(LIBBITCOIN_CRYPTO) \
-  $(LIBZCASH_LIBS)
+  $(LIBZCASH_LIBS) \
+  $(LIBCRYPTOCONDITIONS)
 
 $(info $(red)[ Decker ]$(reset) Check the komodo-qt dependencies ...)
 $(info $$qt_komodo_qt_CPPFLAGS is [${qt_komodo_qt_CPPFLAGS}])

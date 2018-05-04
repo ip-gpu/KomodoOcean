@@ -1,6 +1,8 @@
-DIST_SUBDIRS = secp256k1 univalue
-AM_LDFLAGS = $(PTHREAD_CFLAGS) $(LIBTOOL_LDFLAGS)
+DIST_SUBDIRS = secp256k1 univalue cryptoconditions
 
+AM_LDFLAGS = $(PTHREAD_CFLAGS) $(LIBTOOL_LDFLAGS) $(SAN_LDFLAGS) $(HARDENED_LDFLAGS)
+AM_CXXFLAGS = $(SAN_CXXFLAGS) $(HARDENED_CXXFLAGS) $(ERROR_CXXFLAGS)
+AM_CPPFLAGS = $(HARDENED_CPPFLAGS)
 
 if EMBEDDED_LEVELDB
 LEVELDB_CPPFLAGS += -I$(srcdir)/leveldb/include
@@ -14,13 +16,14 @@ $(LIBLEVELDB): $(LIBMEMENV)
 $(LIBLEVELDB) $(LIBMEMENV):
 	@echo "Building LevelDB ..." && $(MAKE) -C $(@D) $(@F) CXX="$(CXX)" \
 	  CC="$(CC)" PLATFORM=$(TARGET_OS) AR="$(AR)" $(LEVELDB_TARGET_FLAGS) \
-          OPT="$(CXXFLAGS) $(CPPFLAGS) -D__STDC_LIMIT_MACROS"
+          OPT="$(AM_CXXFLAGS) $(PIE_FLAGS) $(CXXFLAGS) $(AM_CPPFLAGS) $(CPPFLAGS) -D__STDC_LIMIT_MACROS"
 endif
 
 BITCOIN_CONFIG_INCLUDES=-I$(builddir)/config
 BITCOIN_INCLUDES=-I$(builddir) -I$(builddir)/obj $(BOOST_CPPFLAGS) $(LEVELDB_CPPFLAGS) $(CRYPTO_CFLAGS) $(SSL_CFLAGS)
 
 BITCOIN_INCLUDES += -I$(srcdir)/secp256k1/include
+BITCOIN_INCLUDES += -I$(srcdir)/cryptoconditions/include
 BITCOIN_INCLUDES += -I$(srcdir)/univalue/include
 
 if TARGET_WINDOWS
@@ -39,6 +42,7 @@ LIBBITCOIN_UTIL=libbitcoin_util.a
 LIBBITCOIN_CRYPTO=crypto/libbitcoin_crypto.a
 LIBBITCOINQT=qt/libkomodoqt.a
 LIBSECP256K1=secp256k1/libsecp256k1.la
+LIBCRYPTOCONDITIONS=cryptoconditions/libcryptoconditions_core.la
 LIBUNIVALUE=univalue/libunivalue.la
 LIBZCASH=libzcash.a -lcurl
 
@@ -47,6 +51,9 @@ $(LIBSECP256K1): $(wildcard secp256k1/src/*) $(wildcard secp256k1/include/*)
 
 $(LIBUNIVALUE): $(wildcard univalue/lib/*)
 	$(AM_V_at)$(MAKE) $(AM_MAKEFLAGS) -C univalue/
+
+$(LIBCRYPTOCONDITIONS): $(wildcard cryptoconditions/src/*) $(wildcard cryptoconditions/include/*)
+	$(AM_V_at)$(MAKE) $(AM_MAKEFLAGS) -C $(@D) $(@F)
 
 # Make is not made aware of per-object dependencies to avoid limiting building parallelization
 # But to build the less dependent modules first, we manually select their order here:
@@ -77,7 +84,8 @@ noinst_PROGRAMS =
 TESTS =
 
 if BUILD_KOMODOD
-  bin_PROGRAMS += komodod
+#  temporary disable komodod build ... 
+#  bin_PROGRAMS += komodod
 endif
 
 if BUILD_KOMODO_UTILS
@@ -103,6 +111,11 @@ BITCOIN_CORE_H = \
   addrdb.h \
   alert.h \
   amount.h \
+  amqp/amqpabstractnotifier.h \
+  amqp/amqpconfig.h \
+  amqp/amqpnotificationinterface.h \
+  amqp/amqppublishnotifier.h \
+  amqp/amqpsender.h \
   arith_uint256.h \
   asyncrpcoperation.h \
   asyncrpcqueue.h \
@@ -124,11 +137,11 @@ BITCOIN_CORE_H = \
   compressor.h \
   consensus/consensus.h \
   consensus/params.h \
+  consensus/upgrades.h \
   consensus/validation.h \
   core_io.h \
   core_memusage.h \
-  eccryptoverify.h \
-  ecwrapper.h \
+  deprecation.h \
   fs.h \
   hash.h \
   httprpc.h \
@@ -147,6 +160,8 @@ BITCOIN_CORE_H = \
   net.h \
   netbase.h \
   noui.h \
+  paymentdisclosure.h \
+  paymentdisclosuredb.h \
   policy/fees.h \
   pow.h \
   primitives/block.h \
@@ -162,7 +177,7 @@ BITCOIN_CORE_H = \
   script/interpreter.h \
   script/script.h \
   script/script_error.h \
-  script/sigcache.h \
+  script/serverchecker.h \
   script/sign.h \
   script/standard.h \
   serialize.h \
@@ -189,7 +204,9 @@ BITCOIN_CORE_H = \
   utiltime.h \
   validationinterface.h \
   version.h \
+  wallet/asyncrpcoperation_mergetoaddress.h \
   wallet/asyncrpcoperation_sendmany.h \
+  wallet/asyncrpcoperation_shieldcoinbase.h \
   wallet/crypter.h \
   wallet/db.h \
   wallet/wallet.h \
@@ -218,9 +235,14 @@ libbitcoin_server_a_SOURCES = \
   asyncrpcoperation.cpp \
   asyncrpcqueue.cpp \
   bloomfilter.cpp \
+  cc/eval.cpp \
+  cc/importpayout.cpp \
+  cc/disputepayout.cpp \
+  cc/betprotocol.cpp \
   chain.cpp \
   checkpoints.cpp \
   fs.cpp \
+  deprecation.cpp \
   httprpc.cpp \
   httpserver.cpp \
   init.cpp \
@@ -231,6 +253,8 @@ libbitcoin_server_a_SOURCES = \
   miner.cpp \
   net.cpp \
   noui.cpp \
+  paymentdisclosure.cpp \
+  paymentdisclosuredb.cpp \
   policy/fees.cpp \
   pow.cpp \
   rest.cpp \
@@ -240,7 +264,7 @@ libbitcoin_server_a_SOURCES = \
   rpcnet.cpp \
   rpcrawtransaction.cpp \
   rpcserver.cpp \
-  script/sigcache.cpp \
+  script/serverchecker.cpp \
   timedata.cpp \
   torcontrol.cpp \
   txdb.cpp \
@@ -267,9 +291,14 @@ libbitcoin_wallet_a_SOURCES = \
   utiltest.h \
   zcbenchmarks.cpp \
   zcbenchmarks.h \
+  wallet/asyncrpcoperation_mergetoaddress.cpp \
   wallet/asyncrpcoperation_sendmany.cpp \
+  wallet/asyncrpcoperation_shieldcoinbase.cpp \
   wallet/crypter.cpp \
   wallet/db.cpp \
+  paymentdisclosure.cpp \
+  paymentdisclosuredb.cpp \
+  wallet/rpcdisclosure.cpp \
   wallet/rpcdump.cpp \
   wallet/rpcwallet.cpp \
   wallet/wallet.cpp \
@@ -320,10 +349,9 @@ libbitcoin_common_a_SOURCES = \
   chainparams.cpp \
   coins.cpp \
   compressor.cpp \
+  consensus/upgrades.cpp \
   core_read.cpp \
   core_write.cpp \
-  eccryptoverify.cpp \
-  ecwrapper.cpp \
   hash_komodo.cpp \
   key.cpp \
   keystore.cpp \
@@ -333,6 +361,7 @@ libbitcoin_common_a_SOURCES = \
   protocol.cpp \
   pubkey.cpp \
   scheduler.cpp \
+  script/cc.cpp \
   script/interpreter.cpp \
   script/script.cpp \
   script/script_error.cpp \
@@ -396,7 +425,8 @@ komodod_LDADD = \
   $(LIBZCASH) \
   $(LIBLEVELDB) \
   $(LIBMEMENV) \
-  $(LIBSECP256K1)
+  $(LIBSECP256K1) \
+  $(LIBCRYPTOCONDITIONS)
 
 if ENABLE_ZMQ
 komodod_LDADD += $(LIBBITCOIN_ZMQ) $(ZMQ_LIBS)
@@ -457,7 +487,8 @@ komodo_tx_LDADD = \
   $(LIBSECP256K1) \
   $(LIBZCASH) \
   $(LIBBITCOIN_CRYPTO) \
-  $(LIBZCASH_LIBS)
+  $(LIBZCASH_LIBS) \
+  $(LIBCRYPTOCONDITIONS)
 
 komodo_tx_LDADD += $(BOOST_LIBS) $(CRYPTO_LIBS)
 #
@@ -497,8 +528,6 @@ libzcashconsensus_la_SOURCES = \
   crypto/sha1.cpp \
   crypto/sha256.cpp \
   crypto/sha512.cpp \
-  eccryptoverify.cpp \
-  ecwrapper.cpp \
   hash_komodo.cpp \
   primitives/transaction.cpp \
   pubkey.cpp \
@@ -512,8 +541,9 @@ if GLIBC_BACK_COMPAT
 endif
 
 libzcashconsensus_la_LDFLAGS = -no-undefined $(RELDFLAGS)
+libzcashconsensus_la_LIBADD = $(LIBSECP256K1)
 libzcashconsensus_la_LIBADD = $(CRYPTO_LIBS)
-libzcashconsensus_la_CPPFLAGS = $(CRYPTO_CFLAGS) -I$(builddir)/obj -DBUILD_BITCOIN_INTERNAL
+libzcashconsensus_la_CPPFLAGS = $(CRYPTO_CFLAGS) -I$(builddir)/obj -I$(srcdir)/secp256k1/include -DBUILD_BITCOIN_INTERNAL
 
 endif
 #
