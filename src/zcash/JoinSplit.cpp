@@ -2,7 +2,7 @@
 #include "prf.h"
 #include "sodium.h"
 
-#include "zcash/util_zcash.h"
+#include "zcash/util.h"
 
 #include <memory>
 
@@ -10,12 +10,11 @@
 #include <boost/format.hpp>
 #include <boost/optional.hpp>
 #include <fstream>
-#include "libsnark/common/default_types/r1cs_ppzksnark_pp.hpp"
-#include "libsnark/zk_proof_systems/ppzksnark/r1cs_ppzksnark/r1cs_ppzksnark.hpp"
-#include "libsnark/gadgetlib1/gadgets/hashes/sha256/sha256_gadget.hpp"
-#include "libsnark/gadgetlib1/gadgets/merkle_tree/merkle_tree_check_read_gadget.hpp"
+#include <libsnark/common/default_types/r1cs_ppzksnark_pp.hpp>
+#include <libsnark/zk_proof_systems/ppzksnark/r1cs_ppzksnark/r1cs_ppzksnark.hpp>
+#include <libsnark/gadgetlib1/gadgets/hashes/sha256/sha256_gadget.hpp>
+#include <libsnark/gadgetlib1/gadgets/merkle_tree/merkle_tree_check_read_gadget.hpp>
 #include "tinyformat.h"
-
 #include "sync.h"
 #include "amount.h"
 
@@ -78,7 +77,6 @@ public:
         loadFromFile(vkPath, vk);
         vk_precomp = r1cs_ppzksnark_verifier_process_vk(vk);
     }
-
     ~JoinSplitCircuit() {}
 
     static void generate(const std::string r1csPath,
@@ -155,11 +153,11 @@ public:
         bool computeProof,
         uint256 *out_esk // Payment disclosure
     ) {
-        if (vpub_old > (uint64_t)MAX_MONEY) {
+        if (vpub_old > MAX_MONEY) {
             throw std::invalid_argument("nonsensical vpub_old value");
         }
 
-        if (vpub_new > (uint64_t)MAX_MONEY) {
+        if (vpub_new > MAX_MONEY) {
             throw std::invalid_argument("nonsensical vpub_new value");
         }
 
@@ -188,13 +186,13 @@ public:
                 }
 
                 // Balance must be sensical
-                if (inputs[i].note.value > (uint64_t)MAX_MONEY) {
+                if (inputs[i].note.value > MAX_MONEY) {
                     throw std::invalid_argument("nonsensical input note value");
                 }
 
                 lhs_value += inputs[i].note.value;
 
-                if (lhs_value > (uint64_t)MAX_MONEY) {
+                if (lhs_value > MAX_MONEY) {
                     throw std::invalid_argument("nonsensical left hand size of joinsplit balance");
                 }
             }
@@ -216,13 +214,13 @@ public:
         for (size_t i = 0; i < NumOutputs; i++) {
             // Sanity checks of output
             {
-                if (outputs[i].value > (uint64_t)MAX_MONEY) {
+                if (outputs[i].value > MAX_MONEY) {
                     throw std::invalid_argument("nonsensical output value");
                 }
 
                 rhs_value += outputs[i].value;
 
-                if (rhs_value > (uint64_t)MAX_MONEY) {
+                if (rhs_value > MAX_MONEY) {
                     throw std::invalid_argument("nonsensical right hand side of joinsplit balance");
                 }
             }
@@ -254,6 +252,7 @@ public:
             }
 
             out_ephemeralKey = encryptor.get_epk();
+
             // !!! Payment disclosure START
             if (out_esk != nullptr) {
                 *out_esk = encryptor.get_esk();

@@ -50,7 +50,7 @@ uint256 PRF_pk(const uint252& a_sk, size_t i0, const uint256& h_sig)
         throw std::domain_error("PRF_pk invoked with index out of bounds");
     }
 
-    return PRF(0, (bool)i0, 0, 0, a_sk, h_sig);
+    return PRF(0, i0, 0, 0, a_sk, h_sig);
 }
 
 uint256 PRF_rho(const uint252& phi, size_t i0, const uint256& h_sig)
@@ -59,5 +59,5 @@ uint256 PRF_rho(const uint252& phi, size_t i0, const uint256& h_sig)
         throw std::domain_error("PRF_rho invoked with index out of bounds");
     }
 
-    return PRF(0, (bool)i0, 1, 0, phi, h_sig);
+    return PRF(0, i0, 1, 0, phi, h_sig);
 }

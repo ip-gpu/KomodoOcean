@@ -70,7 +70,7 @@ NoteDecryption<MLEN>::NoteDecryption(uint256 sk_enc) : sk_enc(sk_enc) {
 template<size_t MLEN>
 typename NoteEncryption<MLEN>::Ciphertext NoteEncryption<MLEN>::encrypt
                                           (const uint256 &pk_enc,
-                                           const Plaintext &message
+                                           const NoteEncryption<MLEN>::Plaintext &message
                                           )
 {
     uint256 dhsecret;
@@ -101,7 +101,7 @@ typename NoteEncryption<MLEN>::Ciphertext NoteEncryption<MLEN>::encrypt
 
 template<size_t MLEN>
 typename NoteDecryption<MLEN>::Plaintext NoteDecryption<MLEN>::decrypt
-                                         (const Ciphertext &ciphertext,
+                                         (const NoteDecryption<MLEN>::Ciphertext &ciphertext,
                                           const uint256 &epk,
                                           const uint256 &hSig,
                                           unsigned char nonce
@@ -140,7 +140,7 @@ typename NoteDecryption<MLEN>::Plaintext NoteDecryption<MLEN>::decrypt
 //
 template<size_t MLEN>
 typename PaymentDisclosureNoteDecryption<MLEN>::Plaintext PaymentDisclosureNoteDecryption<MLEN>::decryptWithEsk
-                                         (const Ciphertext &ciphertext,
+                                         (const PaymentDisclosureNoteDecryption<MLEN>::Ciphertext &ciphertext,
                                           const uint256 &pk_enc,
                                           const uint256 &esk,
                                           const uint256 &hSig,
