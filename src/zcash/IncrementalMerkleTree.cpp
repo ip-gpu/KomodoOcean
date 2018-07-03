@@ -4,7 +4,7 @@
 
 #include "zcash/IncrementalMerkleTree.hpp"
 #include "crypto/sha256.h"
-#include "zcash/util_zcash.h"
+#include "zcash/util.h"
 
 namespace libzcash {
 
@@ -94,7 +94,7 @@ size_t IncrementalMerkleTree<Depth, Hash>::size() const {
     // (right-shifted by 1)
     for (size_t i = 0; i < parents.size(); i++) {
         if (parents[i]) {
-            ret += (size_t)(1 << (i+1));
+            ret += (1 << (i+1));
         }
     }
     return ret;

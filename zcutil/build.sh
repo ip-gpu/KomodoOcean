@@ -1,5 +1,8 @@
 #!/usr/bin/env bash
 
+echo You should not use zcutil\\build.sh , use build.sh from the root repo folder instead !!!
+exit 0
+
 set -eu -o pipefail
 
 # Allow user overrides to $MAKE. Typical usage for users who need it:

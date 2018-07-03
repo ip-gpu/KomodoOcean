@@ -6,11 +6,13 @@
 #define KOMODO_CHECKPOINTS_H
 
 #include "uint256.h"
+#include "chainparams.h"
 #include <boost/assign/list_of.hpp>
 
 #include <map>
 
 class CBlockIndex;
+struct CCheckpointData;
 
 /**
  * Block-chain checkpoints are compiled-in sanity checks.
@@ -18,7 +20,7 @@ class CBlockIndex;
  */
 namespace Checkpoints
 {
-typedef std::map<int, uint256> MapCheckpoints;
+    typedef std::map<int, uint256> MapCheckpoints;
 
 struct CCheckpointData {
     MapCheckpoints mapCheckpoints;
@@ -27,15 +29,15 @@ struct CCheckpointData {
     double fTransactionsPerDay;
 };
 
-bool CheckBlock(const CCheckpointData& data, int nHeight, const uint256& hash);
+    bool CheckBlock(const CChainParams::CCheckpointData& data, int nHeight, const uint256& hash);
 
 //! Return conservative estimate of total number of blocks, 0 if unknown
-int GetTotalBlocksEstimate(const CCheckpointData& data);
+    int GetTotalBlocksEstimate(const CChainParams::CCheckpointData& data);
 
 //! Returns last CBlockIndex* in mapBlockIndex that is a checkpoint
-CBlockIndex* GetLastCheckpoint(const CCheckpointData& data);
+    CBlockIndex* GetLastCheckpoint(const CChainParams::CCheckpointData& data);
 
-double GuessVerificationProgress(const CCheckpointData& data, CBlockIndex* pindex, bool fSigchecks = true);
+    double GuessVerificationProgress(const CChainParams::CCheckpointData& data, CBlockIndex* pindex, bool fSigchecks = true);
 
 } //namespace Checkpoints
 

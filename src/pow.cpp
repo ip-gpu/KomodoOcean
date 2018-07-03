@@ -115,43 +115,52 @@ bool CheckEquihashSolution(const CBlockHeader *pblock, const CChainParams& param
     return true;
 }
 
-int32_t komodo_chosennotary(int32_t *notaryidp,int32_t height,uint8_t *pubkey33);
-int32_t komodo_is_special(int32_t height,uint8_t pubkey33[33]);
+uint32_t komodo_chainactive_timestamp();
+int32_t komodo_chosennotary(int32_t *notaryidp,int32_t height,uint8_t *pubkey33,uint32_t timestamp);
+int32_t komodo_is_special(uint8_t pubkeys[66][33],int32_t mids[66],uint32_t blocktimes[66],int32_t height,uint8_t pubkey33[33],uint32_t blocktime);
 int32_t komodo_currentheight();
 CBlockIndex *komodo_chainactive(int32_t height);
-int8_t komodo_minerid(int32_t height,uint8_t *pubkey33);
 void komodo_index2pubkey33(uint8_t *pubkey33,CBlockIndex *pindex,int32_t height);
 extern int32_t KOMODO_CHOSEN_ONE;
+extern uint64_t ASSETCHAINS_STAKED;
+extern char ASSETCHAINS_SYMBOL[];
 #define KOMODO_ELECTION_GAP 2000
  
-int32_t komodo_eligiblenotary(uint8_t pubkeys[66][33],int32_t *mids,int32_t *nonzpkeysp,int32_t height);
-int32_t KOMODO_LOADINGBLOCKS;
-
+int32_t komodo_eligiblenotary(uint8_t pubkeys[66][33],int32_t *mids,uint32_t blocktimes[66],int32_t *nonzpkeysp,int32_t height);
+int32_t KOMODO_LOADINGBLOCKS = 1;
+ 
 extern std::string NOTARY_PUBKEY;
 
-bool CheckProofOfWork(int32_t height,uint8_t *pubkey33,uint256 hash, unsigned int nBits, const Consensus::Params& params)
+bool CheckProofOfWork(int32_t height,uint8_t *pubkey33,uint256 hash,unsigned int nBits,const Consensus::Params& params,uint32_t blocktime)
 {
     extern int32_t KOMODO_REWIND;
-    bool fNegative,fOverflow; int32_t i,nonzpkeys=0,nonz=0,special=0,special2=0,notaryid=-1,duplicate,flag = 0, mids[66];
-    arith_uint256 bnTarget; CBlockIndex *pindex; uint8_t pubkeys[66][33];
+    bool fNegative,fOverflow; uint8_t origpubkey33[33]; int32_t i,nonzpkeys=0,nonz=0,special=0,special2=0,notaryid=-1,flag = 0, mids[66]; uint32_t tiptime,blocktimes[66];
+    arith_uint256 bnTarget; uint8_t pubkeys[66][33];
+    memcpy(origpubkey33,pubkey33,33);
+    memset(blocktimes,0,sizeof(blocktimes));
+    tiptime = komodo_chainactive_timestamp();
 
     bnTarget.SetCompact(nBits, &fNegative, &fOverflow);
     if ( height == 0 )
-        height = komodo_currentheight() + 1;
-
-    special = komodo_chosennotary(&notaryid,height,pubkey33);
-    flag = komodo_eligiblenotary(pubkeys,mids,&nonzpkeys,height);
-
-    if ( height > 34000 ) // 0 -> non-special notary
     {
+        height = komodo_currentheight() + 1;
+        //LogPrintf("set height to %d\n",height);
+    }
+    if ( height > 34000 && ASSETCHAINS_SYMBOL[0] == 0 ) // 0 -> non-special notary
+    {
+        special = komodo_chosennotary(&notaryid,height,pubkey33,tiptime);
         for (i=0; i<33; i++)
         {
             if ( pubkey33[i] != 0 )
                 nonz++;
         }
         if ( nonz == 0 )
+        {
+            //LogPrintf("ht.%d null pubkey checkproof return\n",height);
             return(true); // will come back via different path with pubkey set
-        special2 = komodo_is_special(height,pubkey33);
+        }
+        flag = komodo_eligiblenotary(pubkeys,mids,blocktimes,&nonzpkeys,height);
+        special2 = komodo_is_special(pubkeys,mids,blocktimes,height,pubkey33,blocktime);
         if ( notaryid >= 0 )
         {
             if ( height > 10000 && height < 80000 && (special != 0 || special2 > 0) )
@@ -159,9 +168,20 @@ bool CheckProofOfWork(int32_t height,uint8_t *pubkey33,uint256 hash, unsigned in
             else if ( height >= 80000 && height < 108000 && special2 > 0 )
                 flag = 1;
             else if ( height >= 108000 && special2 > 0 )
-                flag = ((height % KOMODO_ELECTION_GAP) > 64 || (height % KOMODO_ELECTION_GAP) == 0);
-            if ( flag != 0 || height == 790833 )
+                flag = (height > 1000000 || (height % KOMODO_ELECTION_GAP) > 64 || (height % KOMODO_ELECTION_GAP) == 0);
+            else if ( height == 790833 )
+                flag = 1;
+            else if ( special2 < 0 )
+            {
+                if ( height > 792000 )
+                    flag = 0;
+                else LogPrintf("ht.%d notaryid.%d special.%d flag.%d special2.%d\n",height,notaryid,special,flag,special2);
+            }
+            if ( (flag != 0 || special2 > 0) && special2 != -2 )
+            {
+                //LogPrintf("EASY MINING ht.%d\n",height);
                 bnTarget.SetCompact(KOMODO_MINDIFF_NBITS,&fNegative,&fOverflow);
+             }
         }
     }
     if (fNegative || bnTarget == 0 || fOverflow || bnTarget > UintToArith256(params.powLimit))
@@ -169,40 +189,37 @@ bool CheckProofOfWork(int32_t height,uint8_t *pubkey33,uint256 hash, unsigned in
     // Check proof of work matches claimed amount
     if ( UintToArith256(hash) > bnTarget )
     {
-        if ( (height < 235300 || height >= 236000) && KOMODO_LOADINGBLOCKS == 0 && height > 188000 )
-            //&&  )//186269, 182507&& komodo_chainactive(height) != 0 && nonzpkeys > 0
+        if ( KOMODO_LOADINGBLOCKS != 0 )
+            return true;
+        if ( ASSETCHAINS_SYMBOL[0] != 0 || height > 792000 )
         {
-            for (i=31; i>=0; i--)
-                LogPrintf("%02x",((uint8_t *)&hash)[i]);
-            LogPrintf(" hash vs ");
-            for (i=31; i>=0; i--)
-                LogPrintf("%02x",((uint8_t *)&bnTarget)[i]);
-            LogPrintf(" ht.%d special.%d notaryid.%d ht.%d mod.%d error\n",height,special,notaryid,height,(height % 35));
-            for (i=0; i<33; i++)
-                LogPrintf("%02x",pubkey33[i]);
-            LogPrintf(" <- pubkey\n");
-            for (i=0; i<66; i++)
-                LogPrintf("%d ",mids[i]);
-            LogPrintf(" minerids from ht.%d\n",height);
-            if ( KOMODO_REWIND == 0 && (notaryid >= 0 || height > 225000) )
+            if ( 0 && height > 792000 )
             {
-                LogPrintf("pow error height.%d loading.%d notaryid.%d\n",height,KOMODO_LOADINGBLOCKS,notaryid);
-                return error("CheckProofOfWork(): hash doesn't match nBits");
-            } else LogPrintf("skip return error height.%d loading.%d\n",height,KOMODO_LOADINGBLOCKS);
-        } //else LogPrintf("skip height.%d loading.%d\n",height,KOMODO_LOADINGBLOCKS);
+                for (i=31; i>=0; i--)
+                    printf("%02x",((uint8_t *)&hash)[i]);
+                printf(" hash vs ");
+                for (i=31; i>=0; i--)
+                    printf("%02x",((uint8_t *)&bnTarget)[i]);
+                printf(" ht.%d special.%d notaryid.%d ht.%d mod.%d error\n",height,special,notaryid,height,(height % 35));
+                for (i=0; i<33; i++)
+                    printf("%02x",pubkey33[i]);
+                printf(" <- pubkey\n");
+                for (i=0; i<33; i++)
+                    printf("%02x",origpubkey33[i]);
+                printf(" <- origpubkey\n");
+                for (i=0; i<66; i++)
+                    printf("%d ",mids[i]);
+                printf(" minerids from ht.%d\n",height);
+            }
+            return false;
+        }
     }
-    if ( 0 && height > 248000 )
-    {
-        for (i=31; i>=0; i--)
-            LogPrintf("%02x",((uint8_t *)&hash)[i]);
-        LogPrintf(" hash vs ");
-        for (i=31; i>=0; i--)
-            LogPrintf("%02x",((uint8_t *)&bnTarget)[i]);
-        LogPrintf(" POW ok for ht.%d notaryid.%d: ",height,notaryid);
-        for (i=0; i<33; i++)
-            LogPrintf("%02x",pubkey33[i]);
-        LogPrintf("\n");
-    }
+    /*for (i=31; i>=0; i--)
+     LogPrintf("%02x",((uint8_t *)&hash)[i]);
+     LogPrintf(" hash vs ");
+     for (i=31; i>=0; i--)
+     LogPrintf("%02x",((uint8_t *)&bnTarget)[i]);
+     LogPrintf(" height.%d notaryid.%d PoW valid\n",height,notaryid);*/
     return true;
 }
 

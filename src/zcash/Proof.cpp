@@ -1,11 +1,11 @@
 #include "Proof.hpp"
 
-#include <boost/static_assert.hpp>
-#include <mutex>
-
 #include "crypto/common.h"
-#include "libsnark/common/default_types/r1cs_ppzksnark_pp.hpp"
-#include "libsnark/zk_proof_systems/ppzksnark/r1cs_ppzksnark/r1cs_ppzksnark.hpp"
+
+#include <boost/static_assert.hpp>
+#include <libsnark/common/default_types/r1cs_ppzksnark_pp.hpp>
+#include <libsnark/zk_proof_systems/ppzksnark/r1cs_ppzksnark/r1cs_ppzksnark.hpp>
+#include <mutex>
 
 using namespace libsnark;
 
@@ -90,7 +90,6 @@ curve_Fq2 Fq2::to_libsnark_fq2() const
     bigint<5> res;
     bigint<4> c0;
     bigint<8>::div_qr(res, c0, combined, modq);
-
     bigint<4> c1 = res.shorten(modq, "element is not in Fq2");
 
     return curve_Fq2(curve_Fq(c0), curve_Fq(c1));
@@ -242,7 +241,6 @@ bool ProofVerifier::check(
     const r1cs_ppzksnark_proof<curve_pp>& proof
 )
 {
-    (void)vk;
     if (perform_verification) {
         return r1cs_ppzksnark_online_verifier_strong_IC<curve_pp>(pvk, primary_input, proof);
     } else {

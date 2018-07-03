@@ -2,7 +2,7 @@
 
 ![](https://github.com/DeckerSU/komodo-qt/raw/master/images/image00.png)
 
-### Known Linux issues ###
+### How to build? ###
 
 Following dependencies are needed:
 
@@ -19,6 +19,26 @@ sudo apt-get install libqt5gui5 libqt5core5a libqt5dbus5 qttools5-dev qttools5-d
 ```
 
 Aslo, if you issued troubles with dependencies, may be this [doc](https://github.com/bitcoin/bitcoin/blob/master/doc/build-unix.md) will be useful.
+
+For build (tested only with Ubuntu 16.04):
+
+```
+cd ~
+git clone https://github.com/DeckerSU/KomodoOcean.git
+cd KomodoOcean
+git checkout Linux-dev
+,/build.sh -j$(nproc)
+cd src/qt
+/komodo-qt -rootcertificates= &
+```
+
+If during build you get error like "fatal error: sodium.h: No such file or directory compilation terminated.", try to install libsodium-dev:
+
+```
+sudo apt install libsodium-dev
+```
+
+### Additional info ###
 
 **komodo-qt** currently linked dynamically with following dependencies:
 
