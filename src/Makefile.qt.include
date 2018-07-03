@@ -459,15 +459,16 @@ endif
 #	@rm -f komodod$(EXEEXT)
 #	$(AM_V_CXXLD)$(komodod_LINK) $(komodod_OBJECTS) $(komodod_LDADD) $(LIBS)
 
-qt_komodo_qt_LDADD = qt/libkomodoqt.a $(LIBBITCOIN_SERVER)
+qt_komodo_qt_LDADD = $(LIBBITCOIN_SERVER) qt/libkomodoqt.a 
+if ENABLE_ZMQ
+qt_komodo_qt_LDADD += $(LIBBITCOIN_ZMQ) $(ZMQ_LIBS)
+endif
+
 if ENABLE_WALLET
 $(info $(red)[ Decker ]$(reset) ENABLE_WALLET)
 $(info $$EXTRA_LIBRARIES is [${EXTRA_LIBRARIES}])
 # LIBBITCOIN_CLI should be first?
 qt_komodo_qt_LDADD += libbitcoin_wallet.a 
-endif
-if ENABLE_ZMQ
-qt_komodo_qt_LDADD += $(LIBBITCOIN_ZMQ) $(ZMQ_LIBS)
 endif
 
 qt_komodo_qt_LDADD += $(LIBBITCOIN_CLI) $(LIBBITCOIN_COMMON) $(LIBBITCOIN_UTIL) $(LIBBITCOIN_CONSENSUS) $(LIBBITCOIN_CRYPTO) $(LIBUNIVALUE) $(LIBLEVELDB) $(LIBLEVELDB_SSE42) $(LIBMEMENV) \
@@ -476,8 +477,7 @@ qt_komodo_qt_LDADD += $(LIBBITCOIN_CLI) $(LIBBITCOIN_COMMON) $(LIBBITCOIN_UTIL) 
 qt_komodo_qt_LDFLAGS = $(RELDFLAGS) $(AM_LDFLAGS) $(QT_LDFLAGS) $(LIBTOOL_APP_LDFLAGS) -fopenmp
 qt_komodo_qt_LIBTOOLFLAGS = --tag CXX
 
-qt_komodo_qt_LDADD += $(LIBBITCOIN_SERVER) \
-  $(LIBBITCOIN_COMMON) \
+qt_komodo_qt_LDADD += $(LIBBITCOIN_COMMON) \
   $(LIBUNIVALUE) \
   $(LIBBITCOIN_UTIL) \
   $(LIBBITCOIN_CRYPTO) \
