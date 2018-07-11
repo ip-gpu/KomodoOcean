@@ -1,0 +1,1 @@
+start ..\KomodoOceanGUI.exe -ac_name=GLXT -ac_supply=10000000000 -addnode=13.230.224.15
