@@ -741,6 +741,10 @@
 </context>
 <context>
     <name>SendCoinsEntry</name>
+    <message>
+        <source>Use available balance</source>
+        <translation>Использовать доступный баланс</translation>
+    </message>
     </context>
 <context>
     <name>SendConfirmationDialog</name>

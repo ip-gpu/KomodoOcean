@@ -1294,6 +1294,29 @@ int32_t komodo_checkPOW(int32_t slowflag,CBlock *pblock,int32_t height)
     else return(0);
 }
 
+int64_t komodo_checkcommission(CBlock *pblock,int32_t height)
+{
+    int64_t checktoshis=0; uint8_t *script;
+    if ( ASSETCHAINS_COMMISSION != 0 )
+    {
+        checktoshis = komodo_commission(pblock);
+        if ( checktoshis > 10000 && pblock->vtx[0].vout.size() != 2 )
+            return(-1);
+        else if ( checktoshis != 0 )
+        {
+            script = (uint8_t *)pblock->vtx[0].vout[1].scriptPubKey.data();
+            if ( script[0] != 33 || script[34] != OP_CHECKSIG || memcmp(script+1,ASSETCHAINS_OVERRIDE_PUBKEY33,33) != 0 )
+                return(-1);
+            if ( pblock->vtx[0].vout[1].nValue != checktoshis )
+            {
+                fprintf(stderr,"ht.%d checktoshis %.8f vs actual vout[1] %.8f\n",height,dstr(checktoshis),dstr(pblock->vtx[0].vout[1].nValue));
+                return(-1);
+            }
+        }
+    }
+    return(checktoshis);
+}
+
 uint32_t komodo_interest_args(uint32_t *txheighttimep,int32_t *txheightp,uint32_t *tiptimep,uint64_t *valuep,uint256 hash,int32_t n)
 {
     LOCK(cs_main);
