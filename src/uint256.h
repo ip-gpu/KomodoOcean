@@ -1,10 +1,10 @@
 // Copyright (c) 2009-2010 Satoshi Nakamoto
-// Copyright (c) 2009-2014 The Komodo Core developers
+// Copyright (c) 2009-2014 The Bitcoin Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#ifndef KOMODO_UINT256_H
-#define KOMODO_UINT256_H
+#ifndef BITCOIN_UINT256_H
+#define BITCOIN_UINT256_H
 
 #include <assert.h>
 #include <cstring>
@@ -75,39 +75,26 @@ public:
         return sizeof(data);
     }
 
-    uint64_t GetUint64(int pos) const
-    {
-        const uint8_t* ptr = data + pos * 8;
-        return ((uint64_t)ptr[0]) | \
-               ((uint64_t)ptr[1]) << 8 | \
-               ((uint64_t)ptr[2]) << 16 | \
-               ((uint64_t)ptr[3]) << 24 | \
-               ((uint64_t)ptr[4]) << 32 | \
-               ((uint64_t)ptr[5]) << 40 | \
-               ((uint64_t)ptr[6]) << 48 | \
-               ((uint64_t)ptr[7]) << 56;
-    }
-
-    unsigned int GetSerializeSize(int nType, int nVersion) const
-    {
-        return sizeof(data);
-    }
-
     template<typename Stream>
-    void Serialize(Stream& s, int nType, int nVersion) const
+    void Serialize(Stream& s) const
     {
-        (void)nVersion;
-        (void)nType;
         s.write((char*)data, sizeof(data));
     }
 
     template<typename Stream>
-    void Unserialize(Stream& s, int nType, int nVersion)
+    void Unserialize(Stream& s)
     {
-        (void)nType;
-        (void)nVersion;
         s.read((char*)data, sizeof(data));
     }
+};
+
+/** 88-bit opaque blob.
+ */
+class blob88 : public base_blob<88> {
+public:
+    blob88() {}
+    blob88(const base_blob<88>& b) : base_blob<88>(b) {}
+    explicit blob88(const std::vector<unsigned char>& vch) : base_blob<88>(vch) {}
 };
 
 /** 160-bit opaque blob.
@@ -172,4 +159,4 @@ inline uint256 uint256S(const std::string& str)
     return rv;
 }
 
-#endif // KOMODO_UINT256_H
+#endif // BITCOIN_UINT256_H

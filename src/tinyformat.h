@@ -32,7 +32,7 @@
 // header file.  Design goals include:
 //
 // * Type safety and extensibility for user defined types.
-// * C99 printf() compatibility, to the extent possible using std::ostream
+// * C99 LogPrintf() compatibility, to the extent possible using std::ostream
 // * Simplicity and minimalism.  A single header file to include and distribute
 //   with your projects.
 // * Augment rather than replace the standard stream formatting mechanism
@@ -69,7 +69,7 @@
 //
 // These are the three primary interface functions.  There is also a
 // convenience function printfln() which appends a newline to the usual result
-// of printf() for super simple logging.
+// of LogPrintf() for super simple logging.
 //
 //
 // User defined format functions
@@ -86,7 +86,7 @@
 // n between 1 and 16.  We can use these to define a macro which generates the
 // desired user defined function with n arguments.  To generate all 16 user
 // defined function bodies, use the macro TINYFORMAT_FOREACH_ARGNUM.  For an
-// example, see the implementation of printf() at the end of the source file.
+// example, see the implementation of LogPrintf() at the end of the source file.
 //
 // Sometimes it's useful to be able to pass a list of format arguments through
 // to a non-template function.  The FormatList class is provided as a way to do
@@ -155,7 +155,7 @@ namespace tfm = tinyformat;
 #endif
 
 #ifdef __APPLE__
-// Workaround OSX linker warning: xcode uses different default symbol
+// Workaround macOS linker warning: Xcode uses different default symbol
 // visibilities for static libs vs executables (see issue #25)
 #   define TINYFORMAT_HIDDEN __attribute__((visibility("hidden")))
 #else
@@ -308,7 +308,6 @@ template<typename T>
 inline void formatValue(std::ostream& out, const char* /*fmtBegin*/,
                         const char* fmtEnd, int ntrunc, const T& value)
 {
-    (void)fmtEnd;
 #ifndef TINYFORMAT_ALLOW_WCHAR_STRINGS
     // Since we don't support printing of wchar_t using "%ls", make it fail at
     // compile time in preference to printing as a void* at runtime.
@@ -585,7 +584,7 @@ inline const char* printFormatStringLiteral(std::ostream& out, const char* fmt)
 // Formatting options which can't be natively represented using the ostream
 // state are returned in spacePadPositive (for space padded positive numbers)
 // and ntrunc (for truncating conversions).  argIndex is incremented if
-// necessary to pull out variable width and precision .  The function returns a
+// necessary to pull out variable width and precision.  The function returns a
 // pointer to the character after the end of the current format spec.
 inline const char* streamStateFromFormat(std::ostream& out, bool& spacePadPositive,
                                          int& ntrunc, const char* fmtStart,
@@ -805,7 +804,7 @@ inline void formatImpl(std::ostream& out, const char* fmt,
         else
         {
             // The following is a special case with no direct correspondence
-            // between stream formatting and the printf() behaviour.  Simulate
+            // between stream formatting and the LogPrintf() behaviour.  Simulate
             // it crudely by formatting into a temporary string stream and
             // munging the resulting string.
             std::ostringstream tmpStream;
@@ -970,7 +969,7 @@ std::string format(const char* fmt, const Args&... args)
 
 /// Format list of arguments to std::cout, according to the given format string
 template<typename... Args>
-void printf(const char* fmt, const Args&... args)
+void LogPrintf(const char* fmt, const Args&... args)
 {
     format(std::cout, fmt, args...);
 }
@@ -996,7 +995,7 @@ inline std::string format(const char* fmt)
     return oss.str();
 }
 
-inline void printf(const char* fmt)
+inline void LogPrintf(const char* fmt)
 {
     format(std::cout, fmt);
 }
@@ -1024,7 +1023,7 @@ std::string format(const char* fmt, TINYFORMAT_VARARGS(n))                \
 }                                                                         \
                                                                           \
 template<TINYFORMAT_ARGTYPES(n)>                                          \
-void printf(const char* fmt, TINYFORMAT_VARARGS(n))                       \
+void LogPrintf(const char* fmt, TINYFORMAT_VARARGS(n))                       \
 {                                                                         \
     format(std::cout, fmt, TINYFORMAT_PASSARGS(n));                       \
 }                                                                         \
@@ -1041,7 +1040,7 @@ TINYFORMAT_FOREACH_ARGNUM(TINYFORMAT_MAKE_FORMAT_FUNCS)
 
 #endif
 
-// Added for Komodo Core
+// Added for Bitcoin Core
 template<typename... Args>
 std::string format(const std::string &fmt, const Args&... args)
 {

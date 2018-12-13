@@ -1,5 +1,5 @@
 // Copyright (c) 2009-2010 Satoshi Nakamoto
-// Copyright (c) 2009-2014 The Komodo Core developers
+// Copyright (c) 2009-2014 The Bitcoin Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -13,7 +13,7 @@
 
 #include <stdint.h>
 
-#ifndef WIN32
+#ifndef _WIN32
 #include <sys/stat.h>
 #endif
 
@@ -83,9 +83,7 @@ bool CDBEnv::Open(const boost::filesystem::path& pathIn)
     TryCreateDirectory(pathLogDir);
     boost::filesystem::path pathErrorFile = pathIn / "db.log";
     LogPrintf("CDBEnv::Open: LogDir=%s ErrorFile=%s pathIn.(%s)\n", pathLogDir.string(), pathErrorFile.string(),pathIn.string());
-    LogPrintf("strPath.(%s)\n",strPath.c_str());
-    LogPrintf("pathLogDir.(%s)\n",pathLogDir.string().c_str());
-    LogPrintf("pathErrorFile.(%s)\n",pathErrorFile.string().c_str());
+    //LogPrintf("strPath.(%s)\n",strPath.c_str());
 
     unsigned int nEnvFlags = 0;
     if (GetBoolArg("-privdb", true))
@@ -120,9 +118,7 @@ bool CDBEnv::Open(const boost::filesystem::path& pathIn)
     dbenv->set_errfile(fopen(err_path, "a")); /// debug
     dbenv->set_flags(DB_AUTO_COMMIT, 1);
     dbenv->set_flags(DB_TXN_WRITE_NOSYNC, 1);
-//    dbenv->set_flags(DB_DIRECT_DB, 1);
     dbenv->log_set_config(DB_LOG_AUTO_REMOVE, 1);
-
 //    int ret = dbenv->open(strPath.c_str(),
     int ret = dbenv->open(db_path,
                          DB_CREATE |

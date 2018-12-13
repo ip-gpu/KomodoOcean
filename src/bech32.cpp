@@ -150,6 +150,9 @@ std::string Encode(const std::string& hrp, const data& values) {
     std::string ret = hrp + '1';
     ret.reserve(ret.size() + combined.size());
     for (auto c : combined) {
+        if (c >= 32) {
+            return "";
+        }
         ret += CHARSET[c];
     }
     return ret;
@@ -166,7 +169,7 @@ std::pair<std::string, data> Decode(const std::string& str) {
     }
     if (lower && upper) return {};
     size_t pos = str.rfind('1');
-    if (str.size() > 90 || pos == str.npos || pos == 0 || pos + 7 > str.size()) {
+    if (str.size() > 1023 || pos == str.npos || pos == 0 || pos + 7 > str.size()) {
         return {};
     }
     data values(str.size() - 1 - pos);

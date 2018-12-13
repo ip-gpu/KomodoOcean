@@ -1,9 +1,9 @@
-// Copyright (c) 2009-2013 The Komodo Core developers
+// Copyright (c) 2009-2013 The Bitcoin Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#ifndef KOMODO_NETBASE_H
-#define KOMODO_NETBASE_H
+#ifndef BITCOIN_NETBASE_H
+#define BITCOIN_NETBASE_H
 
 #if defined(HAVE_CONFIG_H)
 #include "config/komodo-config.h"
@@ -22,7 +22,7 @@ extern bool fNameLookup;
 /** -timeout default */
 static const int DEFAULT_CONNECT_TIMEOUT = 5000;
 
-#ifdef WIN32
+#ifdef _WIN32
 // In MSVC, this is defined as a macro, undefine it to prevent a compile and link error
 #undef SetPort
 #endif
@@ -33,7 +33,6 @@ enum Network
     NET_IPV4,
     NET_IPV6,
     NET_TOR,
-    NET_INTERNAL,
 
     NET_MAX,
 };
@@ -43,7 +42,6 @@ class CNetAddr
 {
     protected:
         unsigned char ip[16]; // in network byte order
-        uint32_t scopeId; // for scoped/link-local ipv6 addresses
 
     public:
         CNetAddr();
@@ -58,12 +56,6 @@ class CNetAddr
          * @note Only NET_IPV4 and NET_IPV6 are allowed for network.
          */
         void SetRaw(Network network, const uint8_t *data);
-
-        /**
-          * Transform an arbitrary string into a non-routable ipv6 address.
-          * Useful for mapping resolved addresses back to their source.
-         */
-        bool SetInternal(const std::string& name);
 
         bool SetSpecial(const std::string &strName); // for Tor addresses
         bool IsIPv4() const;    // IPv4 mapped address (::FFFF:0:0/96, 0.0.0.0/0)
@@ -84,7 +76,6 @@ class CNetAddr
         bool IsTor() const;
         bool IsLocal() const;
         bool IsRoutable() const;
-        bool IsInternal() const;
         bool IsValid() const;
         bool IsMulticast() const;
         enum Network GetNetwork() const;
@@ -96,7 +87,7 @@ class CNetAddr
         std::vector<unsigned char> GetGroup() const;
         int GetReachabilityFrom(const CNetAddr *paddrPartner = NULL) const;
 
-        explicit CNetAddr(const struct in6_addr& pipv6Addr, const uint32_t scope = 0);
+        CNetAddr(const struct in6_addr& pipv6Addr);
         bool GetIn6Addr(struct in6_addr* pipv6Addr) const;
 
         friend bool operator==(const CNetAddr& a, const CNetAddr& b);
@@ -106,7 +97,7 @@ class CNetAddr
         ADD_SERIALIZE_METHODS;
 
         template <typename Stream, typename Operation>
-        inline void SerializationOp(Stream& s, Operation ser_action, int nType, int nVersion) {
+        inline void SerializationOp(Stream& s, Operation ser_action) {
             READWRITE(FLATDATA(ip));
         }
 
@@ -125,10 +116,6 @@ class CSubNet
 
     public:
         CSubNet();
-        CSubNet(const CNetAddr &addr, int32_t mask);
-        CSubNet(const CNetAddr &addr, const CNetAddr &mask);
-
-        explicit CSubNet(const CNetAddr &addr);
         explicit CSubNet(const std::string &strSubnet, bool fAllowLookup = false);
 
         bool Match(const CNetAddr &addr) const;
@@ -143,7 +130,7 @@ class CSubNet
         ADD_SERIALIZE_METHODS;
 
         template <typename Stream, typename Operation>
-        inline void SerializationOp(Stream& s, Operation ser_action, int nType, int nVersion) {
+        inline void SerializationOp(Stream& s, Operation ser_action) {
             READWRITE(network);
             READWRITE(FLATDATA(netmask));
             READWRITE(FLATDATA(valid));
@@ -184,7 +171,7 @@ class CService : public CNetAddr
         ADD_SERIALIZE_METHODS;
 
         template <typename Stream, typename Operation>
-        inline void SerializationOp(Stream& s, Operation ser_action, int nType, int nVersion) {
+        inline void SerializationOp(Stream& s, Operation ser_action) {
             READWRITE(FLATDATA(ip));
             unsigned short portN = htons(port);
             READWRITE(FLATDATA(portN));
@@ -216,7 +203,7 @@ bool HaveNameProxy();
 bool LookupHost(const char *pszName, std::vector<CNetAddr>& vIP, unsigned int nMaxSolutions = 0, bool fAllowLookup = true);
 bool Lookup(const char *pszName, CService& addr, int portDefault = 0, bool fAllowLookup = true);
 bool Lookup(const char *pszName, std::vector<CService>& vAddr, int portDefault = 0, bool fAllowLookup = true, unsigned int nMaxSolutions = 0);
-CService LookupNumeric(const char *pszName, int portDefault = 0);
+bool LookupNumeric(const char *pszName, CService& addr, int portDefault = 0);
 bool ConnectSocket(const CService &addr, SOCKET& hSocketRet, int nTimeout, bool *outProxyConnectionFailed = 0);
 bool ConnectSocketByName(CService &addr, SOCKET& hSocketRet, const char *pszDest, int portDefault, int nTimeout, bool *outProxyConnectionFailed = 0);
 /** Return readable error string for a network error code */
@@ -230,4 +217,4 @@ bool SetSocketNonBlocking(SOCKET& hSocket, bool fNonBlocking);
  */
 struct timeval MillisToTimeval(int64_t nTimeout);
 
-#endif // KOMODO_NETBASE_H
+#endif // BITCOIN_NETBASE_H

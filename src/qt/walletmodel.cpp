@@ -1,4 +1,4 @@
-// Copyright (c) 2011-2016 The Komodo Core developers
+// Copyright (c) 2011-2016 The Bitcoin Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -27,6 +27,7 @@
 #include "main.h"
 #include "wallet/wallet.h"
 #include "wallet/walletdb.h" // for BackupWallet
+#include "key_io.h"
 
 #include <stdint.h>
 
@@ -493,7 +494,7 @@ static void NotifyZAddressBookChanged(WalletModel *walletmodel, CWallet *wallet,
         const libzcash::PaymentAddress &address, const std::string &label, bool isMine,
         const std::string &purpose, ChangeType status)
 {
-    QString strAddress = QString::fromStdString(CZCPaymentAddress(address).ToString());
+    QString strAddress = QString::fromStdString(EncodePaymentAddress(address));
     QString strLabel = QString::fromStdString(label);
     QString strPurpose = QString::fromStdString(purpose);
 
@@ -685,7 +686,7 @@ bool WalletModel::isWalletEnabled()
 
 bool WalletModel::hdEnabled() const
 {
-    return wallet->IsHDEnabled();
+    return wallet->IsHDFullyEnabled();
 }
 
 int WalletModel::getDefaultConfirmTarget() const

@@ -1,5 +1,5 @@
 /******************************************************************************
- * Copyright © 2014-2017 The SuperNET Developers.                             *
+ * Copyright © 2014-2018 The SuperNET Developers.                             *
  *                                                                            *
  * See the AUTHORS, DEVELOPER-AGREEMENT and LICENSE files at                  *
  * the top-level directory of this distribution for the individual copyright  *
@@ -20,7 +20,7 @@
 
 #define KOMODO_ENDOFERA 7777777
 #define KOMODO_INTEREST ((uint64_t)5000000) //((uint64_t)(0.05 * COIN))   // 5%
-int64_t MAX_MONEY = 200000000 * 100000000LL;
+extern int64_t MAX_MONEY;
 extern uint8_t NOTARY_PUBKEY33[];
 
 #ifdef notanymore
@@ -83,13 +83,13 @@ uint64_t komodo_moneysupply(int32_t height)
 uint64_t _komodo_interestnew(int32_t txheight,uint64_t nValue,uint32_t nLockTime,uint32_t tiptime)
 {
     int32_t minutes; uint64_t interest = 0;
-    if ( nLockTime >= LOCKTIME_THRESHOLD && tiptime > nLockTime && (minutes= (tiptime - nLockTime) / 60) >= 60 )
+    if ( nLockTime >= LOCKTIME_THRESHOLD && tiptime > nLockTime && (minutes= (tiptime - nLockTime) / 60) >= (KOMODO_MAXMEMPOOLTIME/60) )
     {
         if ( minutes > 365 * 24 * 60 )
             minutes = 365 * 24 * 60;
         if ( txheight >= 1000000 && minutes > 31 * 24 * 60 )
             minutes = 31 * 24 * 60;
-        minutes -= 59;
+        minutes -= ((KOMODO_MAXMEMPOOLTIME/60) - 1);
         interest = ((nValue / 10512000) * minutes);
     }
     return(interest);
@@ -155,7 +155,7 @@ uint64_t komodo_interest(int32_t txheight,uint64_t nValue,uint32_t nLockTime,uin
                         interest = (numerator * minutes) / ((uint64_t)365 * 24 * 60);
                         interestnew = _komodo_interestnew(txheight,nValue,nLockTime,tiptime);
                         if ( interest < interestnew )
-                            LogPrintf("pathA current interest %.8f vs new %.8f for ht.%d %.8f locktime.%u tiptime.%u\n",dstr(interest),dstr(interestnew),txheight,dstr(nValue),nLockTime,tiptime);                    
+                            LogPrintf("pathA current interest %.8f vs new %.8f for ht.%d %.8f locktime.%u tiptime.%u\n",dstr(interest),dstr(interestnew),txheight,dstr(nValue),nLockTime,tiptime);
                     }
                     else interest = _komodo_interestnew(txheight,nValue,nLockTime,tiptime);
                 }

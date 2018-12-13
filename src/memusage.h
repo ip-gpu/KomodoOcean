@@ -1,9 +1,9 @@
-// Copyright (c) 2015 The Komodo developers
+// Copyright (c) 2015 The Bitcoin developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#ifndef KOMODO_MEMUSAGE_H
-#define KOMODO_MEMUSAGE_H
+#ifndef BITCOIN_MEMUSAGE_H
+#define BITCOIN_MEMUSAGE_H
 
 #include <stdlib.h>
 
@@ -22,16 +22,16 @@ namespace memusage
 static size_t MallocUsage(size_t alloc);
 
 /** Dynamic memory usage for built-in types is zero. */
-static inline size_t DynamicUsage(const int8_t& v) { (void)v; return 0; }
-static inline size_t DynamicUsage(const uint8_t& v) { (void)v; return 0; }
-static inline size_t DynamicUsage(const int16_t& v) { (void)v; return 0; }
-static inline size_t DynamicUsage(const uint16_t& v) { (void)v; return 0; }
-static inline size_t DynamicUsage(const int32_t& v) { (void)v; return 0; }
-static inline size_t DynamicUsage(const uint32_t& v) { (void)v; return 0; }
-static inline size_t DynamicUsage(const int64_t& v) { (void)v; return 0; }
-static inline size_t DynamicUsage(const uint64_t& v) { (void)v; return 0; }
-static inline size_t DynamicUsage(const float& v) { (void)v; return 0; }
-static inline size_t DynamicUsage(const double& v) { (void)v; return 0; }
+static inline size_t DynamicUsage(const int8_t& v) { return 0; }
+static inline size_t DynamicUsage(const uint8_t& v) { return 0; }
+static inline size_t DynamicUsage(const int16_t& v) { return 0; }
+static inline size_t DynamicUsage(const uint16_t& v) { return 0; }
+static inline size_t DynamicUsage(const int32_t& v) { return 0; }
+static inline size_t DynamicUsage(const uint32_t& v) { return 0; }
+static inline size_t DynamicUsage(const int64_t& v) { return 0; }
+static inline size_t DynamicUsage(const uint64_t& v) { return 0; }
+static inline size_t DynamicUsage(const float& v) { return 0; }
+static inline size_t DynamicUsage(const double& v) { return 0; }
 template<typename X> static inline size_t DynamicUsage(X * const &v) { return 0; }
 template<typename X> static inline size_t DynamicUsage(const X * const &v) { return 0; }
 
@@ -46,7 +46,9 @@ template<typename X> static inline size_t DynamicUsage(const X * const &v) { ret
 static inline size_t MallocUsage(size_t alloc)
 {
     // Measured on libc6 2.19 on Linux.
-    if (sizeof(void*) == 8) {
+    if (alloc == 0) {
+        return 0;
+    } else if (sizeof(void*) == 8) {
         return ((alloc + 31) >> 4) << 4;
     } else if (sizeof(void*) == 4) {
         return ((alloc + 15) >> 3) << 3;
@@ -72,6 +74,12 @@ template<typename X>
 static inline size_t DynamicUsage(const std::vector<X>& v)
 {
     return MallocUsage(v.capacity() * sizeof(X));
+}
+
+template<unsigned int N, typename X, typename S, typename D>
+static inline size_t DynamicUsage(const prevector<N, X, S, D>& v)
+{
+    return MallocUsage(v.allocated_memory());
 }
 
 template<typename X>

@@ -1,17 +1,20 @@
-// Copyright (c) 2011-2016 The Komodo Core developers
+// Copyright (c) 2011-2016 The Bitcoin Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #include "zaddresstablemodel.h"
 
+#include "komodo_defs.h"
+
 #include "guiutil.h"
 #include "walletmodel.h"
 #include "platformstyle.h"
+#include "key_io.h"
 
 #include "base58.h"
 #include "wallet/wallet.h"
 
-#include "rpcserver.h"
+#include "rpc/server.h"
 
 #include <QFont>
 #include <QDebug>
@@ -94,13 +97,14 @@ public:
             for (const std::pair<libzcash::PaymentAddress, CAddressBookData>& item : wallet->mapZAddressBook)
             {
                 const libzcash::PaymentAddress& address = item.first;
-                bool fMine = wallet->HaveSpendingKey(address) | wallet->HaveViewingKey(address);
+//                bool fMine = wallet->HaveSpendingKey(address) | wallet->HaveViewingKey(address);
+                bool fMine = boost::apply_visitor(PaymentAddressBelongsToWallet(wallet), address);
                 AddressTableEntry::Type addressType = translateTransactionType(
                         QString::fromStdString(item.second.purpose), fMine);
                 const std::string& strName = item.second.name;
                 cachedAddressTable.append(AddressTableEntry(addressType,
                                   QString::fromStdString(strName),
-                                  QString::fromStdString(CZCPaymentAddress(address).ToString())));
+                                  QString::fromStdString(EncodePaymentAddress(address))));
             }
         }
         // qLowerBound() and qUpperBound() require our cachedAddressTable list to be sorted in asc order
@@ -213,16 +217,15 @@ QVariant ZAddressTableModel::data(const QModelIndex &index, int role) const
         {
             {
                 LOCK(wallet->cs_wallet);
-                CZCPaymentAddress address = CZCPaymentAddress(rec->address.toStdString());
-
 //                bool isValid = address.IsValid();
 //!!!!! check validity
                 bool isValid = true;
 
                 if (isValid)
                 {
-                    libzcash::PaymentAddress dest = address.Get();
-                    if (wallet->HaveSpendingKey(dest) || wallet->HaveViewingKey(dest)) mine = ISMINE_SPENDABLE;
+                    libzcash::PaymentAddress dest = DecodePaymentAddress(rec->address.toStdString());
+//                    if (wallet->HaveSpendingKey(dest) || wallet->HaveViewingKey(dest)) mine = ISMINE_SPENDABLE;
+                    if (boost::apply_visitor(PaymentAddressBelongsToWallet(wallet), dest)) mine = ISMINE_SPENDABLE;
                     else mine = ISMINE_NO;
                 }
             }
@@ -306,7 +309,7 @@ bool ZAddressTableModel::setData(const QModelIndex &index, const QVariant &value
     if(role == Qt::EditRole)
     {
         LOCK(wallet->cs_wallet); /* For SetZAddressBook / DelZAddressBook */
-        libzcash::PaymentAddress curAddress = CZCPaymentAddress(rec->address.toStdString()).Get();
+        libzcash::PaymentAddress curAddress = DecodePaymentAddress(rec->address.toStdString());
         if(index.column() == Label)
         {
             // Do nothing, if old label == new label
@@ -317,7 +320,7 @@ bool ZAddressTableModel::setData(const QModelIndex &index, const QVariant &value
             }
             wallet->SetZAddressBook(curAddress, value.toString().toStdString(), strPurpose);
         } else if(index.column() == Address) {
-            libzcash::PaymentAddress newAddress = CZCPaymentAddress(value.toString().toStdString()).Get();
+            libzcash::PaymentAddress newAddress = DecodePaymentAddress(value.toString().toStdString());
             // Refuse to set invalid address, set error status and return false
 //!!!!! check validity
 //            if(boost::get<CNoDestination>(&newAddress))
@@ -425,7 +428,7 @@ QString ZAddressTableModel::addRow(const QString &type, const QString &label, co
         // Check for duplicate addresses
         {
             LOCK(wallet->cs_wallet);
-            if(wallet->mapZAddressBook.count(CZCPaymentAddress(strAddress).Get()))
+            if(wallet->mapZAddressBook.count(DecodePaymentAddress(strAddress)))
             {
                 editStatus = DUPLICATE_ADDRESS;
                 return QString();
@@ -435,8 +438,9 @@ QString ZAddressTableModel::addRow(const QString &type, const QString &label, co
     else if(type == Receive)
     {
         // Generate a new address to associate with given label
-        CZCPaymentAddress pubaddr = wallet->GenerateNewZKey();
-        strAddress = pubaddr.ToString();
+        if ( GetTime() < KOMODO_SAPLING_ACTIVATION )
+            strAddress = EncodePaymentAddress(wallet->GenerateNewSproutZKey());
+        else strAddress = EncodePaymentAddress(wallet->GenerateNewSaplingZKey());
     }
     else
     {
@@ -446,7 +450,7 @@ QString ZAddressTableModel::addRow(const QString &type, const QString &label, co
     // Add entry
     {
         LOCK(wallet->cs_wallet);
-        wallet->SetZAddressBook(CZCPaymentAddress(strAddress).Get(), strLabel,
+        wallet->SetZAddressBook(DecodePaymentAddress(strAddress), strLabel,
                                (type == Send ? "send" : "receive"));
     }
     return QString::fromStdString(strAddress);
@@ -464,7 +468,7 @@ bool ZAddressTableModel::removeRows(int row, int count, const QModelIndex &paren
     }
     {
         LOCK(wallet->cs_wallet);
-        wallet->DelZAddressBook(CZCPaymentAddress(rec->address.toStdString()).Get());
+        wallet->DelZAddressBook(DecodePaymentAddress(rec->address.toStdString()));
     }
     return true;
 }
@@ -475,7 +479,7 @@ QString ZAddressTableModel::labelForAddress(const QString &address) const
 {
     {
         LOCK(wallet->cs_wallet);
-        libzcash::PaymentAddress destination = CZCPaymentAddress(address.toStdString()).Get();
+        libzcash::PaymentAddress destination = DecodePaymentAddress(address.toStdString());
         std::map<libzcash::PaymentAddress, CAddressBookData>::iterator mi = wallet->mapZAddressBook.find(destination);
         if (mi != wallet->mapZAddressBook.end())
         {

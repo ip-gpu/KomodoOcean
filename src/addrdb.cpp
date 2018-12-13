@@ -120,12 +120,3 @@ bool CBanDB::Read(banmap_t& banSet)
     return DeserializeFileDB(pathBanlist, banSet);
 }
 
-bool CAddrDB::Read(CAddrMan& addr, CDataStream& ssPeers)
-{
-    bool ret = DeserializeDB(ssPeers, addr, false);
-    if (!ret) {
-        // Ensure addrman is left in a clean state
-        addr.Clear();
-    }
-    return ret;
-}

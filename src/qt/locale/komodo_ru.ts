@@ -3410,6 +3410,10 @@
         <translation>Проверка бумажника...</translation>
     </message>
     <message>
+        <source>Loading Sapling parameters...</source>
+        <translation>Загрузка параметров Sapling...</translation>
+    </message>
+    <message>
         <source>Wallet %s resides outside data directory %s</source>
         <translation>Бумажник %s располагается вне каталога данных %s</translation>
     </message>

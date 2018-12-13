@@ -1,16 +1,16 @@
-// Copyright (c) 2015 The Komodo Core developers
+// Copyright (c) 2015 The Bitcoin Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#ifndef KOMODO_CORE_MEMUSAGE_H
-#define KOMODO_CORE_MEMUSAGE_H
+#ifndef BITCOIN_CORE_MEMUSAGE_H
+#define BITCOIN_CORE_MEMUSAGE_H
 
 #include "primitives/transaction.h"
 #include "primitives/block.h"
 #include "memusage.h"
 
 static inline size_t RecursiveDynamicUsage(const CScript& script) {
-    return memusage::DynamicUsage(*static_cast<const std::vector<unsigned char>*>(&script));
+    return memusage::DynamicUsage(*static_cast<const CScriptBase*>(&script));
 }
 
 static inline size_t RecursiveDynamicUsage(const COutPoint& out) {
@@ -59,4 +59,4 @@ static inline size_t RecursiveDynamicUsage(const CBlockLocator& locator) {
     return memusage::DynamicUsage(locator.vHave);
 }
 
-#endif // KOMODO_CORE_MEMUSAGE_H
+#endif // BITCOIN_CORE_MEMUSAGE_H

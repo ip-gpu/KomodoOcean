@@ -1,5 +1,5 @@
 // Copyright (c) 2009-2010 Satoshi Nakamoto
-// Copyright (c) 2009-2014 The Komodo Core developers
+// Copyright (c) 2009-2014 The Bitcoin Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -15,7 +15,6 @@
 #include "random.h"
 #include "util.h"
 #include "utilstrencodings.h"
-#include "tinyformat.h"
 
 #ifdef __APPLE__
 #ifdef HAVE_GETADDRINFO_A
@@ -27,7 +26,7 @@
 #include <netdb.h>
 #endif
 
-#ifndef WIN32
+#ifndef _WIN32
 #if HAVE_INET_PTON
 #include <arpa/inet.h>
 #endif
@@ -41,25 +40,6 @@
 #if !defined(HAVE_MSG_NOSIGNAL) && !defined(MSG_NOSIGNAL)
 #define MSG_NOSIGNAL 0
 #endif
-
-// 0xFD + sha256("komodo")[0:5]
-static const unsigned char g_internal_prefix[] = { 0xFD, 0x6B, 0x88, 0xC0, 0x87, 0x24 };
-
-static inline int NetmaskBits(uint8_t x)
-{
-    switch(x) {
-    case 0x00: return 0; break;
-    case 0x80: return 1; break;
-    case 0xc0: return 2; break;
-    case 0xe0: return 3; break;
-    case 0xf0: return 4; break;
-    case 0xf8: return 5; break;
-    case 0xfc: return 6; break;
-    case 0xfe: return 7; break;
-    case 0xff: return 8; break;
-    default: return -1; break;
-    }
-}
 
 // Settings
 static proxyType proxyInfo[NET_MAX];
@@ -149,7 +129,7 @@ bool static LookupIntern(const char *pszName, std::vector<CNetAddr>& vIP, unsign
     aiHint.ai_socktype = SOCK_STREAM;
     aiHint.ai_protocol = IPPROTO_TCP;
     aiHint.ai_family = AF_UNSPEC;
-#ifdef WIN32
+#ifdef _WIN32
     aiHint.ai_flags = fAllowLookup ? 0 : AI_NUMERICHOST;
 #else
     aiHint.ai_flags = fAllowLookup ? AI_ADDRCONFIG : AI_NUMERICHOST;
@@ -187,8 +167,6 @@ bool static LookupIntern(const char *pszName, std::vector<CNetAddr>& vIP, unsign
     struct addrinfo *aiTrav = aiRes;
     while (aiTrav != NULL && (nMaxSolutions == 0 || vIP.size() < nMaxSolutions))
     {
-        boost::this_thread::interruption_point();
-
         if (aiTrav->ai_family == AF_INET)
         {
             assert(aiTrav->ai_addrlen >= sizeof(sockaddr_in));
@@ -250,14 +228,9 @@ bool Lookup(const char *pszName, CService& addr, int portDefault, bool fAllowLoo
     return true;
 }
 
-CService LookupNumeric(const char *pszName, int portDefault)
+bool LookupNumeric(const char *pszName, CService& addr, int portDefault)
 {
-    CService addr;
-    // "1.2:345" will fail to resolve the ip, but will still set the port.
-    // If the ip fails to resolve, re-init the result.
-    if(!Lookup(pszName, addr, portDefault, false))
-        addr = CService();
-    return addr;
+    return Lookup(pszName, addr, portDefault, false);
 }
 
 struct timeval MillisToTimeval(int64_t nTimeout)
@@ -481,7 +454,7 @@ bool static ConnectSocketDirectly(const CService &addrConnect, SOCKET& hSocketRe
 #endif
 
     //Disable Nagle's algorithm
-#ifdef WIN32
+#ifdef _WIN32
     setsockopt(hSocket, IPPROTO_TCP, TCP_NODELAY, (const char*)&set, sizeof(int));
 #else
     setsockopt(hSocket, IPPROTO_TCP, TCP_NODELAY, (void*)&set, sizeof(int));
@@ -515,7 +488,7 @@ bool static ConnectSocketDirectly(const CService &addrConnect, SOCKET& hSocketRe
                 return false;
             }
             socklen_t nRetSize = sizeof(nRet);
-#ifdef WIN32
+#ifdef _WIN32
             if (getsockopt(hSocket, SOL_SOCKET, SO_ERROR, (char*)(&nRet), &nRetSize) == SOCKET_ERROR)
 #else
             if (getsockopt(hSocket, SOL_SOCKET, SO_ERROR, &nRet, &nRetSize) == SOCKET_ERROR)
@@ -532,7 +505,7 @@ bool static ConnectSocketDirectly(const CService &addrConnect, SOCKET& hSocketRe
                 return false;
             }
         }
-#ifdef WIN32
+#ifdef _WIN32
         else if (WSAGetLastError() != WSAEISCONN)
 #else
         else
@@ -662,7 +635,6 @@ bool ConnectSocketByName(CService &addr, SOCKET& hSocketRet, const char *pszDest
 void CNetAddr::Init()
 {
     memset(ip, 0, sizeof(ip));
-    scopeId = 0;
 }
 
 void CNetAddr::SetIP(const CNetAddr& ipIn)
@@ -684,18 +656,6 @@ void CNetAddr::SetRaw(Network network, const uint8_t *ip_in)
         default:
             assert(!"invalid network");
     }
-}
-
-bool CNetAddr::SetInternal(const std::string &name)
-{
-    if (name.empty()) {
-        return false;
-    }
-    unsigned char hash[32] = {};
-    CSHA256().Write((const unsigned char*)name.data(), name.size()).Finalize(hash);
-    memcpy(ip, g_internal_prefix, sizeof(g_internal_prefix));
-    memcpy(ip + sizeof(g_internal_prefix), hash, sizeof(ip) - sizeof(g_internal_prefix));
-    return true;
 }
 
 static const unsigned char pchOnionCat[] = {0xFD,0x87,0xD8,0x7E,0xEB,0x43};
@@ -724,10 +684,9 @@ CNetAddr::CNetAddr(const struct in_addr& ipv4Addr)
     SetRaw(NET_IPV4, (const uint8_t*)&ipv4Addr);
 }
 
-CNetAddr::CNetAddr(const struct in6_addr& ipv6Addr, const uint32_t scope)
+CNetAddr::CNetAddr(const struct in6_addr& ipv6Addr)
 {
     SetRaw(NET_IPV6, (const uint8_t*)&ipv6Addr);
-    scopeId = scope;
 }
 
 CNetAddr::CNetAddr(const char *pszIp, bool fAllowLookup)
@@ -758,7 +717,7 @@ bool CNetAddr::IsIPv4() const
 
 bool CNetAddr::IsIPv6() const
 {
-    return (!IsIPv4() && !IsTor() && !IsInternal());
+    return (!IsIPv4() && !IsTor());
 }
 
 bool CNetAddr::IsRFC1918() const
@@ -871,15 +830,12 @@ bool CNetAddr::IsValid() const
         return false;
 
     // unspecified IPv6 address (::/128)
-    unsigned char ipNone6[16] = {};
-    if (memcmp(ip, ipNone6, 16) == 0)
+    unsigned char ipNone[16] = {};
+    if (memcmp(ip, ipNone, 16) == 0)
         return false;
 
     // documentation IPv6 address
     if (IsRFC3849())
-        return false;
-
-    if (IsInternal())
         return false;
 
     if (IsIPv4())
@@ -900,19 +856,11 @@ bool CNetAddr::IsValid() const
 
 bool CNetAddr::IsRoutable() const
 {
-    return IsValid() && !(IsRFC1918() || IsRFC2544() || IsRFC3927() || IsRFC4862() || IsRFC6598() || IsRFC5737() || (IsRFC4193() && !IsTor()) || IsRFC4843() || IsLocal() || IsInternal());
-}
-
-bool CNetAddr::IsInternal() const
-{
-   return memcmp(ip, g_internal_prefix, sizeof(g_internal_prefix)) == 0;
+    return IsValid() && !(IsRFC1918() || IsRFC2544() || IsRFC3927() || IsRFC4862() || IsRFC6598() || IsRFC5737() || (IsRFC4193() && !IsTor()) || IsRFC4843() || IsLocal());
 }
 
 enum Network CNetAddr::GetNetwork() const
 {
-    if (IsInternal())
-        return NET_INTERNAL;
-
     if (!IsRoutable())
         return NET_UNROUTABLE;
 
@@ -929,14 +877,12 @@ std::string CNetAddr::ToStringIP() const
 {
     if (IsTor())
         return EncodeBase32(&ip[6], 10) + ".onion";
-    if (IsInternal())
-        return EncodeBase32(ip + sizeof(g_internal_prefix), sizeof(ip) - sizeof(g_internal_prefix)) + ".internal";
     CService serv(*this, 0);
     struct sockaddr_storage sockaddr;
     socklen_t socklen = sizeof(sockaddr);
     if (serv.GetSockAddr((struct sockaddr*)&sockaddr, &socklen)) {
         char name[1025] = "";
-        if (!getnameinfo((const struct sockaddr*)&sockaddr, socklen, name, sizeof(name), nullptr, 0, NI_NUMERICHOST))
+        if (!getnameinfo((const struct sockaddr*)&sockaddr, socklen, name, sizeof(name), NULL, 0, NI_NUMERICHOST))
             return std::string(name);
     }
     if (IsIPv4())
@@ -998,15 +944,9 @@ std::vector<unsigned char> CNetAddr::GetGroup() const
         nClass = 255;
         nBits = 0;
     }
-    // all internal-usage addresses get their own group
-    if (IsInternal())
-    {
-        nClass = NET_INTERNAL;
-        nStartByte = sizeof(g_internal_prefix);
-        nBits = (sizeof(ip) - sizeof(g_internal_prefix)) * 8;
-    }
-    // all other unroutable addresses belong to the same group
-    else if (!IsRoutable())
+
+    // all unroutable addresses belong to the same group
+    if (!IsRoutable())
     {
         nClass = NET_UNROUTABLE;
         nBits = 0;
@@ -1072,7 +1012,7 @@ static const int NET_UNKNOWN = NET_MAX + 0;
 static const int NET_TEREDO  = NET_MAX + 1;
 int static GetExtNetwork(const CNetAddr *addr)
 {
-    if (addr == nullptr)
+    if (addr == NULL)
         return NET_UNKNOWN;
     if (addr->IsRFC4380())
         return NET_TEREDO;
@@ -1092,7 +1032,7 @@ int CNetAddr::GetReachabilityFrom(const CNetAddr *paddrPartner) const
         REACH_PRIVATE
     };
 
-    if (!IsRoutable() || IsInternal())
+    if (!IsRoutable())
         return REACH_UNREACHABLE;
 
     int ourNet = GetExtNetwork(this);
@@ -1165,7 +1105,7 @@ CService::CService(const struct sockaddr_in& addr) : CNetAddr(addr.sin_addr), po
     assert(addr.sin_family == AF_INET);
 }
 
-CService::CService(const struct sockaddr_in6 &addr) : CNetAddr(addr.sin6_addr, addr.sin6_scope_id), port(ntohs(addr.sin6_port))
+CService::CService(const struct sockaddr_in6 &addr) : CNetAddr(addr.sin6_addr), port(ntohs(addr.sin6_port))
 {
    assert(addr.sin6_family == AF_INET6);
 }
@@ -1258,7 +1198,6 @@ bool CService::GetSockAddr(struct sockaddr* paddr, socklen_t *addrlen) const
         memset(paddrin6, 0, *addrlen);
         if (!GetIn6Addr(&paddrin6->sin6_addr))
             return false;
-        paddrin6->sin6_scope_id = scopeId;
         paddrin6->sin6_family = AF_INET6;
         paddrin6->sin6_port = htons(port);
         return true;
@@ -1270,7 +1209,7 @@ std::vector<unsigned char> CService::GetKey() const
 {
      std::vector<unsigned char> vKey;
      vKey.resize(18);
-     memcpy(vKey.data(), ip, 16);
+     memcpy(&vKey[0], ip, 16);
      vKey[16] = port / 0x100;
      vKey[17] = port & 0x0FF;
      return vKey;
@@ -1283,7 +1222,7 @@ std::string CService::ToStringPort() const
 
 std::string CService::ToStringIPPort() const
 {
-    if (IsIPv4() || IsTor() || IsInternal()) {
+    if (IsIPv4() || IsTor()) {
         return ToStringIP() + ":" + ToStringPort();
     } else {
         return "[" + ToStringIP() + "]:" + ToStringPort();
@@ -1304,49 +1243,6 @@ CSubNet::CSubNet():
     valid(false)
 {
     memset(netmask, 0, sizeof(netmask));
-}
-
-CSubNet::CSubNet(const CNetAddr &addr, int32_t mask)
-{
-    valid = true;
-    network = addr;
-    // Default to /32 (IPv4) or /128 (IPv6), i.e. match single address
-    memset(netmask, 255, sizeof(netmask));
-
-    // IPv4 addresses start at offset 12, and first 12 bytes must match, so just offset n
-    const int astartofs = network.IsIPv4() ? 12 : 0;
-
-    int32_t n = mask;
-    if(n >= 0 && n <= (128 - astartofs*8)) // Only valid if in range of bits of address
-    {
-        n += astartofs*8;
-        // Clear bits [n..127]
-        for (; n < 128; ++n)
-            netmask[n>>3] &= ~(1<<(7-(n&7)));
-    } else
-        valid = false;
-
-    // Normalize network according to netmask
-    for(int x=0; x<16; ++x)
-        network.ip[x] &= netmask[x];
-}
-
-CSubNet::CSubNet(const CNetAddr &addr, const CNetAddr &mask)
-{
-    valid = true;
-    network = addr;
-    // Default to /32 (IPv4) or /128 (IPv6), i.e. match single address
-    memset(netmask, 255, sizeof(netmask));
-
-    // IPv4 addresses start at offset 12, and first 12 bytes must match, so just offset n
-    const int astartofs = network.IsIPv4() ? 12 : 0;
-
-    for(int x=astartofs; x<16; ++x)
-        netmask[x] = mask.ip[x];
-
-    // Normalize network according to netmask
-    for(int x=0; x<16; ++x)
-        network.ip[x] &= netmask[x];
 }
 
 CSubNet::CSubNet(const std::string &strSubnet, bool fAllowLookup)
@@ -1408,13 +1304,6 @@ CSubNet::CSubNet(const std::string &strSubnet, bool fAllowLookup)
         network.ip[x] &= netmask[x];
 }
 
-CSubNet::CSubNet(const CNetAddr &addr):
-    valid(addr.IsValid())
-{
-    memset(netmask, 255, sizeof(netmask));
-    network = addr;
-}
-
 bool CSubNet::Match(const CNetAddr &addr) const
 {
     if (!valid || !addr.IsValid())
@@ -1427,39 +1316,15 @@ bool CSubNet::Match(const CNetAddr &addr) const
 
 std::string CSubNet::ToString() const
 {
-    /* Parse binary 1{n}0{N-n} to see if mask can be represented as /n */
-    int cidr = 0;
-    bool valid_cidr = true;
-    int n = network.IsIPv4() ? 12 : 0;
-    for (; n < 16 && netmask[n] == 0xff; ++n)
-        cidr += 8;
-    if (n < 16) {
-        int bits = NetmaskBits(netmask[n]);
-        if (bits < 0)
-            valid_cidr = false;
-        else
-            cidr += bits;
-        ++n;
-    }
-    for (; n < 16 && valid_cidr; ++n)
-        if (netmask[n] != 0x00)
-            valid_cidr = false;
-
-    /* Format output */
     std::string strNetmask;
-    if (valid_cidr) {
-        strNetmask = strprintf("%u", cidr);
-    } else {
-        if (network.IsIPv4())
-            strNetmask = strprintf("%u.%u.%u.%u", netmask[12], netmask[13], netmask[14], netmask[15]);
-        else
-            strNetmask = strprintf("%x:%x:%x:%x:%x:%x:%x:%x",
-                             netmask[0] << 8 | netmask[1], netmask[2] << 8 | netmask[3],
-                             netmask[4] << 8 | netmask[5], netmask[6] << 8 | netmask[7],
-                             netmask[8] << 8 | netmask[9], netmask[10] << 8 | netmask[11],
-                             netmask[12] << 8 | netmask[13], netmask[14] << 8 | netmask[15]);
-    }
-
+    if (network.IsIPv4())
+        strNetmask = strprintf("%u.%u.%u.%u", netmask[12], netmask[13], netmask[14], netmask[15]);
+    else
+        strNetmask = strprintf("%x:%x:%x:%x:%x:%x:%x:%x",
+                         netmask[0] << 8 | netmask[1], netmask[2] << 8 | netmask[3],
+                         netmask[4] << 8 | netmask[5], netmask[6] << 8 | netmask[7],
+                         netmask[8] << 8 | netmask[9], netmask[10] << 8 | netmask[11],
+                         netmask[12] << 8 | netmask[13], netmask[14] << 8 | netmask[15]);
     return network.ToString() + "/" + strNetmask;
 }
 
@@ -1483,7 +1348,7 @@ bool operator<(const CSubNet& a, const CSubNet& b)
     return (a.network < b.network || (a.network == b.network && memcmp(a.netmask, b.netmask, 16) < 0));
 }
 
-#ifdef WIN32
+#ifdef _WIN32
 std::string NetworkErrorString(int err)
 {
     char buf[256];
@@ -1521,7 +1386,7 @@ bool CloseSocket(SOCKET& hSocket)
 {
     if (hSocket == INVALID_SOCKET)
         return false;
-#ifdef WIN32
+#ifdef _WIN32
     int ret = closesocket(hSocket);
 #else
     int ret = close(hSocket);
@@ -1533,7 +1398,7 @@ bool CloseSocket(SOCKET& hSocket)
 bool SetSocketNonBlocking(SOCKET& hSocket, bool fNonBlocking)
 {
     if (fNonBlocking) {
-#ifdef WIN32
+#ifdef _WIN32
         u_long nOne = 1;
         if (ioctlsocket(hSocket, FIONBIO, &nOne) == SOCKET_ERROR) {
 #else
@@ -1544,7 +1409,7 @@ bool SetSocketNonBlocking(SOCKET& hSocket, bool fNonBlocking)
             return false;
         }
     } else {
-#ifdef WIN32
+#ifdef _WIN32
         u_long nZero = 0;
         if (ioctlsocket(hSocket, FIONBIO, &nZero) == SOCKET_ERROR) {
 #else

@@ -1,14 +1,14 @@
 #define PACKAGE_NAME "KomodoOcean"
 
-#define CLIENT_VERSION_MAJOR 1
+#define CLIENT_VERSION_MAJOR 2
 #define CLIENT_VERSION_MINOR 0
-#define CLIENT_VERSION_REVISION 8
-#define CLIENT_VERSION_BUILD 52
+#define CLIENT_VERSION_REVISION 15
+#define CLIENT_VERSION_BUILD 26
 
 //! Set to true for release, false for prerelease or test build
 #define CLIENT_VERSION_IS_RELEASE false
 
-#define COPYRIGHT_YEAR 2017
+#define COPYRIGHT_YEAR 2018
 
 #define _COPYRIGHT_HOLDERS "The %s developers"
 #define _COPYRIGHT_HOLDERS_SUBSTITUTION "Ocean and Decker"

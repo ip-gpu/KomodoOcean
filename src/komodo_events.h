@@ -37,35 +37,36 @@ struct komodo_event *komodo_eventadd(struct komodo_state *sp,int32_t height,char
     return(ep);
 }
 
-void komodo_eventadd_notarized(struct komodo_state *sp,char *symbol,int32_t height,char *dest,uint256 notarized_hash,uint256 notarized_desttxid,int32_t notarizedheight)//,uint256 MoM,int32_t MoMdepth)
+void komodo_eventadd_notarized(struct komodo_state *sp,char *symbol,int32_t height,char *dest,uint256 notarized_hash,uint256 notarized_desttxid,int32_t notarizedheight,uint256 MoM,int32_t MoMdepth)
 {
-    struct komodo_event_notarized N;
-    if ( NOTARY_PUBKEY33[0] != 0 && komodo_verifynotarization(symbol,dest,height,notarizedheight,notarized_hash,notarized_desttxid) != 0 )
+    static uint32_t counter; int32_t verified=0; char *coin; struct komodo_event_notarized N;
+    coin = (ASSETCHAINS_SYMBOL[0] == 0) ? (char *)"KMD" : ASSETCHAINS_SYMBOL;
+    if ( IS_KOMODO_NOTARY != 0 && (verified= komodo_verifynotarization(symbol,dest,height,notarizedheight,notarized_hash,notarized_desttxid)) < 0 )
     {
-        if ( height > 50000 || ASSETCHAINS_SYMBOL[0] != 0 )
+        if ( counter++ < 100 )
             LogPrintf("[%s] error validating notarization ht.%d notarized_height.%d, if on a pruned %s node this can be ignored\n",ASSETCHAINS_SYMBOL,height,notarizedheight,dest);
     }
-    else
+    else if ( strcmp(symbol,coin) == 0 )
     {
-        if ( 0 && ASSETCHAINS_SYMBOL[0] != 0 )
-            LogPrintf("validated [%s] ht.%d notarized %d\n",ASSETCHAINS_SYMBOL,height,notarizedheight);
+        if ( 0 && IS_KOMODO_NOTARY != 0 && verified != 0 )
+            LogPrintf("validated [%s] ht.%d notarized %d\n",coin,height,notarizedheight);
         memset(&N,0,sizeof(N));
         N.blockhash = notarized_hash;
         N.desttxid = notarized_desttxid;
         N.notarizedheight = notarizedheight;
-        //N.MoM = MoM;
-        //N.MoMdepth = MoMdepth;
+        N.MoM = MoM;
+        N.MoMdepth = MoMdepth;
         strncpy(N.dest,dest,sizeof(N.dest)-1);
         komodo_eventadd(sp,height,symbol,KOMODO_EVENT_NOTARIZED,(uint8_t *)&N,sizeof(N));
         if ( sp != 0 )
-            komodo_notarized_update(sp,height,notarizedheight,notarized_hash,notarized_desttxid);//,MoM,MoMdepth);
+            komodo_notarized_update(sp,height,notarizedheight,notarized_hash,notarized_desttxid,MoM,MoMdepth);
     }
 }
 
 void komodo_eventadd_pubkeys(struct komodo_state *sp,char *symbol,int32_t height,uint8_t num,uint8_t pubkeys[64][33])
 {
     struct komodo_event_pubkeys P;
-    //LogPrintf("eventadd pubkeys ht.%d\n",height);
+    //printf("eventadd pubkeys ht.%d\n",height);
     memset(&P,0,sizeof(P));
     P.num = num;
     memcpy(P.pubkeys,pubkeys,33 * num);
@@ -85,7 +86,7 @@ void komodo_eventadd_pricefeed(struct komodo_state *sp,char *symbol,int32_t heig
         komodo_eventadd(sp,height,symbol,KOMODO_EVENT_PRICEFEED,(uint8_t *)&F,(int32_t)(sizeof(F.num) + sizeof(*F.prices) * num));
         if ( sp != 0 )
             komodo_pvals(height,prices,num);
-    } //else fprintf(stderr,"skip pricefeed[%d]\n",num);
+    } //else LogPrintf("skip pricefeed[%d]\n",num);
 }
 
 void komodo_eventadd_opreturn(struct komodo_state *sp,char *symbol,int32_t height,uint256 txid,uint64_t value,uint16_t vout,uint8_t *buf,uint16_t opretlen)
@@ -143,7 +144,7 @@ void komodo_event_rewind(struct komodo_state *sp,char *symbol,int32_t height)
             {
                 if ( ep->height < height )
                     break;
-                //LogPrintf("[%s] undo %s event.%c ht.%d for rewind.%d\n",ASSETCHAINS_SYMBOL,symbol,ep->type,ep->height,height);
+                //printf("[%s] undo %s event.%c ht.%d for rewind.%d\n",ASSETCHAINS_SYMBOL,symbol,ep->type,ep->height,height);
                 komodo_event_undo(sp,ep);
                 sp->Komodo_numevents--;
             }
@@ -178,7 +179,7 @@ void komodo_eventadd_kmdheight(struct komodo_state *sp,char *symbol,int32_t heig
     }
     else
     {
-        //fprintf(stderr,"REWIND kmdheight.%d\n",kmdheight);
+        //LogPrintf("REWIND kmdheight.%d\n",kmdheight);
         kmdheight = -kmdheight;
         komodo_eventadd(sp,height,symbol,KOMODO_EVENT_REWIND,(uint8_t *)&height,sizeof(height));
         if ( sp != 0 )
@@ -188,30 +189,30 @@ void komodo_eventadd_kmdheight(struct komodo_state *sp,char *symbol,int32_t heig
 
 
 /*void komodo_eventadd_deposit(int32_t actionflag,char *symbol,int32_t height,uint64_t komodoshis,char *fiat,uint64_t fiatoshis,uint8_t rmd160[20],bits256 kmdtxid,uint16_t kmdvout,uint64_t price)
-{
-    uint8_t opret[512]; uint16_t opretlen;
-    komodo_eventadd_opreturn(symbol,height,KOMODO_OPRETURN_DEPOSIT,kmdtxid,komodoshis,kmdvout,opret,opretlen);
-}
-
-void komodo_eventadd_issued(int32_t actionflag,char *symbol,int32_t height,int32_t fiatheight,bits256 fiattxid,uint16_t fiatvout,bits256 kmdtxid,uint16_t kmdvout,uint64_t fiatoshis)
-{
-    uint8_t opret[512]; uint16_t opretlen;
-    komodo_eventadd_opreturn(symbol,height,KOMODO_OPRETURN_ISSUED,fiattxid,fiatoshis,fiatvout,opret,opretlen);
-}
-
-void komodo_eventadd_withdraw(int32_t actionflag,char *symbol,int32_t height,uint64_t komodoshis,char *fiat,uint64_t fiatoshis,uint8_t rmd160[20],bits256 fiattxid,int32_t fiatvout,uint64_t price)
-{
-    uint8_t opret[512]; uint16_t opretlen;
-    komodo_eventadd_opreturn(symbol,height,KOMODO_OPRETURN_WITHDRAW,fiattxid,fiatoshis,fiatvout,opret,opretlen);
-}
-
-void komodo_eventadd_redeemed(int32_t actionflag,char *symbol,int32_t height,bits256 kmdtxid,uint16_t kmdvout,int32_t fiatheight,bits256 fiattxid,uint16_t fiatvout,uint64_t komodoshis)
-{
-    uint8_t opret[512]; uint16_t opretlen;
-    komodo_eventadd_opreturn(symbol,height,KOMODO_OPRETURN_REDEEMED,kmdtxid,komodoshis,kmdvout,opret,opretlen);
-}*/
+ {
+ uint8_t opret[512]; uint16_t opretlen;
+ komodo_eventadd_opreturn(symbol,height,KOMODO_OPRETURN_DEPOSIT,kmdtxid,komodoshis,kmdvout,opret,opretlen);
+ }
+ 
+ void komodo_eventadd_issued(int32_t actionflag,char *symbol,int32_t height,int32_t fiatheight,bits256 fiattxid,uint16_t fiatvout,bits256 kmdtxid,uint16_t kmdvout,uint64_t fiatoshis)
+ {
+ uint8_t opret[512]; uint16_t opretlen;
+ komodo_eventadd_opreturn(symbol,height,KOMODO_OPRETURN_ISSUED,fiattxid,fiatoshis,fiatvout,opret,opretlen);
+ }
+ 
+ void komodo_eventadd_withdraw(int32_t actionflag,char *symbol,int32_t height,uint64_t komodoshis,char *fiat,uint64_t fiatoshis,uint8_t rmd160[20],bits256 fiattxid,int32_t fiatvout,uint64_t price)
+ {
+ uint8_t opret[512]; uint16_t opretlen;
+ komodo_eventadd_opreturn(symbol,height,KOMODO_OPRETURN_WITHDRAW,fiattxid,fiatoshis,fiatvout,opret,opretlen);
+ }
+ 
+ void komodo_eventadd_redeemed(int32_t actionflag,char *symbol,int32_t height,bits256 kmdtxid,uint16_t kmdvout,int32_t fiatheight,bits256 fiattxid,uint16_t fiatvout,uint64_t komodoshis)
+ {
+ uint8_t opret[512]; uint16_t opretlen;
+ komodo_eventadd_opreturn(symbol,height,KOMODO_OPRETURN_REDEEMED,kmdtxid,komodoshis,kmdvout,opret,opretlen);
+ }*/
 
 // process events
-// 
+//
 
 #endif

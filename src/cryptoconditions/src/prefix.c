@@ -12,7 +12,7 @@
 
 static int prefixVisitChildren(CC *cond, CCVisitor visitor) {
     size_t prefixedLength = cond->prefixLength + visitor.msgLength;
-    unsigned char *prefixed = (unsigned char *)malloc(prefixedLength);
+    unsigned char *prefixed = (unsigned char *)calloc(1,prefixedLength);
     memcpy(prefixed, cond->prefix, cond->prefixLength);
     memcpy(prefixed + cond->prefixLength, visitor.msg, visitor.msgLength);
     visitor.msg = prefixed;

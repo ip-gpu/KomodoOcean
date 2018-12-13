@@ -137,6 +137,15 @@ bool UniValue::setInt(int64_t val_)
     return setNumStr(oss.str());
 }
 
+bool UniValue::setInt(uint32_t val_)
+{
+    ostringstream oss;
+
+    oss << val_;
+
+    return setNumStr(oss.str());
+}
+
 bool UniValue::setFloat(double val_)
 {
     ostringstream oss;

@@ -122,21 +122,22 @@ unsigned char *base64_decode(const unsigned char *data_,
 
 void base64_cleanup() {
     free(decoding_table);
+    decoding_table = 0;
 }
 
 
 void dumpStr(unsigned char *str, size_t len) {
     if (-1 == len) len = strlen((const char*)str);
-    LogPrintf("len:%i ", (int)len);
+    fprintf(stderr,"len:%i ", (int)len);
     for (int i=0; i<len; i++) {
         if (isprint(str[i])) {
-            LogPrintf("%c", str[i]);
+            fprintf(stderr,"%c", str[i]);
         } else {
-            LogPrintf("\\x%02x", str[i] & 0xff);
+            fprintf(stderr,"\\x%02x", str[i] & 0xff);
             //fprintf(stderr, "\\%u", str[i] & 0xff);
         }
     }
-    LogPrintf("\n");
+    fprintf(stderr,"\n");
 }
 
 
@@ -199,7 +200,7 @@ unsigned char *hashFingerprintContents(asn_TYPE_descriptor_t *asnType, void *fp)
     asn_enc_rval_t rc = der_encode_to_buffer(asnType, fp, buf, BUF_SIZE);
     ASN_STRUCT_FREE(*asnType, fp);
     if (rc.encoded < 1) {
-        LogPrintf("Encoding fingerprint failed\n");
+        fprintf(stderr,"Encoding fingerprint failed\n");
         return 0;
     }
     unsigned char *hash = (unsigned char *)malloc(32);
@@ -246,7 +247,7 @@ ERR:
 }
 
 
-int checkDecodeHex(const cJSON *value, char *key, char *err, unsigned char **data, size_t *size) {
+bool checkDecodeHex(const cJSON *value, char *key, char *err, unsigned char **data, size_t *size) {
     if (!checkString(value, key, err))
         return 0;
 
@@ -260,7 +261,7 @@ int checkDecodeHex(const cJSON *value, char *key, char *err, unsigned char **dat
 }
 
 
-int jsonGetHex(const cJSON *params, char *key, char *err, unsigned char **data, size_t *size)
+bool jsonGetHex(const cJSON *params, char *key, char *err, unsigned char **data, size_t *size)
 {
     cJSON *item = cJSON_GetObjectItem(params, key);
     if (!item) {

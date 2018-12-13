@@ -53,7 +53,7 @@ static CC *evalFromFulfillment(const Fulfillment_t *ffill) {
 
     OCTET_STRING_t octets = eval->code;
     cond->codeLength = octets.size;
-    cond->code = (uint8_t*)malloc(octets.size);
+    cond->code = (uint8_t*)calloc(1,octets.size);
     memcpy(cond->code, octets.buf, octets.size);
 
     return cond;
@@ -91,7 +91,7 @@ int jsonVerifyEval(CC *cond, void *context) {
     if (cond->codeLength == 5 && 0 == memcmp(cond->code, "TEST", 4)) {
         return cond->code[5];
     }
-    LogPrintf("Cannot verify eval; user function unknown\n");
+    fprintf(stderr,"Cannot verify eval; user function unknown\n");
     return 0;
 }
 

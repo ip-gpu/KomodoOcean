@@ -3,11 +3,9 @@
 #include "crypto/common.h"
 
 #include <boost/static_assert.hpp>
+#include <libsnark/common/default_types/r1cs_ppzksnark_pp.hpp>
+#include <libsnark/zk_proof_systems/ppzksnark/r1cs_ppzksnark/r1cs_ppzksnark.hpp>
 #include <mutex>
-
-#include "crypto/common.h"
-#include "libsnark/common/default_types/r1cs_ppzksnark_pp.hpp"
-#include "libsnark/zk_proof_systems/ppzksnark/r1cs_ppzksnark/r1cs_ppzksnark.hpp"
 
 using namespace libsnark;
 
@@ -92,7 +90,6 @@ curve_Fq2 Fq2::to_libsnark_fq2() const
     bigint<5> res;
     bigint<4> c0;
     bigint<8>::div_qr(res, c0, combined, modq);
-
     bigint<4> c1 = res.shorten(modq, "element is not in Fq2");
 
     return curve_Fq2(curve_Fq(c0), curve_Fq(c1));
@@ -174,7 +171,7 @@ curve_G2 CompressedG2::to_libsnark_g2() const
 }
 
 template<>
-ZCProof::ZCProof(const r1cs_ppzksnark_proof<curve_pp> &proof)
+PHGRProof::PHGRProof(const r1cs_ppzksnark_proof<curve_pp> &proof)
 {
     g_A = CompressedG1(proof.g_A.g);
     g_A_prime = CompressedG1(proof.g_A.h);
@@ -187,7 +184,7 @@ ZCProof::ZCProof(const r1cs_ppzksnark_proof<curve_pp> &proof)
 }
 
 template<>
-r1cs_ppzksnark_proof<curve_pp> ZCProof::to_libsnark_proof() const
+r1cs_ppzksnark_proof<curve_pp> PHGRProof::to_libsnark_proof() const
 {
     r1cs_ppzksnark_proof<curve_pp> proof;
 
@@ -203,9 +200,9 @@ r1cs_ppzksnark_proof<curve_pp> ZCProof::to_libsnark_proof() const
     return proof;
 }
 
-ZCProof ZCProof::random_invalid()
+PHGRProof PHGRProof::random_invalid()
 {
-    ZCProof p;
+    PHGRProof p;
     p.g_A = curve_G1::random_element();
     p.g_A_prime = curve_G1::random_element();
     p.g_B = curve_G2::random_element();
@@ -219,7 +216,7 @@ ZCProof ZCProof::random_invalid()
     return p;
 }
 
-std::once_flag init_public_params_once_flag;
+static std::once_flag init_public_params_once_flag;
 
 void initialize_curve_params()
 {
@@ -244,7 +241,6 @@ bool ProofVerifier::check(
     const r1cs_ppzksnark_proof<curve_pp>& proof
 )
 {
-    (void)vk;
     if (perform_verification) {
         return r1cs_ppzksnark_online_verifier_strong_IC<curve_pp>(pvk, primary_input, proof);
     } else {

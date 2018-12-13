@@ -46,7 +46,7 @@ public:
     ADD_SERIALIZE_METHODS;
 
     template <typename Stream, typename Operation>
-    inline void SerializationOp(Stream& s, Operation ser_action, int nType, int nVersion) {
+    inline void SerializationOp(Stream& s, Operation ser_action) {
         READWRITE(this->nVersion);
         READWRITE(nCreateTime);
         READWRITE(nBanUntil);
@@ -75,18 +75,6 @@ public:
 };
 
 typedef std::map<CSubNet, CBanEntry> banmap_t;
-
-/** Access to the (IP) address database (peers.dat) */
-class CAddrDB
-{
-private:
-    fs::path pathAddr;
-public:
-    CAddrDB();
-    bool Write(const CAddrMan& addr);
-    bool Read(CAddrMan& addr);
-    static bool Read(CAddrMan& addr, CDataStream& ssPeers);
-};
 
 /** Access to the banlist database (banlist.dat) */
 class CBanDB
