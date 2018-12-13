@@ -1,4 +1,4 @@
-// Copyright (c) 2011-2016 The Komodo Core developers
+// Copyright (c) 2011-2016 The Bitcoin Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -15,6 +15,7 @@
 #include "util.h"
 #include "main.h"
 #include "wallet/wallet.h"
+#include "key_io.h"
 
 #include <cstdlib>
 
@@ -219,13 +220,13 @@ void PaymentServer::ipcParseCommandLine(int argc, char* argv[])
             SendCoinsRecipient r;
             if (GUIUtil::parseKomodoURI(arg, &r) && !r.address.isEmpty())
             {
-                auto tempChainParams = CreateChainParams(CBaseChainParams::MAIN);
+                auto tempChainParams = Params(CBaseChainParams::MAIN);
 
-                if (IsValidDestinationString(r.address.toStdString(), *tempChainParams)) {
+                if (IsValidDestinationString(r.address.toStdString(), tempChainParams)) {
                     SelectParams(CBaseChainParams::MAIN);
                 } else {
-                    tempChainParams = CreateChainParams(CBaseChainParams::TESTNET);
-                    if (IsValidDestinationString(r.address.toStdString(), *tempChainParams)) {
+                    tempChainParams = Params(CBaseChainParams::TESTNET);
+                    if (IsValidDestinationString(r.address.toStdString(), tempChainParams)) {
                         SelectParams(CBaseChainParams::TESTNET);
                     }
                 }

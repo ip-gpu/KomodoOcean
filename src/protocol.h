@@ -1,5 +1,5 @@
 // Copyright (c) 2009-2010 Satoshi Nakamoto
-// Copyright (c) 2009-2013 The Komodo Core developers
+// Copyright (c) 2009-2013 The Bitcoin Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -7,8 +7,8 @@
 #error This header can only be compiled as C++.
 #endif
 
-#ifndef KOMODO_PROTOCOL_H
-#define KOMODO_PROTOCOL_H
+#ifndef BITCOIN_PROTOCOL_H
+#define BITCOIN_PROTOCOL_H
 
 #include "netbase.h"
 #include "serialize.h"
@@ -19,38 +19,6 @@
 #include <string>
 
 #define MESSAGE_START_SIZE 4
-
-/** nServices flags */
-enum ServiceFlags : uint64_t {
-    // Nothing
-    NODE_NONE = 0,
-    // NODE_NETWORK means that the node is capable of serving the block chain. It is currently
-    // set by all Komodo Core nodes, and is unset by SPV clients or other peers that just want
-    // network services but don't provide them.
-    NODE_NETWORK = (1 << 0),
-    // NODE_GETUTXO means the node is capable of responding to the getutxo protocol request.
-    // Komodo Core does not support this but a patch set called Komodo XT does.
-    // See BIP 64 for details on how this is implemented.
-    NODE_GETUTXO = (1 << 1),
-    // NODE_BLOOM means the node is capable and willing to handle bloom-filtered connections.
-    // Komodo Core nodes used to support this by default, without advertising this bit,
-    // but no longer do as of protocol version 70011 (= NO_BLOOM_VERSION)
-    NODE_BLOOM = (1 << 2),
-    // NODE_WITNESS indicates that a node can be asked for blocks and transactions including
-    // witness data.
-    NODE_WITNESS = (1 << 3),
-    // NODE_XTHIN means the node supports Xtreme Thinblocks
-    // If this is turned off then the node will not service nor make xthin requests
-    NODE_XTHIN = (1 << 4),
-
-    // Bits 24-31 are reserved for temporary experiments. Just pick a bit that
-    // isn't getting used, or one not being used much, and notify the
-    // komodo-development mailing list. Remember that service bits are just
-    // unauthenticated advertisements, so your code must be robust against
-    // collisions and other cases where nodes may be advertising a service they
-    // do not actually support. Other service bits should be allocated via the
-    // BIP process.
-};
 
 /** Message header.
  * (4) message start.
@@ -72,7 +40,7 @@ public:
     ADD_SERIALIZE_METHODS;
 
     template <typename Stream, typename Operation>
-    inline void SerializationOp(Stream& s, Operation ser_action, int nType, int nVersion)
+    inline void SerializationOp(Stream& s, Operation ser_action)
     {
         READWRITE(FLATDATA(pchMessageStart));
         READWRITE(FLATDATA(pchCommand));
@@ -97,6 +65,26 @@ public:
     unsigned int nChecksum;
 };
 
+/** nServices flags */
+enum {
+    // NODE_NETWORK means that the node is capable of serving the block chain. It is currently
+    // set by all Bitcoin Core nodes, and is unset by SPV clients or other peers that just want
+    // network services but don't provide them.
+    NODE_NETWORK = (1 << 0),
+    // NODE_BLOOM means the node is capable and willing to handle bloom-filtered connections.
+    // Zcash nodes used to support this by default, without advertising this bit,
+    // but no longer do as of protocol version 170004 (= NO_BLOOM_VERSION)
+    NODE_BLOOM = (1 << 2),
+
+    // Bits 24-31 are reserved for temporary experiments. Just pick a bit that
+    // isn't getting used, or one not being used much, and notify the
+    // bitcoin-development mailing list. Remember that service bits are just
+    // unauthenticated advertisements, so your code must be robust against
+    // collisions and other cases where nodes may be advertising a service they
+    // do not actually support. Other service bits should be allocated via the
+    // BIP process.
+};
+
 /** A CService with information about it as peer */
 class CAddress : public CService
 {
@@ -109,14 +97,15 @@ public:
     ADD_SERIALIZE_METHODS;
 
     template <typename Stream, typename Operation>
-    inline void SerializationOp(Stream& s, Operation ser_action, int nType, int nVersion)
+    inline void SerializationOp(Stream& s, Operation ser_action)
     {
         if (ser_action.ForRead())
             Init();
-        if (nType & SER_DISK)
+        int nVersion = s.GetVersion();
+        if (s.GetType() & SER_DISK)
             READWRITE(nVersion);
-        if ((nType & SER_DISK) ||
-            (nVersion >= CADDR_TIME_VERSION && !(nType & SER_GETHASH)))
+        if ((s.GetType() & SER_DISK) ||
+            (nVersion >= CADDR_TIME_VERSION && !(s.GetType() & SER_GETHASH)))
             READWRITE(nTime);
         READWRITE(nServices);
         READWRITE(*(CService*)this);
@@ -141,7 +130,7 @@ public:
     ADD_SERIALIZE_METHODS;
 
     template <typename Stream, typename Operation>
-    inline void SerializationOp(Stream& s, Operation ser_action, int nType, int nVersion)
+    inline void SerializationOp(Stream& s, Operation ser_action)
     {
         READWRITE(type);
         READWRITE(hash);
@@ -167,4 +156,4 @@ enum {
     MSG_FILTERED_BLOCK,
 };
 
-#endif // KOMODO_PROTOCOL_H
+#endif // BITCOIN_PROTOCOL_H

@@ -1,5 +1,5 @@
 // Copyright (c) 2009-2010 Satoshi Nakamoto
-// Copyright (c) 2009-2014 The Komodo Core developers
+// Copyright (c) 2009-2014 The Bitcoin Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -18,7 +18,9 @@ enum isminetype
     ISMINE_NO = 0,
     ISMINE_WATCH_ONLY = 1,
     ISMINE_SPENDABLE = 2,
-    ISMINE_ALL = ISMINE_WATCH_ONLY | ISMINE_SPENDABLE
+    ISMINE_CHANGE = 4,
+    ISMINE_ALL = ISMINE_WATCH_ONLY | ISMINE_SPENDABLE,
+    ISMINE_ALLANDCHANGE = ISMINE_ALL | ISMINE_CHANGE
 };
 /** used for bitflags of isminetype */
 typedef uint8_t isminefilter;

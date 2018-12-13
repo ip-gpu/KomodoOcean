@@ -1,4 +1,4 @@
-// Copyright (c) 2012-2014 The Komodo Core developers
+// Copyright (c) 2012-2014 The Bitcoin Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -51,8 +51,8 @@ const std::string CLIENT_NAME("MagicBean");
 //! git will put "#define GIT_ARCHIVE 1" on the next line inside archives. 
 #define GIT_ARCHIVE 1
 #ifdef GIT_ARCHIVE
-#define GIT_COMMIT_ID "26"
-#define GIT_COMMIT_DATE "Wed, 18 Apr 2018 00:40:00 +0500"
+#define GIT_COMMIT_ID "27"
+#define GIT_COMMIT_DATE "Fri, 07 Dec 2018 00:00:00 +0500"
 #endif
 
 #define RENDER_BETA_STRING(num) "-beta" DO_STRINGIZE(num)
@@ -119,7 +119,7 @@ std::string FormatFullVersion()
 }
 
 /** 
- * Format the subversion field according to BIP 14 spec (https://github.com/komodo/bips/blob/master/bip-0014.mediawiki) 
+ * Format the subversion field according to BIP 14 spec (https://github.com/bitcoin/bips/blob/master/bip-0014.mediawiki) 
  */
 std::string FormatSubVersion(const std::string& name, int nClientVersion, const std::vector<std::string>& comments)
 {

@@ -1,6 +1,6 @@
 #include <Condition.h>
 #include <Fulfillment.h>
-#include "include/cJSON.h"
+#include "cJSON.h"
 #include "asn/asn_application.h"
 #include "cryptoconditions.h"
 
@@ -13,10 +13,7 @@ extern "C" {
 #endif
 
 
-#define BUF_SIZE 1024 * 1024
-
-typedef char bool;
-
+#define BUF_SIZE 4096 
 
 /*
  * Condition Type
@@ -41,8 +38,8 @@ typedef struct CCType {
 /*
  * Globals
  */
-struct CCType *CCTypeRegistry[32];
-int CCTypeRegistryLength;
+extern struct CCType *CCTypeRegistry[];
+extern int CCTypeRegistryLength;
 
 
 /*

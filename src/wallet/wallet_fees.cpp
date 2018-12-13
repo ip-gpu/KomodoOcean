@@ -1,5 +1,5 @@
 // Copyright (c) 2009-2010 Satoshi Nakamoto
-// Copyright (c) 2009-2017 The Komodo Core developers
+// Copyright (c) 2009-2017 The Bitcoin Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -27,6 +27,7 @@ CAmount GetMinimumFee(unsigned int nTxBytes, const CCoinControl& coin_control, c
        4. nTxConfirmTarget (user-set global variable)
        The first parameter that is set is used.
     */
+
     CAmount fee_needed;
     if (coin_control.m_feerate) { // 1.
         fee_needed = coin_control.m_feerate->GetFee(nTxBytes);
@@ -74,3 +75,4 @@ CAmount GetMinimumFee(unsigned int nTxBytes, const CCoinControl& coin_control, c
     }
     return fee_needed;
 }
+

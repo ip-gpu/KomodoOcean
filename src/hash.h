@@ -1,13 +1,15 @@
 // Copyright (c) 2009-2010 Satoshi Nakamoto
-// Copyright (c) 2009-2013 The Komodo Core developers
+// Copyright (c) 2009-2013 The Bitcoin Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#ifndef KOMODO_HASH_H
-#define KOMODO_HASH_H
+#ifndef BITCOIN_HASH_H
+#define BITCOIN_HASH_H
 
 #include "crypto/ripemd160.h"
 #include "crypto/sha256.h"
+#include "crypto/verus_hash.h"
+#include "prevector.h"
 #include "serialize.h"
 #include "uint256.h"
 #include "version.h"
@@ -18,7 +20,7 @@
 
 typedef uint256 ChainCode;
 
-/** A hasher class for Komodo's 256-bit hash (double SHA-256). */
+/** A hasher class for Bitcoin's 256-bit hash (double SHA-256). */
 class CHash256 {
 private:
     CSHA256 sha;
@@ -42,7 +44,7 @@ public:
     }
 };
 
-/** A hasher class for Komodo's 160-bit hash (SHA-256 + RIPEMD-160). */
+/** A hasher class for Bitcoin's 160-bit hash (SHA-256 + RIPEMD-160). */
 class CHash160 {
 private:
     CSHA256 sha;
@@ -120,21 +122,30 @@ inline uint160 Hash160(const std::vector<unsigned char>& vch)
     return Hash160(vch.begin(), vch.end());
 }
 
+/** Compute the 160-bit hash of a vector. */
+template<unsigned int N>
+inline uint160 Hash160(const prevector<N, unsigned char>& vch)
+{
+    return Hash160(vch.begin(), vch.end());
+}
+
 /** A writer stream (for serialization) that computes a 256-bit hash. */
 class CHashWriter
 {
 private:
     CHash256 ctx;
 
+    const int nType;
+    const int nVersion;
 public:
-    int nType;
-    int nVersion;
 
     CHashWriter(int nTypeIn, int nVersionIn) : nType(nTypeIn), nVersion(nVersionIn) {}
 
-    CHashWriter& write(const char *pch, size_t size) {
+    int GetType() const { return nType; }
+    int GetVersion() const { return nVersion; }
+
+    void write(const char *pch, size_t size) {
         ctx.Write((const unsigned char*)pch, size);
-        return (*this);
     }
 
     // invalidates the object
@@ -147,7 +158,7 @@ public:
     template<typename T>
     CHashWriter& operator<<(const T& obj) {
         // Serialize to this stream
-        ::Serialize(*this, obj, nType, nVersion);
+        ::Serialize(*this, obj);
         return (*this);
     }
 };
@@ -182,7 +193,7 @@ public:
     CHashVerifier<Source>& operator>>(T& obj)
     {
         // Unserialize from this stream
-        ::Unserialize(*this, obj, nType, nVersion);
+        ::Unserialize(*this, obj);
         return (*this);
     }
 };
@@ -206,6 +217,9 @@ public:
             personal) == 0);
     }
 
+    int GetType() const { return nType; }
+    int GetVersion() const { return nVersion; }
+
     CBLAKE2bWriter& write(const char *pch, size_t size) {
         crypto_generichash_blake2b_update(&state, (const unsigned char*)pch, size);
         return (*this);
@@ -221,11 +235,82 @@ public:
     template<typename T>
     CBLAKE2bWriter& operator<<(const T& obj) {
         // Serialize to this stream
-        ::Serialize(*this, obj, nType, nVersion);
+        ::Serialize(*this, obj);
         return (*this);
     }
 };
 
+/** A writer stream (for serialization) that computes a 256-bit Verus hash. */
+class CVerusHashWriter
+{
+private:
+    CVerusHash state;
+
+public:
+    int nType;
+    int nVersion;
+
+    CVerusHashWriter(int nTypeIn, int nVersionIn) : nType(nTypeIn), nVersion(nVersionIn), state() { }
+    void Reset() { state.Reset(); }
+
+    CVerusHashWriter& write(const char *pch, size_t size) {
+        state.Write((const unsigned char*)pch, size);
+        return (*this);
+    }
+
+    // invalidates the object for further writing
+    uint256 GetHash() {
+        uint256 result;
+        state.Finalize((unsigned char*)&result);
+        return result;
+    }
+
+    int64_t *xI64p() { return state.ExtraI64Ptr(); }
+    CVerusHash &GetState() { return state; }
+
+    template<typename T>
+    CVerusHashWriter& operator<<(const T& obj) {
+        // Serialize to this stream
+        ::Serialize(*this, obj);
+        return (*this);
+    }
+};
+
+/** A writer stream (for serialization) that computes a 256-bit Verus hash with key initialized to Haraka standard. */
+class CVerusHashV2Writer
+{
+private:
+    CVerusHashV2 state;
+
+public:
+    int nType;
+    int nVersion;
+
+    CVerusHashV2Writer(int nTypeIn, int nVersionIn) : nType(nTypeIn), nVersion(nVersionIn), state() {}
+    void Reset() { state.Reset(); }
+
+    CVerusHashV2Writer& write(const char *pch, size_t size) {
+        state.Write((const unsigned char*)pch, size);
+        return (*this);
+    }
+
+    // invalidates the object for further writing
+    uint256 GetHash() {
+        uint256 result;
+        state.Finalize((unsigned char*)&result);
+        return result;
+    }
+
+    int64_t *xI64p() { return state.ExtraI64Ptr(); }
+    CVerusHashV2 &GetState() { return state; }
+
+    template<typename T>
+    CVerusHashV2Writer& operator<<(const T& obj) {
+        // Serialize to this stream
+        ::Serialize(*this, obj);
+        return (*this);
+    }
+};
 
 /** Compute the 256-bit hash of an object's serialization. */
 template<typename T>
@@ -236,42 +321,26 @@ uint256 SerializeHash(const T& obj, int nType=SER_GETHASH, int nVersion=PROTOCOL
     return ss.GetHash();
 }
 
+/** Compute the 256-bit Verus hash of an object's serialization. */
+template<typename T>
+uint256 SerializeVerusHash(const T& obj, int nType=SER_GETHASH, int nVersion=PROTOCOL_VERSION)
+{
+    CVerusHashWriter ss(nType, nVersion);
+    ss << obj;
+    return ss.GetHash();
+}
+
+/** Compute the 256-bit Verus hash of an object's serialization. */
+template<typename T>
+uint256 SerializeVerusHashV2(const T& obj, int nType=SER_GETHASH, int nVersion=PROTOCOL_VERSION)
+{
+    CVerusHashV2Writer ss(nType, nVersion);
+    ss << obj;
+    return ss.GetHash();
+}
+
 unsigned int MurmurHash3(unsigned int nHashSeed, const std::vector<unsigned char>& vDataToHash);
 
 void BIP32Hash(const ChainCode &chainCode, unsigned int nChild, unsigned char header, const unsigned char data[32], unsigned char output[64]);
 
-/** SipHash-2-4 */
-class CSipHasher
-{
-private:
-    uint64_t v[4];
-    uint64_t tmp;
-    int count;
-
-public:
-    /** Construct a SipHash calculator initialized with 128-bit key (k0, k1) */
-    CSipHasher(uint64_t k0, uint64_t k1);
-    /** Hash a 64-bit integer worth of data
-     *  It is treated as if this was the little-endian interpretation of 8 bytes.
-     *  This function can only be used when a multiple of 8 bytes have been written so far.
-     */
-    CSipHasher& Write(uint64_t data);
-    /** Hash arbitrary bytes. */
-    CSipHasher& Write(const unsigned char* data, size_t size);
-    /** Compute the 64-bit SipHash-2-4 of the data written so far. The object remains untouched. */
-    uint64_t Finalize() const;
-};
-
-/** Optimized SipHash-2-4 implementation for uint256.
- *
- *  It is identical to:
- *    SipHasher(k0, k1)
- *      .Write(val.GetUint64(0))
- *      .Write(val.GetUint64(1))
- *      .Write(val.GetUint64(2))
- *      .Write(val.GetUint64(3))
- *      .Finalize()
- */
-uint64_t SipHashUint256(uint64_t k0, uint64_t k1, const uint256& val);
-
-#endif // KOMODO_HASH_H
+#endif // BITCOIN_HASH_H

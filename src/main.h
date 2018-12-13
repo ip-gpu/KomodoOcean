@@ -1,10 +1,10 @@
 // Copyright (c) 2009-2010 Satoshi Nakamoto
-// Copyright (c) 2009-2014 The Komodo Core developers
+// Copyright (c) 2009-2014 The Bitcoin Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#ifndef KOMODO_MAIN_H
-#define KOMODO_MAIN_H
+#ifndef BITCOIN_MAIN_H
+#define BITCOIN_MAIN_H
 
 #if defined(HAVE_CONFIG_H)
 #include "config/komodo-config.h"
@@ -22,6 +22,8 @@
 #include "script/script.h"
 #include "script/serverchecker.h"
 #include "script/standard.h"
+#include "script/script_ext.h"
+#include "spentindex.h"
 #include "sync.h"
 #include "tinyformat.h"
 #include "txmempool.h"
@@ -52,7 +54,7 @@ struct CNodeStateStats;
 #define _COINBASE_MATURITY 100
 
 /** Default for -blockmaxsize and -blockminsize, which control the range of sizes the mining code will create **/
-static const unsigned int DEFAULT_BLOCK_MAX_SIZE = MAX_BLOCK_SIZE;
+static const unsigned int DEFAULT_BLOCK_MAX_SIZE = 2000000;//MAX_BLOCK_SIZE;
 static const unsigned int DEFAULT_BLOCK_MIN_SIZE = 0;
 /** Default for -blockprioritysize, maximum space for zero/low-fee transactions **/
 static const unsigned int DEFAULT_BLOCK_PRIORITY_SIZE = DEFAULT_BLOCK_MAX_SIZE / 2;
@@ -100,9 +102,18 @@ static const unsigned int DATABASE_WRITE_INTERVAL = 60 * 60;
 static const unsigned int DATABASE_FLUSH_INTERVAL = 24 * 60 * 60;
 /** Maximum length of reject messages. */
 static const unsigned int MAX_REJECT_MESSAGE_LENGTH = 111;
+static const int64_t DEFAULT_MAX_TIP_AGE = 24 * 60 * 60;
+
+//static const bool DEFAULT_ADDRESSINDEX = false;
+//static const bool DEFAULT_SPENTINDEX = false;
+#define DEFAULT_ADDRESSINDEX (GetArg("-ac_cc",0) != 0 || GetArg("-ac_ccactivate",0) != 0)
+#define DEFAULT_SPENTINDEX (GetArg("-ac_cc",0) != 0 || GetArg("-ac_ccactivate",0) != 0)
+static const bool DEFAULT_TIMESTAMPINDEX = false;
+static const unsigned int DEFAULT_DB_MAX_OPEN_FILES = 1000;
+static const bool DEFAULT_DB_COMPRESSION = true;
 
 // Sanity check the magic numbers when we change them
-BOOST_STATIC_ASSERT(DEFAULT_BLOCK_MAX_SIZE <= MAX_BLOCK_SIZE);
+//BOOST_STATIC_ASSERT(DEFAULT_BLOCK_MAX_SIZE <= MAX_BLOCK_SIZE());
 BOOST_STATIC_ASSERT(DEFAULT_BLOCK_PRIORITY_SIZE <= DEFAULT_BLOCK_MAX_SIZE);
 
 #define equihash_parameters_acceptable(N, K) \
@@ -140,6 +151,7 @@ extern bool fCoinbaseEnforcedProtectionEnabled;
 extern size_t nCoinCacheUsage;
 extern CFeeRate minRelayTxFee;
 extern bool fAlerts;
+extern int64_t nMaxTipAge;
 
 /** Best header we've seen so far (used for getheaders queries' starting points). */
 extern CBlockIndex *pindexBestHeader;
@@ -172,11 +184,11 @@ void RegisterNodeSignals(CNodeSignals& nodeSignals);
 /** Unregister a network node */
 void UnregisterNodeSignals(CNodeSignals& nodeSignals);
 
-/** 
+/**
  * Process an incoming block. This only returns after the best known valid
  * block is made active. Note that it does not, however, guarantee that the
  * specific block passed to it has been checked for validity!
- * 
+ *
  * @param[out]  state   This may be set to an Error state if any error occurred processing it, including during validation/connection/etc of otherwise unrelated blocks during reorganisation; or it may be set to an Invalid state if pblock is itself invalid (but this is not guaranteed even when the block is checked). If you want to *possibly* get feedback on whether pblock is valid, you must also install a CValidationInterface (see validationinterface.h) - this will have its BlockChecked method called whenever *any* block completes validation.
  * @param[in]   pfrom   The node which we are receiving the block from; it is added to mapBlockSource and may be penalised if the block is invalid.
  * @param[in]   pblock  The block we want to process.
@@ -216,6 +228,10 @@ void ThreadScriptCheck();
 void PartitionCheck(bool (*initialDownloadCheck)(), CCriticalSection& cs, const CBlockIndex *const &bestHeader, int64_t nPowTargetSpacing);
 /** Check whether we are doing an initial block download (synchronizing from disk or network) */
 bool IsInitialBlockDownload();
+/** Check if the daemon is in sync, if not, it returns 1 or if due to best header only, the difference in best
+ * header and activeChain tip
+ */
+int IsNotInSync();
 /** Format a string that describes several potential problems detected by the core */
 std::string GetWarnings(const std::string& strFor);
 /** Retrieve a transaction (from memory pool, or from disk, if possible) */
@@ -259,7 +275,7 @@ void PruneAndFlush();
 
 /** (try to) add transaction to memory pool **/
 bool AcceptToMemoryPool(CTxMemPool& pool, CValidationState &state, const CTransaction &tx, bool fLimitFree,
-                        bool* pfMissingInputs, bool fRejectAbsurdFee=false);
+                        bool* pfMissingInputs, bool fRejectAbsurdFee=false, int dosLevel=-1);
 
 
 struct CNodeStateStats {
@@ -269,6 +285,338 @@ struct CNodeStateStats {
     std::vector<int> vHeightInFlight;
 };
 
+struct CTimestampIndexIteratorKey {
+    unsigned int timestamp;
+
+    size_t GetSerializeSize(int nType, int nVersion) const {
+        return 4;
+    }
+    template<typename Stream>
+    void Serialize(Stream& s) const {
+        ser_writedata32be(s, timestamp);
+    }
+    template<typename Stream>
+    void Unserialize(Stream& s) {
+        timestamp = ser_readdata32be(s);
+    }
+
+    CTimestampIndexIteratorKey(unsigned int time) {
+        timestamp = time;
+    }
+
+    CTimestampIndexIteratorKey() {
+        SetNull();
+    }
+
+    void SetNull() {
+        timestamp = 0;
+    }
+};
+
+struct CTimestampIndexKey {
+    unsigned int timestamp;
+    uint256 blockHash;
+
+    size_t GetSerializeSize(int nType, int nVersion) const {
+        return 36;
+    }
+    template<typename Stream>
+    void Serialize(Stream& s) const {
+        ser_writedata32be(s, timestamp);
+        blockHash.Serialize(s);
+    }
+    template<typename Stream>
+    void Unserialize(Stream& s) {
+        timestamp = ser_readdata32be(s);
+        blockHash.Unserialize(s);
+    }
+
+    CTimestampIndexKey(unsigned int time, uint256 hash) {
+        timestamp = time;
+        blockHash = hash;
+    }
+
+    CTimestampIndexKey() {
+        SetNull();
+    }
+
+    void SetNull() {
+        timestamp = 0;
+        blockHash.SetNull();
+    }
+};
+
+struct CTimestampBlockIndexKey {
+    uint256 blockHash;
+
+    size_t GetSerializeSize(int nType, int nVersion) const {
+        return 32;
+    }
+
+    template<typename Stream>
+    void Serialize(Stream& s) const {
+        blockHash.Serialize(s);
+    }
+
+    template<typename Stream>
+    void Unserialize(Stream& s) {
+        blockHash.Unserialize(s);
+    }
+
+    CTimestampBlockIndexKey(uint256 hash) {
+        blockHash = hash;
+    }
+
+    CTimestampBlockIndexKey() {
+        SetNull();
+    }
+
+    void SetNull() {
+        blockHash.SetNull();
+    }
+};
+
+struct CTimestampBlockIndexValue {
+    unsigned int ltimestamp;
+    size_t GetSerializeSize(int nType, int nVersion) const {
+        return 4;
+    }
+
+    template<typename Stream>
+    void Serialize(Stream& s) const {
+        ser_writedata32be(s, ltimestamp);
+    }
+
+    template<typename Stream>
+    void Unserialize(Stream& s) {
+        ltimestamp = ser_readdata32be(s);
+    }
+
+    CTimestampBlockIndexValue (unsigned int time) {
+        ltimestamp = time;
+    }
+
+    CTimestampBlockIndexValue() {
+        SetNull();
+    }
+
+    void SetNull() {
+        ltimestamp = 0;
+    }
+};
+
+struct CAddressUnspentKey {
+    unsigned int type;
+    uint160 hashBytes;
+    uint256 txhash;
+    size_t index;
+
+    size_t GetSerializeSize(int nType, int nVersion) const {
+        return 57;
+    }
+    template<typename Stream>
+    void Serialize(Stream& s) const {
+        ser_writedata8(s, type);
+        hashBytes.Serialize(s);
+        txhash.Serialize(s);
+        ser_writedata32(s, index);
+    }
+    template<typename Stream>
+    void Unserialize(Stream& s) {
+        type = ser_readdata8(s);
+        hashBytes.Unserialize(s);
+        txhash.Unserialize(s);
+        index = ser_readdata32(s);
+    }
+
+    CAddressUnspentKey(unsigned int addressType, uint160 addressHash, uint256 txid, size_t indexValue) {
+        type = addressType;
+        hashBytes = addressHash;
+        txhash = txid;
+        index = indexValue;
+    }
+
+    CAddressUnspentKey() {
+        SetNull();
+    }
+
+    void SetNull() {
+        type = 0;
+        hashBytes.SetNull();
+        txhash.SetNull();
+        index = 0;
+    }
+};
+
+struct  CAddressUnspentValue {
+    CAmount satoshis;
+    CScript script;
+    int blockHeight;
+
+    ADD_SERIALIZE_METHODS;
+
+    template <typename Stream, typename Operation>
+    inline void SerializationOp(Stream& s, Operation ser_action) {
+        READWRITE(satoshis);
+        READWRITE(*(CScriptBase*)(&script));
+        READWRITE(blockHeight);
+    }
+
+    CAddressUnspentValue(CAmount sats, CScript scriptPubKey, int height) {
+        satoshis = sats;
+        script = scriptPubKey;
+        blockHeight = height;
+    }
+
+    CAddressUnspentValue() {
+        SetNull();
+    }
+
+    void SetNull() {
+        satoshis = -1;
+        script.clear();
+        blockHeight = 0;
+    }
+
+    bool IsNull() const {
+        return (satoshis == -1);
+    }
+};
+
+struct CAddressIndexKey {
+    unsigned int type;
+    uint160 hashBytes;
+    int blockHeight;
+    unsigned int txindex;
+    uint256 txhash;
+    size_t index;
+    bool spending;
+
+    size_t GetSerializeSize(int nType, int nVersion) const {
+        return 66;
+    }
+    template<typename Stream>
+    void Serialize(Stream& s) const {
+        ser_writedata8(s, type);
+        hashBytes.Serialize(s);
+        // Heights are stored big-endian for key sorting in LevelDB
+        ser_writedata32be(s, blockHeight);
+        ser_writedata32be(s, txindex);
+        txhash.Serialize(s);
+        ser_writedata32(s, index);
+        char f = spending;
+        ser_writedata8(s, f);
+    }
+    template<typename Stream>
+    void Unserialize(Stream& s) {
+        type = ser_readdata8(s);
+        hashBytes.Unserialize(s);
+        blockHeight = ser_readdata32be(s);
+        txindex = ser_readdata32be(s);
+        txhash.Unserialize(s);
+        index = ser_readdata32(s);
+        char f = ser_readdata8(s);
+        spending = f;
+    }
+
+    CAddressIndexKey(unsigned int addressType, uint160 addressHash, int height, int blockindex,
+                     uint256 txid, size_t indexValue, bool isSpending) {
+        type = addressType;
+        hashBytes = addressHash;
+        blockHeight = height;
+        txindex = blockindex;
+        txhash = txid;
+        index = indexValue;
+        spending = isSpending;
+    }
+
+    CAddressIndexKey() {
+        SetNull();
+    }
+
+    void SetNull() {
+        type = 0;
+        hashBytes.SetNull();
+        blockHeight = 0;
+        txindex = 0;
+        txhash.SetNull();
+        index = 0;
+        spending = false;
+    }
+
+};
+
+struct CAddressIndexIteratorKey {
+    unsigned int type;
+    uint160 hashBytes;
+
+    size_t GetSerializeSize(int nType, int nVersion) const {
+        return 21;
+    }
+    template<typename Stream>
+    void Serialize(Stream& s) const {
+        ser_writedata8(s, type);
+        hashBytes.Serialize(s);
+    }
+    template<typename Stream>
+    void Unserialize(Stream& s) {
+        type = ser_readdata8(s);
+        hashBytes.Unserialize(s);
+    }
+
+    CAddressIndexIteratorKey(unsigned int addressType, uint160 addressHash) {
+        type = addressType;
+        hashBytes = addressHash;
+    }
+
+    CAddressIndexIteratorKey() {
+        SetNull();
+    }
+
+    void SetNull() {
+        type = 0;
+        hashBytes.SetNull();
+    }
+};
+
+struct CAddressIndexIteratorHeightKey {
+    unsigned int type;
+    uint160 hashBytes;
+    int blockHeight;
+
+    size_t GetSerializeSize(int nType, int nVersion) const {
+        return 25;
+    }
+    template<typename Stream>
+    void Serialize(Stream& s) const {
+        ser_writedata8(s, type);
+        hashBytes.Serialize(s);
+        ser_writedata32be(s, blockHeight);
+    }
+    template<typename Stream>
+    void Unserialize(Stream& s) {
+        type = ser_readdata8(s);
+        hashBytes.Unserialize(s);
+        blockHeight = ser_readdata32be(s);
+    }
+
+    CAddressIndexIteratorHeightKey(unsigned int addressType, uint160 addressHash, int height) {
+        type = addressType;
+        hashBytes = addressHash;
+        blockHeight = height;
+    }
+
+    CAddressIndexIteratorHeightKey() {
+        SetNull();
+    }
+
+    void SetNull() {
+        type = 0;
+        hashBytes.SetNull();
+        blockHeight = 0;
+    }
+};
+
 struct CDiskTxPos : public CDiskBlockPos
 {
     unsigned int nTxOffset; // after header
@@ -276,7 +624,7 @@ struct CDiskTxPos : public CDiskBlockPos
     ADD_SERIALIZE_METHODS;
 
     template <typename Stream, typename Operation>
-    inline void SerializationOp(Stream& s, Operation ser_action, int nType, int nVersion) {
+    inline void SerializationOp(Stream& s, Operation ser_action) {
         READWRITE(*(CDiskBlockPos*)this);
         READWRITE(VARINT(nTxOffset));
     }
@@ -294,13 +642,12 @@ struct CDiskTxPos : public CDiskBlockPos
     }
 };
 
-
 CAmount GetMinRelayFee(const CTransaction& tx, unsigned int nBytes, bool fAllowFree);
 
 /**
  * Check transaction inputs, and make sure any
  * pay-to-script-hash transactions are evaluating IsStandard scripts
- * 
+ *
  * Why bother? To avoid denial-of-service attacks; an attacker
  * can submit a standard HASH... OP_EQUAL transaction,
  * which will get accepted into blocks. The redemption
@@ -309,14 +656,14 @@ CAmount GetMinRelayFee(const CTransaction& tx, unsigned int nBytes, bool fAllowF
  *   DUP CHECKSIG DROP ... repeated 100 times... OP_1
  */
 
-/** 
+/**
  * Check for standard transaction types
  * @param[in] mapInputs    Map of previous transactions that have outputs we're spending
  * @return True if all inputs (scriptSigs) use only standard transaction forms
  */
 bool AreInputsStandard(const CTransaction& tx, const CCoinsViewCache& mapInputs, uint32_t consensusBranchId);
 
-/** 
+/**
  * Count ECDSA signature operations the old-fashioned (pre-0.6) way
  * @return number of sigops this transaction's outputs will produce when spent
  * @see CTransaction::FetchInputs
@@ -325,7 +672,7 @@ unsigned int GetLegacySigOpCount(const CTransaction& tx);
 
 /**
  * Count ECDSA signature operations in pay-to-script-hash inputs.
- * 
+ *
  * @param[in] mapInputs Map of previous transactions that have outputs we're spending
  * @return maximum number of sigops required to validate this transaction's inputs
  * @see CTransaction::FetchInputs
@@ -344,7 +691,8 @@ bool ContextualCheckInputs(const CTransaction& tx, CValidationState &state, cons
                            std::vector<CScriptCheck> *pvChecks = NULL);
 
 /** Check a transaction contextually against a set of consensus rules */
-bool ContextualCheckTransaction(const CTransaction& tx, CValidationState &state, int nHeight, int dosLevel);
+bool ContextualCheckTransaction(const CTransaction& tx, CValidationState &state, int nHeight, int dosLevel,
+                                bool (*isInitBlockDownload)() = IsInitialBlockDownload);
 
 /** Apply the effects of this transaction on the UTXO set represented by view */
 void UpdateCoins(const CTransaction& tx, CCoinsViewCache& inputs, int nHeight);
@@ -352,8 +700,8 @@ void UpdateCoins(const CTransaction& tx, CCoinsViewCache& inputs, int nHeight);
 /** Transaction validation functions */
 
 /** Context-independent validity checks */
-bool CheckTransaction(const CTransaction& tx, CValidationState& state, libzcash::ProofVerifier& verifier);
-bool CheckTransactionWithoutProofVerification(const CTransaction& tx, CValidationState &state);
+bool CheckTransaction(uint32_t tiptime,const CTransaction& tx, CValidationState& state, libzcash::ProofVerifier& verifier);
+bool CheckTransactionWithoutProofVerification(uint32_t tiptime,const CTransaction& tx, CValidationState &state);
 
 /** Check for standard transaction types
  * @return True if all outputs (scriptPubKeys) use only standard transaction forms
@@ -392,9 +740,9 @@ bool IsExpiredTx(const CTransaction &tx, int nBlockHeight);
  */
 bool CheckFinalTx(const CTransaction &tx, int flags = -1);
 
-/** 
+/**
  * Closure representing one script verification
- * Note that this stores references to the spending transaction 
+ * Note that this stores references to the spending transaction
  */
 class CScriptCheck
 {
@@ -412,9 +760,9 @@ private:
 public:
     CScriptCheck(): amount(0), ptxTo(0), nIn(0), nFlags(0), cacheStore(false), consensusBranchId(0), error(SCRIPT_ERR_UNKNOWN_ERROR) {}
     CScriptCheck(const CCoins& txFromIn, const CTransaction& txToIn, unsigned int nInIn, unsigned int nFlagsIn, bool cacheIn, uint32_t consensusBranchIdIn, PrecomputedTransactionData* txdataIn) :
-        scriptPubKey(txFromIn.vout[txToIn.vin[nInIn].prevout.n].scriptPubKey), amount(txFromIn.vout[txToIn.vin[nInIn].prevout.n].nValue),
+        scriptPubKey(CCoinsViewCache::GetSpendFor(&txFromIn, txToIn.vin[nInIn])), amount(txFromIn.vout[txToIn.vin[nInIn].prevout.n].nValue),
         ptxTo(&txToIn), nIn(nInIn), nFlags(nFlagsIn), cacheStore(cacheIn), consensusBranchId(consensusBranchIdIn), error(SCRIPT_ERR_UNKNOWN_ERROR), txdata(txdataIn) { }
- 
+
     bool operator()();
 
     void swap(CScriptCheck &check) {
@@ -432,11 +780,18 @@ public:
     ScriptError GetScriptError() const { return error; }
 };
 
+bool GetTimestampIndex(const unsigned int &high, const unsigned int &low, const bool fActiveOnly, std::vector<std::pair<uint256, unsigned int> > &hashes);
+bool GetSpentIndex(CSpentIndexKey &key, CSpentIndexValue &value);
+bool GetAddressIndex(uint160 addressHash, int type,
+                     std::vector<std::pair<CAddressIndexKey, CAmount> > &addressIndex,
+                     int start = 0, int end = 0);
+bool GetAddressUnspent(uint160 addressHash, int type,
+                       std::vector<std::pair<CAddressUnspentKey, CAddressUnspentValue> > &unspentOutputs);
 
 /** Functions for disk access for blocks */
 bool WriteBlockToDisk(CBlock& block, CDiskBlockPos& pos, const CMessageHeader::MessageStartChars& messageStart);
-bool ReadBlockFromDisk(CBlock& block, const CDiskBlockPos& pos);
-bool ReadBlockFromDisk(CBlock& block, const CBlockIndex* pindex);
+bool ReadBlockFromDisk(CBlock& block, const CDiskBlockPos& pos,bool checkPOW);
+bool ReadBlockFromDisk(CBlock& block, const CBlockIndex* pindex,bool checkPOW);
 
 
 /** Functions for validating blocks and updating the block tree */
@@ -473,12 +828,17 @@ bool TestBlockValidity(CValidationState &state, const CBlock& block, CBlockIndex
 bool AcceptBlock(int32_t *futureblockp,CBlock& block, CValidationState& state, CBlockIndex **pindex, bool fRequested, CDiskBlockPos* dbp);
 bool AcceptBlockHeader(int32_t *futureblockp,const CBlockHeader& block, CValidationState& state, CBlockIndex **ppindex= NULL);
 
+
+
 /**
  * When there are blocks in the active chain with missing data (e.g. if the
  * activation height and branch ID of a particular upgrade have been altered),
  * rewind the chainstate and remove them from the block index.
+ *
+ * clearWitnessCaches is an output parameter that will be set to true iff
+ * witness caches should be cleared in order to handle an intended long rewind.
  */
-bool RewindBlockIndex(const CChainParams& params);
+bool RewindBlockIndex(const CChainParams& params, bool& clearWitnessCaches);
 
 class CBlockFileInfo
 {
@@ -494,7 +854,7 @@ public:
     ADD_SERIALIZE_METHODS;
 
     template <typename Stream, typename Operation>
-    inline void SerializationOp(Stream& s, Operation ser_action, int nType, int nVersion) {
+    inline void SerializationOp(Stream& s, Operation ser_action) {
         READWRITE(VARINT(nBlocks));
         READWRITE(VARINT(nSize));
         READWRITE(VARINT(nUndoSize));
@@ -567,7 +927,9 @@ extern CBlockTreeDB *pblocktree;
  */
 int GetSpendHeight(const CCoinsViewCache& inputs);
 
+uint64_t CalculateCurrentUsage();
+
 /** Return a CMutableTransaction with contextual default values based on set of consensus rules at height */
 CMutableTransaction CreateNewContextualCMutableTransaction(const Consensus::Params& consensusParams, int nHeight);
 
-#endif // KOMODO_MAIN_H
+#endif // BITCOIN_MAIN_H

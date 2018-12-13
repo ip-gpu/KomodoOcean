@@ -1,11 +1,12 @@
 // Copyright (c) 2009-2010 Satoshi Nakamoto
-// Copyright (c) 2009-2014 The Komodo Core developers
+// Copyright (c) 2009-2014 The Bitcoin Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#ifndef KOMODO_POW_H
-#define KOMODO_POW_H
+#ifndef BITCOIN_POW_H
+#define BITCOIN_POW_H
 
+#include "chain.h"
 #include "consensus/params.h"
 
 #include <stdint.h>
@@ -21,14 +22,16 @@ unsigned int CalculateNextWorkRequired(arith_uint256 bnAvg,
                                        int64_t nLastBlockTime, int64_t nFirstBlockTime,
                                        const Consensus::Params&);
 
+unsigned int lwmaGetNextPOSRequired(const CBlockIndex* pindexLast, const Consensus::Params& params);
+
 /** Check whether the Equihash solution in a block header is valid */
 bool CheckEquihashSolution(const CBlockHeader *pblock, const CChainParams&);
 
 /** Check whether a block hash satisfies the proof-of-work requirement specified by nBits */
-bool CheckProofOfWork(int32_t height,uint8_t *pubkey33,uint256 hash, unsigned int nBits, const Consensus::Params&,uint32_t blocktime);
-arith_uint256 GetBlockProof(const CBlockIndex& block);
+bool CheckProofOfWork(const CBlockHeader &blkHeader, uint8_t *pubkey33, int32_t height, const Consensus::Params& params);
+CChainPower GetBlockProof(const CBlockIndex& block);
 
 /** Return the time it would take to redo the work difference between from and to, assuming the current hashrate corresponds to the difficulty at tip, in seconds. */
 int64_t GetBlockProofEquivalentTime(const CBlockIndex& to, const CBlockIndex& from, const CBlockIndex& tip, const Consensus::Params&);
 
-#endif // KOMODO_POW_H
+#endif // BITCOIN_POW_H

@@ -1,4 +1,4 @@
-// Copyright (c) 2011-2016 The Komodo Core developers
+// Copyright (c) 2011-2016 The Bitcoin Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -17,6 +17,7 @@
 #include "main.h"
 #include "wallet/db.h"
 #include "wallet/wallet.h"
+#include "key_io.h"
 
 #include <stdint.h>
 #include <string>

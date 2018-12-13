@@ -108,7 +108,7 @@ size_t cc_conditionBinary(const CC *cond, unsigned char *buf) {
     asnCondition(cond, asn);
     asn_enc_rval_t rc = der_encode_to_buffer(&asn_DEF_Condition, asn, buf, 1000);
     if (rc.encoded == -1) {
-        LogPrintf("CONDITION NOT ENCODED\n");
+        fprintf(stderr,"CONDITION NOT ENCODED\n");
         return 0;
     }
     ASN_STRUCT_FREE(asn_DEF_Condition, asn);
@@ -120,7 +120,7 @@ size_t cc_fulfillmentBinary(const CC *cond, unsigned char *buf, size_t length) {
     Fulfillment_t *ffill = asnFulfillmentNew(cond);
     asn_enc_rval_t rc = der_encode_to_buffer(&asn_DEF_Fulfillment, ffill, buf, length);
     if (rc.encoded == -1) {
-        LogPrintf("FULFILLMENT NOT ENCODED\n");
+        fprintf(stderr,"FULFILLMENT NOT ENCODED\n");
         return 0;
     }
     ASN_STRUCT_FREE(asn_DEF_Fulfillment, ffill);
@@ -173,7 +173,7 @@ CCType *getTypeByAsnEnum(Condition_PR present) {
 CC *fulfillmentToCC(Fulfillment_t *ffill) {
     CCType *type = getTypeByAsnEnum((Condition_PR)(ffill->present));
     if (!type) {
-        LogPrintf("Unknown fulfillment type: %i\n", ffill->present);
+        fprintf(stderr,"Unknown fulfillment type: %i\n", ffill->present);
         return 0;
     }
     return type->fromFulfillment(ffill);
@@ -191,7 +191,7 @@ CC *cc_readFulfillmentBinary(const unsigned char *ffill_bin, size_t ffill_bin_le
     // Do malleability check
     asn_enc_rval_t rc = der_encode_to_buffer(&asn_DEF_Fulfillment, ffill, buf, ffill_bin_len);
     if (rc.encoded == -1) {
-        LogPrintf("FULFILLMENT NOT ENCODED\n");
+        fprintf(stderr,"FULFILLMENT NOT ENCODED\n");
         goto end;
     }
     if (rc.encoded != ffill_bin_len || 0 != memcmp(ffill_bin, buf, rc.encoded)) {
@@ -203,6 +203,35 @@ end:
     free(buf);
     if (ffill) ASN_STRUCT_FREE(asn_DEF_Fulfillment, ffill);
     return cond;
+}
+
+int cc_readFulfillmentBinaryExt(const unsigned char *ffill_bin, size_t ffill_bin_len, CC **ppcc) {
+
+    int error = 0;
+    unsigned char *buf = (unsigned char *)calloc(1,ffill_bin_len);
+    Fulfillment_t *ffill = 0;
+    asn_dec_rval_t rval = ber_decode(0, &asn_DEF_Fulfillment, (void **)&ffill, ffill_bin, ffill_bin_len);
+    if (rval.code != RC_OK) {
+        error = rval.code;
+        goto end;
+    }
+    // Do malleability check
+    asn_enc_rval_t rc = der_encode_to_buffer(&asn_DEF_Fulfillment, ffill, buf, ffill_bin_len);
+    if (rc.encoded == -1) {
+        fprintf(stderr,"FULFILLMENT NOT ENCODED\n");
+        error = -1;
+        goto end;
+    }
+    if (rc.encoded != ffill_bin_len || 0 != memcmp(ffill_bin, buf, rc.encoded)) {
+        error = (rc.encoded == ffill_bin_len) ? -3 : -2;
+        goto end;
+    }
+    
+    *ppcc = fulfillmentToCC(ffill);
+end:
+    free(buf);
+    if (ffill) ASN_STRUCT_FREE(asn_DEF_Fulfillment, ffill);
+    return error;
 }
 
 
@@ -221,11 +250,13 @@ int cc_verify(const struct CC *cond, const unsigned char *msg, size_t msgLength,
     unsigned char targetBinary[1000];
     const size_t binLength = cc_conditionBinary(cond, targetBinary);
     if (0 != memcmp(condBin, targetBinary, binLength)) {
+	fprintf(stderr,"cc_verify error A\n");
         return 0;
     }
 
     if (!cc_ed25519VerifyTree(cond, msg, msgLength)) {
-        return 0;
+        fprintf(stderr,"cc_verify error B\n");
+	return 0;
     }
 
     unsigned char msgHash[32];
@@ -233,10 +264,12 @@ int cc_verify(const struct CC *cond, const unsigned char *msg, size_t msgLength,
     else memcpy(msgHash, msg, 32);
 
     if (!cc_secp256k1VerifyTreeMsg32(cond, msgHash)) {
+	fprintf(stderr,"cc_verify error C\n");
         return 0;
     }
 
     if (!cc_verifyEval(cond, verifyEval, evalContext)) {
+	fprintf(stderr,"cc_verify error D\n");
         return 0;
     }
     return 1;
@@ -248,7 +281,7 @@ CC *cc_readConditionBinary(const unsigned char *cond_bin, size_t length) {
     asn_dec_rval_t rval;
     rval = ber_decode(0, &asn_DEF_Condition, (void **)&asnCond, cond_bin, length);
     if (rval.code != RC_OK) {
-        LogPrintf("Failed reading condition binary\n");
+        fprintf(stderr,"Failed reading condition binary\n");
         return NULL;
     }
     CC *cond = mkAnon(asnCond);

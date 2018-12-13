@@ -1,16 +1,16 @@
-// Copyright (c) 2014 The Komodo Core developers
+// Copyright (c) 2014 The Bitcoin Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#ifndef KOMODO_CHAINPARAMSBASE_H
-#define KOMODO_CHAINPARAMSBASE_H
+#ifndef BITCOIN_CHAINPARAMSBASE_H
+#define BITCOIN_CHAINPARAMSBASE_H
 
 #include <string>
 #include <vector>
 
 /**
- * CBaseChainParams defines the base parameters (shared between komodo-cli and komodod)
- * of a given instance of the Komodo system.
+ * CBaseChainParams defines the base parameters (shared between bitcoin-cli and bitcoind)
+ * of a given instance of the Bitcoin system.
  */
 class CBaseChainParams
 {
@@ -60,10 +60,4 @@ bool SelectBaseParamsFromCommandLine();
  */
 bool AreBaseParamsConfigured();
 
-/**
- * Looks for -regtest, -testnet and returns the appropriate BIP70 chain name.
- * @return CBaseChainParams::MAX_NETWORK_TYPES if an invalid combination is given. CBaseChainParams::MAIN by default.
- */
-std::string ChainNameFromCommandLine();
-
-#endif // KOMODO_CHAINPARAMSBASE_H
+#endif // BITCOIN_CHAINPARAMSBASE_H

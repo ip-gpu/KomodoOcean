@@ -15,6 +15,7 @@ windows:INCLUDEPATH += depends\openssl-1.1.0f-vs2015\include64 depends\openssl\c
 
 windows:BOOST_LIB_PATH = depends\boost_1_65_1\lib64-msvc-14.0
 windows:OPENSSL_LIB_PATH = depends\openssl-1.1.0f-vs2015\lib64
+RUST_LIB_PATH = depends\librustzcash-master\target\debug
 
 QT_VERSION = 0x050902
 QT += network widgets
@@ -249,20 +250,26 @@ SOURCES += src\protobuf\google\protobuf\any.cc \
     src\compressor.cpp \
     src\core_read.cpp \
     src\core_write.cpp \
+    src\crosschain.cpp \
     src\crypto\equihash.cpp \
+    src\crypto\haraka.cpp \
+    src\crypto\haraka_portable.cpp \
     src\crypto\hmac_sha256.cpp \
     src\crypto\hmac_sha512.cpp \
     src\crypto\ripemd160.cpp \
     src\crypto\sha1.cpp \
     src\crypto\sha256.cpp \
     src\crypto\sha512.cpp \
+    src\crypto\verus_hash.cpp \
     src\fs.cpp \
     src\hash_komodo.cpp \
     src\httprpc.cpp \
     src\httpserver.cpp \
     src\init.cpp \
+    src\importcoin.cpp \
     src\key.cpp \
     src\keystore.cpp \
+    src\key_io.cpp \
     src\leveldb\db\builder.cc \
     src\leveldb\db\db_impl.cc \
     src\leveldb\db\db_iter.cc \
@@ -300,7 +307,7 @@ SOURCES += src\protobuf\google\protobuf\any.cc \
     src\leveldb\util\logging.cc \
     src\leveldb\util\options.cc \
     src\leveldb\util\status_leveldb.cc \
-    src\leveldbwrapper.cpp \
+    src\dbwrapper.cpp \
     src\libevent\buffer.c \
     src\libevent\buffer_iocp.c \
     src\libevent\bufferevent.c \
@@ -334,10 +341,12 @@ SOURCES += src\protobuf\google\protobuf\any.cc \
     src\miner.cpp \
     src\net.cpp \
     src\netbase.cpp \
+    src\notarisationdb.cpp \
     src\policy\fees.cpp \
     src\policy\policy.cpp \
     src\pow.cpp \
     src\primitives\block_komodo.cpp \
+    src\primitives\nonce.cpp \
     src\primitives\transaction.cpp \
     src\protocol.cpp \
     src\pubkey.cpp \
@@ -397,18 +406,20 @@ SOURCES += src\protobuf\google\protobuf\any.cc \
     src\qt\winshutdownmonitor.cpp \
     src\random.cpp \
     src\rest.cpp \
-    src\rpcblockchain.cpp \
-    src\rpcclient.cpp \
-    src\rpcmining.cpp \
-    src\rpcmisc.cpp \
-    src\rpcnet.cpp \
-    src\rpcprotocol.cpp \
-    src\rpcrawtransaction.cpp \
-    src\rpcserver.cpp \
+    src\rpc\blockchain.cpp \
+    src\rpc\client.cpp \
+    src\rpc\crosschain_rpc.cpp \
+    src\rpc\mining.cpp \
+    src\rpc\misc.cpp \
+    src\rpc\net_rpc.cpp \
+    src\rpc\protocol_rpc.cpp \
+    src\rpc\rawtransaction.cpp \
+    src\rpc\server.cpp \
     src\scheduler.cpp \
     src\script\interpreter.cpp \
     src\script\script.cpp \
     src\script\script_error.cpp \
+    src\script\script_ext.cpp \
     src\script\serverchecker.cpp \
     src\script\sign.cpp \
     src\script\standard.cpp \
@@ -421,6 +432,7 @@ SOURCES += src\protobuf\google\protobuf\any.cc \
     src\threadinterrupt.cpp \
     src\timedata.cpp \
     src\torcontrol.cpp \
+    src\transaction_builder.cpp \
     src\txdb.cpp \
     src\txmempool.cpp \
     src\uint256.cpp \
@@ -434,6 +446,7 @@ SOURCES += src\protobuf\google\protobuf\any.cc \
     src\utiltime.cpp \
     src\validationinterface.cpp \
     src\versionbits.cpp \
+    src\veruslaunch.cpp \
     src\wallet\asyncrpcoperation_sendmany.cpp \
     src\wallet\crypter.cpp \
     src\wallet\db.cpp \
@@ -451,12 +464,32 @@ SOURCES += src\protobuf\google\protobuf\any.cc \
     src\zcash\prf.cpp \
     src\zcash\Proof.cpp \
     src\zcash\util_zcash.cpp \
+    src\zcash\zip32.cpp \
     src\zcbenchmarks.cpp \
     src\chainparams.cpp \
+    src\cc\assets.cpp \
+    src\cc\auction.cpp \
     src\cc\betprotocol.cpp \
-    src\cc\disputepayout.cpp \
+    src\cc\channels.cpp \
+    src\cc\CCassetstx.cpp \
+    src\cc\CCassetsCore.cpp \
+    src\cc\CCcustom.cpp \
+    src\cc\CCtx.cpp \
+    src\cc\CCutils.cpp \
+    src\cc\dice.cpp \
     src\cc\eval.cpp \
-    src\cc\importpayout.cpp \
+    src\cc\faucet.cpp \
+    src\cc\fsm.cpp \
+    src\cc\gateways.cpp \
+    src\cc\heir.cpp \
+    src\cc\import.cpp \
+    src\cc\lotto.cpp \
+    src\cc\oracles.cpp \
+    src\cc\payments.cpp \
+    src\cc\pegs.cpp \
+    src\cc\prices.cpp \
+    src\cc\rewards.cpp \
+    src\cc\triggers.cpp \
     src\consensus\upgrades.cpp \
     src\deprecation.cpp \
     src\paymentdisclosure.cpp \
@@ -600,11 +633,12 @@ macx:QMAKE_CXXFLAGS_THREAD += -pthread
 macx:QMAKE_LFLAGS_THREAD += -pthread
 
 # Set libraries and includes at end, to use platform-defined defaults if not overridden
-LIBS += $$join(BOOST_LIB_PATH,,-L,) $$join(OPENSSL_LIB_PATH,,-L,)
+LIBS += $$join(BOOST_LIB_PATH,,-L,) $$join(OPENSSL_LIB_PATH,,-L,) $$join(RUST_LIB_PATH,,-L,)
 LIBS += $$BDB_LIB_SUFFIX
-windows:LIBS += -lws2_32 -lshlwapi -lmswsock -lole32 -loleaut32 -luuid -lgdi32 -luser32
+windows:LIBS += -lws2_32 -lshlwapi -lmswsock -lole32 -loleaut32 -luuid -lgdi32 -luser32 -luserenv
 LIBS += -lboost_system$$BOOST_LIB_SUFFIX -lboost_filesystem$$BOOST_LIB_SUFFIX -lboost_program_options$$BOOST_LIB_SUFFIX -lboost_thread$$BOOST_THREAD_LIB_SUFFIX
 windows:LIBS += -lboost_chrono$$BOOST_LIB_SUFFIX
+LIBS += -lrustzcash
 
 Release:LIBS += -ldepends\libgmp_6.1.1_msvc14\lib\x64\gmp
 Release:LIBS += -ldepends\libsodium-1.0.15-msvc\x64\Release\v140\dynamic\libsodium

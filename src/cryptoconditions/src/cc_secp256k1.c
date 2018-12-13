@@ -1,7 +1,9 @@
 #define _GNU_SOURCE 1
 
-#ifndef WIN32
+#if __linux
 #include <sys/syscall.h>
+#elif defined(_WIN32) || defined(_WIN64)
+#include <windows.h> 
 #endif
 
 #include <unistd.h>
@@ -43,11 +45,12 @@ void lockSign() {
     fclose(fp);
 #endif
     if (read != 32) {
-        LogPrintf("Could not read 32 bytes entropy from system\n");
-        exit(1);
+        int32_t i;
+        for (i=0; i<32; i++)
+            ((uint8_t *)ent)[i] = rand();
     }
     if (!secp256k1_context_randomize(ec_ctx_sign, ent)) {
-        LogPrintf("Could not randomize secp256k1 context\n");
+        fprintf(stderr,"Could not randomize secp256k1 context\n");
         exit(1);
     }
 }
@@ -162,7 +165,7 @@ int cc_signTreeSecp256k1Msg32(CC *cond, const unsigned char *privateKey, const u
     int rc = secp256k1_ec_pubkey_create(ec_ctx_sign, &spk, privateKey);
     unlockSign();
     if (rc != 1) {
-        LogPrintf("Cryptoconditions couldn't derive secp256k1 pubkey\n");
+        fprintf(stderr,"Cryptoconditions couldn't derive secp256k1 pubkey\n");
         return 0;
     }
 

@@ -1,10 +1,10 @@
 // Copyright (c) 2009-2010 Satoshi Nakamoto
-// Copyright (c) 2009-2014 The Komodo Core developers
+// Copyright (c) 2009-2014 The Bitcoin Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#ifndef KOMODO_CHAINPARAMS_H
-#define KOMODO_CHAINPARAMS_H
+#ifndef BITCOIN_CHAINPARAMS_H
+#define BITCOIN_CHAINPARAMS_H
 
 #include "chainparamsbase.h"
 #include "consensus/params.h"
@@ -27,15 +27,10 @@ struct SeedSpec6 {
 
 typedef std::map<int, uint256> MapCheckpoints;
 
-struct ChainTxData {
-    int64_t nTime;
-    int64_t nTxCount;
-    double dTxRate;
-};
 
 /**
  * CChainParams defines various tweakable parameters of a given instance of the
- * Komodo system. There are three: the main network on which people trade goods
+ * Bitcoin system. There are three: the main network on which people trade goods
  * and services, the public test network which gets reset from time to time and
  * a regression test mode which is intended for private networks only. It has
  * minimal difficulty to ensure that blocks can be found instantly.
@@ -63,6 +58,15 @@ public:
         double fTransactionsPerDay;
     };
 
+    enum Bech32Type {
+        SAPLING_PAYMENT_ADDRESS,
+        SAPLING_FULL_VIEWING_KEY,
+        SAPLING_INCOMING_VIEWING_KEY,
+        SAPLING_EXTENDED_SPEND_KEY,
+
+        MAX_BECH32_TYPES
+    };
+
     const Consensus::Params& GetConsensus() const { return consensus; }
     const CMessageHeader::MessageStartChars& MessageStart() const { return pchMessageStart; }
     const std::vector<unsigned char>& AlertKey() const { return vAlertPubKey; }
@@ -75,11 +79,11 @@ public:
     bool DefaultConsistencyChecks() const { return fDefaultConsistencyChecks; }
     /** Policy: Filter transactions that do not match well-defined patterns */
     bool RequireStandard() const { return fRequireStandard; }
-    int64_t MaxTipAge() const { return nMaxTipAge; }
     int64_t PruneAfterHeight() const { return nPruneAfterHeight; }
     unsigned int EquihashN() const { return nEquihashN; }
     unsigned int EquihashK() const { return nEquihashK; }
     std::string CurrencyUnits() const { return strCurrencyUnits; }
+    uint32_t BIP44CoinType() const { return bip44CoinType; }
     /** Make miner stop after a block is found. In RPC, don't return until nGenProcLimit blocks are generated */
     bool MineBlocksOnDemand() const { return fMineBlocksOnDemand; }
     /** In the future use NetworkIDString() for RPC fields */
@@ -88,16 +92,15 @@ public:
     std::string NetworkIDString() const { return strNetworkID; }
     const std::vector<CDNSSeedData>& DNSSeeds() const { return vSeeds; }
     const std::vector<unsigned char>& Base58Prefix(Base58Type type) const { return base58Prefixes[type]; }
+    const std::string& Bech32HRP(Bech32Type type) const { return bech32HRPs[type]; }
     const std::vector<SeedSpec6>& FixedSeeds() const { return vFixedSeeds; }
     const CCheckpointData& Checkpoints() const { return checkpointData; }
-    const ChainTxData& TxData() const { return chainTxData; }
     /** Return the founder's reward address and script for a given block height */
     std::string GetFoundersRewardAddressAtHeight(int height) const;
     CScript GetFoundersRewardScriptAtHeight(int height) const;
     std::string GetFoundersRewardAddressAtIndex(int i) const;
     /** Enforce coinbase consensus rule in regtest mode */
     void SetRegTestCoinbaseMustBeProtected() { consensus.fCoinbaseMustBeProtected = true; }
-    const std::string& Bech32HRP() const { return bech32_hrp; }
 
     void SetDefaultPort(uint16_t port) { nDefaultPort = port; }
     void SetCheckpointData(CCheckpointData checkpointData);
@@ -106,7 +109,6 @@ public:
     //void settimestamp(uint32_t timestamp) { genesis.nTime = timestamp; }
     //void setgenesis(CBlock &block) { genesis = block; }
     //void recalc_genesis(uint32_t nonce) { genesis = CreateGenesisBlock(ASSETCHAINS_TIMESTAMP, nonce, GENESIS_NBITS, 1, COIN); };
-    int nDefaultPort = 0;
     CMessageHeader::MessageStartChars pchMessageStart; // jl777 moved
     Consensus::Params consensus;
 
@@ -117,14 +119,16 @@ protected:
     std::vector<unsigned char> vAlertPubKey;
     int nMinerThreads = 0;
     long nMaxTipAge = 0;
+    int nDefaultPort = 0;
     uint64_t nPruneAfterHeight = 0;
     unsigned int nEquihashN = 0;
     unsigned int nEquihashK = 0;
     std::vector<CDNSSeedData> vSeeds;
     std::vector<unsigned char> base58Prefixes[MAX_BASE58_TYPES];
-    std::string bech32_hrp;
+    std::string bech32HRPs[MAX_BECH32_TYPES];
     std::string strNetworkID;
     std::string strCurrencyUnits;
+    uint32_t bip44CoinType;
     CBlock genesis;
     std::vector<SeedSpec6> vFixedSeeds;
     bool fMiningRequiresPeers = false;
@@ -134,15 +138,7 @@ protected:
     bool fTestnetToBeDeprecatedFieldRPC = false;
     CCheckpointData checkpointData;
     std::vector<std::string> vFoundersRewardAddress;
-    ChainTxData chainTxData;
 };
-
-/**
- * Creates and returns a std::unique_ptr<CChainParams> of the chosen chain.
- * @returns a CChainParams* of the chosen chain.
- * @throws a std::runtime_error if the chain is not supported.
- */
-std::unique_ptr<CChainParams> CreateChainParams(CBaseChainParams::Network chain);
 
 /**
  * Return the currently selected parameters. This won't change after app
@@ -167,4 +163,4 @@ bool SelectParamsFromCommandLine();
  */
 void UpdateNetworkUpgradeParameters(Consensus::UpgradeIndex idx, int nActivationHeight);
 
-#endif // KOMODO_CHAINPARAMS_H
+#endif // BITCOIN_CHAINPARAMS_H

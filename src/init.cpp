@@ -1,5 +1,5 @@
 // Copyright (c) 2009-2010 Satoshi Nakamoto
-// Copyright (c) 2009-2014 The Komodo Core developers
+// Copyright (c) 2009-2014 The Bitcoin Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -9,12 +9,9 @@
 
 #include "init.h"
 #include "crypto/common.h"
+#include "primitives/block.h"
 #include "addrman.h"
 #include "amount.h"
-#include "chain.h"
-#ifdef ENABLE_MINING
-#include "base58.h"
-#endif
 #include "checkpoints.h"
 #include "compat/sanity.h"
 #include "consensus/upgrades.h"
@@ -22,11 +19,16 @@
 #include "httpserver.h"
 #include "httprpc.h"
 #include "key.h"
+#include "notarisationdb.h"
+#ifdef ENABLE_MINING
+#include "key_io.h"
+#endif
 #include "main.h"
 #include "metrics.h"
 #include "miner.h"
 #include "net.h"
-#include "rpcserver.h"
+#include "rpc/server.h"
+#include "rpc/register.h"
 #include "script/standard.h"
 #include "scheduler.h"
 #include "txdb.h"
@@ -44,7 +46,7 @@
 
 #include <sys/time.h>
 
-#ifndef WIN32
+#ifndef _WIN32
 #include <signal.h>
 #endif
 
@@ -59,7 +61,7 @@
 #include <boost/thread.hpp>
 #include <openssl/crypto.h>
 
-#include "libsnark/common/profiling.hpp"
+#include <libsnark/common/profiling.hpp>
 
 #if ENABLE_ZMQ
 #include "zmq/zmqnotificationinterface.h"
@@ -69,10 +71,13 @@
 #include "amqp/amqpnotificationinterface.h"
 #endif
 
+#include "librustzcash.h"
+
 using namespace std;
 
 extern void ThreadSendAlert();
 extern int32_t KOMODO_LOADINGBLOCKS;
+extern bool VERUS_MINTBLOCKS;
 
 ZCJoinSplit* pzcashParams = NULL;
 
@@ -192,7 +197,7 @@ void Shutdown()
     /// for example if the data directory was found to be locked.
     /// Be sure that anything that writes files or flushes caches only does this if the respective
     /// module was initialized.
-    RenameThread("zcash-shutoff");
+    RenameThread("verus-shutoff");
     mempool.AddTransactionsUpdated(1);
 
     StopHTTPRPC();
@@ -334,10 +339,9 @@ void OnRPCPreCommand(const CRPCCommand& cmd)
 std::string HelpMessage(HelpMessageMode mode)
 {
     const bool showDebug = GetBoolArg("-help-debug", false);
-    const auto defaultChainParams = CreateChainParams(CBaseChainParams::MAIN);
 
     // When adding new options to the categories, please keep and ensure alphabetical ordering.
-    // Do not translate _(...) -help-debug options, Many technical terms, and only a very small audience, so is unnecessary stress to translators
+    // Do not translate _(...) -help-debug options, many technical terms, and only a very small audience, so is unnecessary stress to translators
 
     string strUsage = HelpMessageGroup(_("Options:"));
     strUsage += HelpMessageOpt("-?", _("This help message"));
@@ -354,16 +358,14 @@ std::string HelpMessage(HelpMessageMode mode)
 #endif
     }
     strUsage += HelpMessageOpt("-datadir=<dir>", _("Specify data directory"));
-    strUsage += HelpMessageOpt("-disabledeprecation=<version>", strprintf(_("Disable block-height node deprecation and automatic shutdown (example: -disabledeprecation=%s)"),
-        FormatVersion(CLIENT_VERSION)));
     strUsage += HelpMessageOpt("-exportdir=<dir>", _("Specify directory to be used when exporting data"));
     strUsage += HelpMessageOpt("-dbcache=<n>", strprintf(_("Set database cache size in megabytes (%d to %d, default: %d)"), nMinDbCache, nMaxDbCache, nDefaultDbCache));
     strUsage += HelpMessageOpt("-loadblock=<file>", _("Imports blocks from external blk000??.dat file") + " " + _("on startup"));
     strUsage += HelpMessageOpt("-maxorphantx=<n>", strprintf(_("Keep at most <n> unconnectable transactions in memory (default: %u)"), DEFAULT_MAX_ORPHAN_TRANSACTIONS));
-    strUsage += HelpMessageOpt("-mempooltxinputlimit=<n>", _("Set the maximum number of transparent inputs in a transaction that the mempool will accept (default: 0 = no limit applied)"));
+    strUsage += HelpMessageOpt("-mempooltxinputlimit=<n>", _("[DEPRECATED FROM OVERWINTER] Set the maximum number of transparent inputs in a transaction that the mempool will accept (default: 0 = no limit applied)"));
     strUsage += HelpMessageOpt("-par=<n>", strprintf(_("Set the number of script verification threads (%u to %d, 0 = auto, <0 = leave that many cores free, default: %d)"),
         -(int)boost::thread::hardware_concurrency(), MAX_SCRIPTCHECK_THREADS, DEFAULT_SCRIPTCHECK_THREADS));
-#ifndef WIN32
+#ifndef _WIN32
     strUsage += HelpMessageOpt("-pid=<file>", strprintf(_("Specify pid file (default: %s)"), "komodod.pid"));
 #endif
     strUsage += HelpMessageOpt("-prune=<n>", strprintf(_("Reduce storage requirements by pruning (deleting) old blocks. This mode disables wallet support and is incompatible with -txindex. "
@@ -374,7 +376,9 @@ std::string HelpMessage(HelpMessageMode mode)
     strUsage += HelpMessageOpt("-sysperms", _("Create new files with system default permissions, instead of umask 077 (only effective with disabled wallet functionality)"));
 #endif
     strUsage += HelpMessageOpt("-txindex", strprintf(_("Maintain a full transaction index, used by the getrawtransaction rpc call (default: %u)"), 0));
-
+    strUsage += HelpMessageOpt("-addressindex", strprintf(_("Maintain a full address index, used to query for the balance, txids and unspent outputs for addresses (default: %u)"), DEFAULT_ADDRESSINDEX));
+    strUsage += HelpMessageOpt("-timestampindex", strprintf(_("Maintain a timestamp index for block hashes, used to query blocks hashes by a range of timestamps (default: %u)"), DEFAULT_TIMESTAMPINDEX));
+    strUsage += HelpMessageOpt("-spentindex", strprintf(_("Maintain a full spent index, used to query the spending txid and input index for an outpoint (default: %u)"), DEFAULT_SPENTINDEX));
     strUsage += HelpMessageGroup(_("Connection options:"));
     strUsage += HelpMessageOpt("-addnode=<ip>", _("Add a node to connect to and attempt to keep the connection open"));
     strUsage += HelpMessageOpt("-banscore=<n>", strprintf(_("Threshold for disconnecting misbehaving peers (default: %u)"), 100));
@@ -394,6 +398,9 @@ std::string HelpMessage(HelpMessageMode mode)
     strUsage += HelpMessageOpt("-onion=<ip:port>", strprintf(_("Use separate SOCKS5 proxy to reach peers via Tor hidden services (default: %s)"), "-proxy"));
     strUsage += HelpMessageOpt("-onlynet=<net>", _("Only connect to nodes in network <net> (ipv4, ipv6 or onion)"));
     strUsage += HelpMessageOpt("-permitbaremultisig", strprintf(_("Relay non-P2SH multisig (default: %u)"), 1));
+    strUsage += HelpMessageOpt("-peerbloomfilters", strprintf(_("Support filtering of blocks and transaction with Bloom filters (default: %u)"), 1));
+    if (showDebug)
+        strUsage += HelpMessageOpt("-enforcenodebloom", strprintf("Enforce minimum protocol version to limit use of Bloom filters (default: %u)", 0));
     strUsage += HelpMessageOpt("-port=<port>", strprintf(_("Listen for connections on <port> (default: %u or testnet: %u)"), 7770, 17770));
     strUsage += HelpMessageOpt("-proxy=<ip:port>", _("Connect through SOCKS5 proxy"));
     strUsage += HelpMessageOpt("-proxyrandomize", strprintf(_("Randomize credentials for every proxy connection. This enables Tor stream isolation (default: %u)"), 1));
@@ -472,6 +479,7 @@ std::string HelpMessage(HelpMessageMode mode)
         strUsage += HelpMessageOpt("-limitfreerelay=<n>", strprintf("Continuously rate-limit free transactions to <n>*1000 bytes per minute (default: %u)", 15));
         strUsage += HelpMessageOpt("-relaypriority", strprintf("Require high priority for relaying free or low-fee transactions (default: %u)", 0));
         strUsage += HelpMessageOpt("-maxsigcachesize=<n>", strprintf("Limit size of signature cache to <n> entries (default: %u)", 50000));
+        strUsage += HelpMessageOpt("-maxtipage=<n>", strprintf("Maximum tip age in seconds to consider node in initial block download (default: %u)", DEFAULT_MAX_TIP_AGE));
     }
     strUsage += HelpMessageOpt("-minrelaytxfee=<amt>", strprintf(_("Fees (in %s/kB) smaller than this are considered zero fee for relaying (default: %s)"),
         CURRENCY_UNIT, FormatMoney(::minRelayTxFee.GetFeePerK())));
@@ -499,8 +507,9 @@ std::string HelpMessage(HelpMessageMode mode)
 
 #ifdef ENABLE_MINING
     strUsage += HelpMessageGroup(_("Mining options:"));
-    strUsage += HelpMessageOpt("-gen", strprintf(_("Generate coins (default: %u)"), 0));
-    strUsage += HelpMessageOpt("-genproclimit=<n>", strprintf(_("Set the number of threads for coin generation if enabled (-1 = all cores, default: %d)"), 1));
+    strUsage += HelpMessageOpt("-mint", strprintf(_("Mint/stake coins automatically (default: %u)"), 0));
+    strUsage += HelpMessageOpt("-gen", strprintf(_("Mine/generate coins (default: %u)"), 0));
+    strUsage += HelpMessageOpt("-genproclimit=<n>", strprintf(_("Set the number of threads for coin mining if enabled (-1 = all cores, default: %d)"), 0));
     strUsage += HelpMessageOpt("-equihashsolver=<name>", _("Specify the Equihash solver to be used if enabled (default: \"default\")"));
     strUsage += HelpMessageOpt("-mineraddress=<addr>", _("Send mined coins to a specific single address"));
     strUsage += HelpMessageOpt("-minetolocalwallet", strprintf(
@@ -551,7 +560,6 @@ static void BlockNotifyCallback(bool initialSync, const CBlockIndex *pBlockIndex
         boost::thread t(runCommand, strCmd); // thread runs free
     }
 }
-
 
 struct CImportingNow
 {
@@ -672,7 +680,7 @@ void ThreadImport(std::vector<boost::filesystem::path> vImportFiles)
 }
 
 /** Sanity checks
- *  Ensure that Komodo is running in a usable environment with all
+ *  Ensure that Bitcoin is running in a usable environment with all
  *  necessary library support.
  */
 bool InitSanityCheck(void)
@@ -688,15 +696,26 @@ bool InitSanityCheck(void)
 }
 
 
-static void ZC_LoadParams()
+static void ZC_LoadParams(
+    const CChainParams& chainparams
+)
 {
     struct timeval tv_start, tv_end;
     float elapsed;
 
     boost::filesystem::path pk_path = ZC_GetParamsDir() / "sprout-proving.key";
     boost::filesystem::path vk_path = ZC_GetParamsDir() / "sprout-verifying.key";
+    boost::filesystem::path sapling_spend = ZC_GetParamsDir() / "sapling-spend.params";
+    boost::filesystem::path sapling_output = ZC_GetParamsDir() / "sapling-output.params";
+    boost::filesystem::path sprout_groth16 = ZC_GetParamsDir() / "sprout-groth16.params";
 
-    if (!(boost::filesystem::exists(pk_path) && boost::filesystem::exists(vk_path))) {
+    if (!(
+        boost::filesystem::exists(pk_path) &&
+        boost::filesystem::exists(vk_path) &&
+        boost::filesystem::exists(sapling_spend) &&
+        boost::filesystem::exists(sapling_output) &&
+        boost::filesystem::exists(sprout_groth16)
+    )) {
         uiInterface.ThreadSafeMessageBox(strprintf(
             _("Cannot find the Zcash network parameters in the following directory:\n"
               "%s\n"
@@ -715,6 +734,34 @@ static void ZC_LoadParams()
     gettimeofday(&tv_end, 0);
     elapsed = float(tv_end.tv_sec-tv_start.tv_sec) + (tv_end.tv_usec-tv_start.tv_usec)/float(1000000);
     LogPrintf("Loaded verifying key in %fs seconds.\n", elapsed);
+
+    static_assert(
+        sizeof(boost::filesystem::path::value_type) == sizeof(codeunit),
+        "librustzcash not configured correctly");
+    auto sapling_spend_str = sapling_spend.native();
+    auto sapling_output_str = sapling_output.native();
+    auto sprout_groth16_str = sprout_groth16.native();
+
+    LogPrintf("Loading Sapling (Spend) parameters from %s\n", sapling_spend.string().c_str());
+    LogPrintf("Loading Sapling (Output) parameters from %s\n", sapling_output.string().c_str());
+    LogPrintf("Loading Sapling (Sprout Groth16) parameters from %s\n", sprout_groth16.string().c_str());
+    gettimeofday(&tv_start, 0);
+
+    librustzcash_init_zksnark_params(
+        reinterpret_cast<const codeunit*>(sapling_spend_str.c_str()),
+        sapling_spend_str.length(),
+        "8270785a1a0d0bc77196f000ee6d221c9c9894f55307bd9357c3f0105d31ca63991ab91324160d8f53e2bbd3c2633a6eb8bdf5205d822e7f3f73edac51b2b70c",
+        reinterpret_cast<const codeunit*>(sapling_output_str.c_str()),
+        sapling_output_str.length(),
+        "657e3d38dbb5cb5e7dd2970e8b03d69b4787dd907285b5a7f0790dcc8072f60bf593b32cc2d1c030e00ff5ae64bf84c5c3beb84ddc841d48264b4a171744d028",
+        reinterpret_cast<const codeunit*>(sprout_groth16_str.c_str()),
+        sprout_groth16_str.length(),
+        "e9b238411bd6c0ec4791e9d04245ec350c9c5744f5610dfcce4365d5ca49dfefd5054e371842b3f88fa1b9d7e8e075249b3ebabd167fa8b0f3161292d36c180a"
+    );
+
+    gettimeofday(&tv_end, 0);
+    elapsed = float(tv_end.tv_sec-tv_start.tv_sec) + (tv_end.tv_usec-tv_start.tv_usec)/float(1000000);
+    LogPrintf("Loaded Sapling parameters in %fs seconds.\n", elapsed);
 }
 
 bool AppInitServers(boost::thread_group& threadGroup)
@@ -734,7 +781,7 @@ bool AppInitServers(boost::thread_group& threadGroup)
     return true;
 }
 
-/** Initialize komodo.
+/** Initialize bitcoin.
  *  @pre Parameters should be parsed and config file should be read.
  */
 extern int32_t KOMODO_REWIND;
@@ -751,7 +798,7 @@ bool AppInit2(boost::thread_group& threadGroup, CScheduler& scheduler)
     // Disable confusing "helpful" text message on abort, Ctrl-C
     _set_abort_behavior(0, _WRITE_ABORT_MSG | _CALL_REPORTFAULT);
 #endif
-#ifdef WIN32
+#ifdef _WIN32
     // Enable Data Execution Prevention (DEP)
     // Minimum supported OS versions: WinXP SP3, WinVista >= SP1, Win Server 2008
     // A failure is non-critical and needs no further attention!
@@ -768,7 +815,7 @@ bool AppInit2(boost::thread_group& threadGroup, CScheduler& scheduler)
     if (!SetupNetworking())
         return InitError("Error: Initializing networking failed");
 
-#ifndef WIN32
+#ifndef _WIN32
     if (GetBoolArg("-sysperms", false)) {
 #ifdef ENABLE_WALLET
         if (!GetBoolArg("-disablewallet", false))
@@ -797,11 +844,13 @@ bool AppInit2(boost::thread_group& threadGroup, CScheduler& scheduler)
     signal(SIGPIPE, SIG_IGN);
 #endif
 
+    std::set_new_handler(new_handler_terminate);
+
     // ********************************************************* Step 2: parameter interactions
     const CChainParams& chainparams = Params();
 
     // Set this early so that experimental features are correctly enabled/disabled
-    fExperimentalMode = GetBoolArg("-experimentalfeatures", false);
+    fExperimentalMode = GetBoolArg("-experimentalfeatures", true);
 
     // Fail early if user has set experimental options without the global flag
     if (!fExperimentalMode) {
@@ -965,8 +1014,11 @@ bool AppInit2(boost::thread_group& threadGroup, CScheduler& scheduler)
         fPruneMode = true;
     }
 
+    RegisterAllCoreRPCCommands(tableRPC);
 #ifdef ENABLE_WALLET
     bool fDisableWallet = GetBoolArg("-disablewallet", false);
+    if (!fDisableWallet)
+        RegisterWalletRPCCommands(tableRPC);
 #endif
 
     nConnectTimeout = GetArg("-timeout", DEFAULT_CONNECT_TIMEOUT);
@@ -1041,10 +1093,15 @@ bool AppInit2(boost::thread_group& threadGroup, CScheduler& scheduler)
     // Option to startup with mocktime set (used for regression testing):
     SetMockTime(GetArg("-mocktime", 0)); // SetMockTime(0) is a no-op
 
+    if (GetBoolArg("-peerbloomfilters", true))
+        nLocalServices |= NODE_BLOOM;
+
+    nMaxTipAge = GetArg("-maxtipage", DEFAULT_MAX_TIP_AGE);
+
 #ifdef ENABLE_MINING
     if (mapArgs.count("-mineraddress")) {
-        CKomodoAddress addr;
-        if (!addr.SetString(mapArgs["-mineraddress"])) {
+        CTxDestination addr = DecodeDestination(mapArgs["-mineraddress"]);
+        if (!IsValidDestination(addr)) {
             return InitError(strprintf(
                 _("Invalid address for -mineraddress=<addr>: '%s' (must be a transparent address)"),
                 mapArgs["-mineraddress"]));
@@ -1106,6 +1163,16 @@ bool AppInit2(boost::thread_group& threadGroup, CScheduler& scheduler)
     ECC_Start();
     globalVerifyHandle.reset(new ECCVerifyHandle());
 
+    // set the hash algorithm to use for this chain
+    extern uint32_t ASSETCHAINS_ALGO, ASSETCHAINS_VERUSHASH;
+    CVerusHash::init();
+    CVerusHashV2::init();
+    if (ASSETCHAINS_ALGO == ASSETCHAINS_VERUSHASH)
+    {
+        // initialize VerusHash
+        CBlockHeader::SetVerusHash();
+    }
+
     // Sanity check
     if (!InitSanityCheck())
         return InitError(_("Initialization sanity check failed. Komodo is shutting down."));
@@ -1116,7 +1183,7 @@ bool AppInit2(boost::thread_group& threadGroup, CScheduler& scheduler)
     if (strWalletFile != boost::filesystem::basename(strWalletFile) + boost::filesystem::extension(strWalletFile))
         return InitError(strprintf(_("Wallet %s resides outside data directory %s"), strWalletFile, strDataDir));
 #endif
-    // Make sure only a single Komodo process is using the data directory.
+    // Make sure only a single Bitcoin process is using the data directory.
     boost::filesystem::path pathLockFile = GetDataDir() / ".lock";
     FILE* file = fopen(pathLockFile.string().c_str(), "a"); // empty lock file; created if it doesn't exist.
     if (file) fclose(file);
@@ -1129,7 +1196,7 @@ bool AppInit2(boost::thread_group& threadGroup, CScheduler& scheduler)
         return InitError(strprintf(_("Cannot obtain a lock on data directory %s. Komodo is probably already running.") + " %s.", strDataDir, e.what()));
     }
 
-#ifndef WIN32
+#ifndef _WIN32
     CreatePidFile(GetPidFile(), getpid());
 #endif
     if (GetBoolArg("-shrinkdebugfile", !fDebug))
@@ -1177,8 +1244,10 @@ bool AppInit2(boost::thread_group& threadGroup, CScheduler& scheduler)
     libsnark::inhibit_profiling_info = true;
     libsnark::inhibit_profiling_counters = true;
 
+    uiInterface.InitMessage(_("Loading Sapling parameters..."));
+
     // Initialize Zcash circuit parameters
-    ZC_LoadParams();
+    ZC_LoadParams(chainparams);
 
     /* Start the RPC server already.  It will be started in "warmup" mode
      * and not really process calls already (but it will signify connections
@@ -1216,6 +1285,20 @@ bool AppInit2(boost::thread_group& threadGroup, CScheduler& scheduler)
     // ********************************************************* Step 6: network initialization
 
     RegisterNodeSignals(GetNodeSignals());
+
+    // sanitize comments per BIP-0014, format user agent and check total size
+    std::vector<string> uacomments;
+    BOOST_FOREACH(string cmt, mapMultiArgs["-uacomment"])
+    {
+        if (cmt != SanitizeString(cmt, SAFE_CHARS_UA_COMMENT))
+            return InitError(strprintf("User Agent comment (%s) contains unsafe characters.", cmt));
+        uacomments.push_back(SanitizeString(cmt, SAFE_CHARS_UA_COMMENT));
+    }
+    strSubVersion = FormatSubVersion(CLIENT_NAME, CLIENT_VERSION, uacomments);
+    if (strSubVersion.size() > MAX_SUBVERSION_LENGTH) {
+        return InitError(strprintf("Total length of network version string %i exceeds maximum of %i characters. Reduce the number and/or size of uacomments.",
+            strSubVersion.size(), MAX_SUBVERSION_LENGTH));
+    }
 
     if (mapArgs.count("-onlynet")) {
         std::set<enum Network> nets;
@@ -1373,21 +1456,61 @@ bool AppInit2(boost::thread_group& threadGroup, CScheduler& scheduler)
         }
     }
 
+    // block tree db settings
+    int dbMaxOpenFiles = GetArg("-dbmaxopenfiles", DEFAULT_DB_MAX_OPEN_FILES);
+    bool dbCompression = GetBoolArg("-dbcompression", DEFAULT_DB_COMPRESSION);
+
+    LogPrintf("Block index database configuration:\n");
+    LogPrintf("* Using %d max open files\n", dbMaxOpenFiles);
+    LogPrintf("* Compression is %s\n", dbCompression ? "enabled" : "disabled");
+
     // cache size calculations
     int64_t nTotalCache = (GetArg("-dbcache", nDefaultDbCache) << 20);
     nTotalCache = std::max(nTotalCache, nMinDbCache << 20); // total cache cannot be less than nMinDbCache
     nTotalCache = std::min(nTotalCache, nMaxDbCache << 20); // total cache cannot be greated than nMaxDbcache
     int64_t nBlockTreeDBCache = nTotalCache / 8;
-    if (nBlockTreeDBCache > (1 << 21) && !GetBoolArg("-txindex", true))
-        nBlockTreeDBCache = (1 << 21); // block tree db cache shouldn't be larger than 2 MiB
+
+    if (GetBoolArg("-addressindex", DEFAULT_ADDRESSINDEX) || GetBoolArg("-spentindex", DEFAULT_SPENTINDEX)) {
+        // enable 3/4 of the cache if addressindex and/or spentindex is enabled
+        nBlockTreeDBCache = nTotalCache * 3 / 4;
+    } else {
+        if (nBlockTreeDBCache > (1 << 21) && !GetBoolArg("-txindex", false)) {
+            nBlockTreeDBCache = (1 << 21); // block tree db cache shouldn't be larger than 2 MiB
+        }
+    }
     nTotalCache -= nBlockTreeDBCache;
     int64_t nCoinDBCache = std::min(nTotalCache / 2, (nTotalCache / 4) + (1 << 23)); // use 25%-50% of the remainder for disk cache
     nTotalCache -= nCoinDBCache;
     nCoinCacheUsage = nTotalCache; // the rest goes to in-memory cache
     LogPrintf("Cache configuration:\n");
+    LogPrintf("* Max cache setting possible %.1fMiB\n", nMaxDbCache);
     LogPrintf("* Using %.1fMiB for block index database\n", nBlockTreeDBCache * (1.0 / 1024 / 1024));
     LogPrintf("* Using %.1fMiB for chain state database\n", nCoinDBCache * (1.0 / 1024 / 1024));
     LogPrintf("* Using %.1fMiB for in-memory UTXO set\n", nCoinCacheUsage * (1.0 / 1024 / 1024));
+
+    if ( fReindex == 0 )
+    {
+        bool checkval,fAddressIndex,fSpentIndex;
+        pblocktree = new CBlockTreeDB(nBlockTreeDBCache, false, fReindex, dbCompression, dbMaxOpenFiles);
+        fAddressIndex = GetBoolArg("-addressindex", DEFAULT_ADDRESSINDEX);
+        pblocktree->ReadFlag("addressindex", checkval);
+        if ( checkval != fAddressIndex && fAddressIndex != 0 )
+        {
+            pblocktree->WriteFlag("addressindex", fAddressIndex);
+            LogPrintf("set addressindex, will reindex. could take a while.\n");
+            fReindex = true;
+        }
+        fSpentIndex = GetBoolArg("-spentindex", DEFAULT_SPENTINDEX);
+        pblocktree->ReadFlag("spentindex", checkval);
+        if ( checkval != fSpentIndex && fSpentIndex != 0 )
+        {
+            pblocktree->WriteFlag("spentindex", fSpentIndex);
+            LogPrintf("set spentindex, will reindex. could take a while.\n");
+            fReindex = true;
+        }
+    }
+    
+    bool clearWitnessCaches = false;
 
     bool fLoaded = false;
     while (!fLoaded && !fRequestShutdown) {
@@ -1404,11 +1527,14 @@ bool AppInit2(boost::thread_group& threadGroup, CScheduler& scheduler)
                 delete pcoinsdbview;
                 delete pcoinscatcher;
                 delete pblocktree;
+                delete pnotarisations;
 
-                pblocktree = new CBlockTreeDB(nBlockTreeDBCache, false, fReindex);
+                pblocktree = new CBlockTreeDB(nBlockTreeDBCache, false, fReindex, dbCompression, dbMaxOpenFiles);
                 pcoinsdbview = new CCoinsViewDB(nCoinDBCache, false, fReindex);
                 pcoinscatcher = new CCoinsViewErrorCatcher(pcoinsdbview);
                 pcoinsTip = new CCoinsViewCache(pcoinscatcher);
+                pnotarisations = new NotarisationDB(100*1024*1024, false, fReindex);
+
 
                 if (fReindex) {
                     pblocktree->WriteReindexing(true);
@@ -1437,7 +1563,6 @@ bool AppInit2(boost::thread_group& threadGroup, CScheduler& scheduler)
                     break;
                 }
                 KOMODO_LOADINGBLOCKS = 0;
-
                 // Check for changed -txindex state
                 if (fTxIndex != GetBoolArg("-txindex", true)) {
                     strLoadError = _("You need to rebuild the database using -reindex to change -txindex");
@@ -1453,7 +1578,7 @@ bool AppInit2(boost::thread_group& threadGroup, CScheduler& scheduler)
 
                 if (!fReindex) {
                     uiInterface.InitMessage(_("Rewinding blocks if needed..."));
-                    if (!RewindBlockIndex(chainparams)) {
+                    if (!RewindBlockIndex(chainparams, clearWitnessCaches)) {
                         strLoadError = _("Unable to rewind the database to a pre-upgrade state. You will need to redownload the blockchain");
                         break;
                     }
@@ -1560,7 +1685,7 @@ bool AppInit2(boost::thread_group& threadGroup, CScheduler& scheduler)
                 InitWarning(msg);
             }
             else if (nLoadWalletRet == DB_TOO_NEW)
-                strErrors << _("Error loading wallet.dat: Wallet requires newer version of Zcash") << "\n";
+                strErrors << _("Error loading wallet.dat: Wallet requires newer version of Komodo") << "\n";
             else if (nLoadWalletRet == DB_NEED_REWRITE)
             {
                 strErrors << _("Wallet needed to be rewritten: restart Zcash to complete") << "\n";
@@ -1587,6 +1712,12 @@ bool AppInit2(boost::thread_group& threadGroup, CScheduler& scheduler)
             pwalletMain->SetMaxVersion(nMaxVersion);
         }
 
+        if (!pwalletMain->HaveHDSeed())
+        {
+            // generate a new HD seed
+            pwalletMain->GenerateNewSeed();
+        }
+
         if (fFirstRun)
         {
             // Create new keyUser and set as default key
@@ -1606,7 +1737,7 @@ bool AppInit2(boost::thread_group& threadGroup, CScheduler& scheduler)
         RegisterValidationInterface(pwalletMain);
 
         CBlockIndex *pindexRescan = chainActive.Tip();
-        if (GetBoolArg("-rescan", false))
+        if (clearWitnessCaches || GetBoolArg("-rescan", false))
         {
             pwalletMain->ClearNoteWitnessCache();
             pindexRescan = chainActive.Genesis();
@@ -1623,7 +1754,7 @@ bool AppInit2(boost::thread_group& threadGroup, CScheduler& scheduler)
         if (chainActive.Tip() && chainActive.Tip() != pindexRescan)
         {
             uiInterface.InitMessage(_("Rescanning..."));
-            LogPrintf("Rescanning last %i blocks (from block %i)...\n", chainActive.Height() - pindexRescan->nHeight, pindexRescan->nHeight);
+            LogPrintf("Rescanning last %i blocks (from block %i)...\n", chainActive.Height() - pindexRescan->GetHeight(), pindexRescan->GetHeight());
             nStart = GetTimeMillis();
             pwalletMain->ScanForWalletTransactions(pindexRescan, true);
             LogPrintf(" rescan      %15dms\n", GetTimeMillis() - nStart);
@@ -1658,7 +1789,6 @@ bool AppInit2(boost::thread_group& threadGroup, CScheduler& scheduler)
         pwalletMain->SetBroadcastTransactions(GetBoolArg("-walletbroadcast", true));
 
         vpwallets.push_back(pwalletMain);
-
     } // (!fDisableWallet)
 #else // ENABLE_WALLET
     LogPrintf("No wallet support compiled in!\n");
@@ -1679,9 +1809,8 @@ bool AppInit2(boost::thread_group& threadGroup, CScheduler& scheduler)
         bool minerAddressInLocalWallet = false;
         if (pwalletMain) {
             // Address has alreday been validated
-            CKomodoAddress addr(mapArgs["-mineraddress"]);
-            CKeyID keyID;
-            addr.GetKeyID(keyID);
+            CTxDestination addr = DecodeDestination(mapArgs["-mineraddress"]);
+            CKeyID keyID = boost::get<CKeyID>(addr);
             minerAddressInLocalWallet = pwalletMain->HaveKey(keyID);
         }
         if (GetBoolArg("-minetolocalwallet", true) && !minerAddressInLocalWallet) {
@@ -1713,8 +1842,10 @@ bool AppInit2(boost::thread_group& threadGroup, CScheduler& scheduler)
         uiInterface.InitMessage(_("Activating best chain..."));
         // scan for better chains in the block chain database, that are not yet connected in the active best chain
         CValidationState state;
+        if ( !ActivateBestChain(state))
         if ( !ActivateBestChain(state)) 
         {
+         strErrors << "Failed to connect best block";
          LogPrintf("Failed to connect best block");
          StartShutdown();
         }
@@ -1750,6 +1881,8 @@ bool AppInit2(boost::thread_group& threadGroup, CScheduler& scheduler)
     LogPrintf("mapBlockIndex.size() = %u\n",   mapBlockIndex.size());
     LogPrintf("nBestHeight = %d\n",                   chainActive.Height());
 #ifdef ENABLE_WALLET
+    RescanWallets();
+
     LogPrintf("setKeyPool.size() = %u\n",      pwalletMain ? pwalletMain->setKeyPool.size() : 0);
     LogPrintf("mapWallet.size() = %u\n",       pwalletMain ? pwalletMain->mapWallet.size() : 0);
     LogPrintf("mapAddressBook.size() = %u\n",  pwalletMain ? pwalletMain->mapAddressBook.size() : 0);
@@ -1760,19 +1893,15 @@ bool AppInit2(boost::thread_group& threadGroup, CScheduler& scheduler)
 
     StartNode(threadGroup, scheduler);
 
-    // Monitor the chain, and alert if we get blocks much quicker or slower than expected
-    int64_t nPowTargetSpacing = Params().GetConsensus().nPowTargetSpacing;
-    CScheduler::Function f = boost::bind(&PartitionCheck, &IsInitialBlockDownload,
-                                         boost::ref(cs_main), boost::cref(pindexBestHeader), nPowTargetSpacing);
-    scheduler.scheduleEvery(f, nPowTargetSpacing);
-
 #ifdef ENABLE_MINING
     // Generate coins in the background
  #ifdef ENABLE_WALLET
+    VERUS_MINTBLOCKS = GetBoolArg("-mint", false);
+
     if (pwalletMain || !GetArg("-mineraddress", "").empty())
-        GenerateKomodos(GetBoolArg("-gen", false), pwalletMain, GetArg("-genproclimit", 1));
+        GenerateKomodos(GetBoolArg("-gen", false), pwalletMain, GetArg("-genproclimit", 0));
  #else
-    GenerateKomodos(GetBoolArg("-gen", false), GetArg("-genproclimit", 1));
+    GenerateKomodos(GetBoolArg("-gen", false), GetArg("-genproclimit", 0));
  #endif
 #endif
 

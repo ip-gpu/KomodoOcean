@@ -3,8 +3,8 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#ifndef BITCOIN_SCRIPT_SERVERCHECKER_H
-#define BITCOIN_SCRIPT_SERVERCHECKER_H
+#ifndef KOMODO_SCRIPT_SERVERCHECKER_H
+#define KOMODO_SCRIPT_SERVERCHECKER_H
 
 #include "script/interpreter.h"
 
@@ -18,10 +18,11 @@ private:
     bool store;
 
 public:
-    ServerTransactionSignatureChecker(const CTransaction* txToIn, unsigned int nIn, const CAmount& amount, bool storeIn, PrecomputedTransactionData& txdataIn) : TransactionSignatureChecker(txToIn, nIn, amount, txdataIn), store(storeIn) {}
+    ServerTransactionSignatureChecker(const CTransaction* txToIn, unsigned int nIn, const CAmount& amount, bool storeIn, const PrecomputedTransactionData& txdataIn) : TransactionSignatureChecker(txToIn, nIn, amount, txdataIn), store(storeIn) {}
+    ServerTransactionSignatureChecker(const CTransaction* txToIn, unsigned int nIn, const CAmount& amount, bool storeIn) : TransactionSignatureChecker(txToIn, nIn, amount), store(storeIn) {}
 
     bool VerifySignature(const std::vector<unsigned char>& vchSig, const CPubKey& vchPubKey, const uint256& sighash) const;
     int CheckEvalCondition(const CC *cond) const;
 };
 
-#endif // BITCOIN_SCRIPT_SERVERCHECKER_H
+#endif // KOMODO_SCRIPT_SERVERCHECKER_H

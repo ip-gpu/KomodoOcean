@@ -22,6 +22,7 @@ class Writer {
   // "*dest" must be initially empty.
   // "*dest" must remain live while this Writer is in use.
   explicit Writer(WritableFile* dest);
+
   ~Writer();
 
   Status AddRecord(const Slice& slice);

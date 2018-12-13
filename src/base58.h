@@ -1,5 +1,5 @@
 // Copyright (c) 2009-2010 Satoshi Nakamoto
-// Copyright (c) 2009-2014 The Komodo Core developers
+// Copyright (c) 2009-2014 The Bitcoin Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -58,13 +58,13 @@ std::string EncodeBase58Check(const std::vector<unsigned char>& vchIn);
  * Decode a base58-encoded string (psz) that includes a checksum into a byte
  * vector (vchRet), return true if decoding is successful
  */
-inline bool DecodeBase58Check(const char* psz, std::vector<unsigned char>& vchRet);
+bool DecodeBase58Check(const char* psz, std::vector<unsigned char>& vchRet);
 
 /**
  * Decode a base58-encoded string (str) that includes a checksum into a byte
  * vector (vchRet), return true if decoding is successful
  */
-inline bool DecodeBase58Check(const std::string& str, std::vector<unsigned char>& vchRet);
+bool DecodeBase58Check(const std::string& str, std::vector<unsigned char>& vchRet);
 
 /**
  * Base class for all base58-encoded data
@@ -107,35 +107,15 @@ public:
     DATA_TYPE Get() const;
 };
 
-class CZCPaymentAddress : public CZCEncoding<libzcash::PaymentAddress, CChainParams::ZCPAYMENT_ADDRRESS, libzcash::SerializedPaymentAddressSize> {
+class CZCSproutPaymentAddress : public CZCEncoding<libzcash::SproutPaymentAddress, CChainParams::ZCPAYMENT_ADDRRESS, libzcash::SerializedSproutPaymentAddressSize>
+{
 protected:
     std::string PrependName(const std::string& s) const { return "payment address" + s; }
 public:
-    CZCPaymentAddress() {}
+    CZCSproutPaymentAddress() {}
 
-    CZCPaymentAddress(const std::string& strAddress) { SetString(strAddress.c_str(), 2); }
-    CZCPaymentAddress(const libzcash::PaymentAddress& addr) { Set(addr); }
-};
-
-class CZCViewingKey : public CZCEncoding<libzcash::ViewingKey, CChainParams::ZCVIEWING_KEY, libzcash::SerializedViewingKeySize> {
-protected:
-    std::string PrependName(const std::string& s) const { return "viewing key" + s; }
-
-public:
-    CZCViewingKey() {}
-    CZCViewingKey(const std::string& strViewingKey) { SetString(strViewingKey.c_str(), 3); }
-    CZCViewingKey(const libzcash::ViewingKey& vk) { Set(vk); }
-};
-
-class CZCSpendingKey : public CZCEncoding<libzcash::SpendingKey, CChainParams::ZCSPENDING_KEY, libzcash::SerializedSpendingKeySize> {
-protected:
-    std::string PrependName(const std::string& s) const { return "spending key" + s; }
-
-public:
-    CZCSpendingKey() {}
-
-    CZCSpendingKey(const std::string& strAddress) { SetString(strAddress.c_str(), 2); }
-    CZCSpendingKey(const libzcash::SpendingKey& addr) { Set(addr); }
+    CZCSproutPaymentAddress(const std::string& strAddress) { SetString(strAddress.c_str(), 2); }
+    CZCSproutPaymentAddress(const libzcash::SproutPaymentAddress& addr) { Set(addr); }
 };
 
 /** base58-encoded Komodo addresses.
@@ -147,6 +127,7 @@ public:
 class CKomodoAddress : public CBase58Data {
 public:
     bool Set(const CKeyID &id);
+    bool Set(const CPubKey &key);
     bool Set(const CScriptID &id);
     bool Set(const CTxDestination &dest);
     bool IsValid() const;
@@ -161,6 +142,8 @@ public:
 
     CTxDestination Get() const;
     bool GetKeyID(CKeyID &keyID) const;
+    bool GetKeyID_NoCheck(CKeyID& keyID) const;
+    bool GetIndexKey(uint160& hashBytes, int& type) const;
     bool IsScript() const;
 };
 
@@ -212,10 +195,4 @@ public:
 typedef CKomodoExtKeyBase<CExtKey, 74, CChainParams::EXT_SECRET_KEY> CKomodoExtKey;
 typedef CKomodoExtKeyBase<CExtPubKey, 74, CChainParams::EXT_PUBLIC_KEY> CKomodoExtPubKey;
 
-std::string EncodeDestination(const CTxDestination& dest);
-CTxDestination DecodeDestination(const std::string& str);
-
-bool IsValidDestinationString(const std::string& str);
-bool IsValidDestinationString(const std::string& str, const CChainParams& params);
-
-#endif // KOMODO_BASE58_H
+#endif // BITCOIN_BASE58_H

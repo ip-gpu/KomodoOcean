@@ -1,4 +1,4 @@
-// Copyright (c) 2011-2016 The Komodo Core developers
+// Copyright (c) 2011-2016 The Bitcoin Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -11,7 +11,7 @@
 
 #define KOMODO_ASSETCHAIN_MAXLEN 65
 extern char ASSETCHAINS_SYMBOL[KOMODO_ASSETCHAIN_MAXLEN];
-extern int32_t ASSETCHAIN_INIT;
+extern uint32_t ASSETCHAIN_INIT;
 extern std::string NOTARY_PUBKEY;
 void komodo_passport_iteration();
 
@@ -34,7 +34,7 @@ void komodo_passport_iteration();
 #endif
 
 #include "init.h"
-#include "rpcserver.h"
+#include "rpc/server.h"
 #include "scheduler.h"
 #include "ui_interface.h"
 #include "util.h"

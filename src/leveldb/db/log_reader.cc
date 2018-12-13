@@ -74,6 +74,7 @@ bool Reader::ReadRecord(Slice* record, std::string* scratch) {
   while (true) {
     uint64_t physical_record_offset = end_of_buffer_offset_ - buffer_.size();
     const unsigned int record_type = ReadPhysicalRecord(&fragment);
+
     switch (record_type) {
       case kFullType:
         if (in_fragmented_record) {

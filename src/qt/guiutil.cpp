@@ -1,4 +1,4 @@
-// Copyright (c) 2011-2016 The Komodo Core developers
+// Copyright (c) 2011-2016 The Bitcoin Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -18,6 +18,7 @@
 #include "script/standard.h"
 #include "util.h"
 #include "main.h"
+#include "key_io.h"
 
 #ifdef WIN32
 #ifdef _WIN32_WINNT
@@ -918,17 +919,8 @@ QString formatServicesStr(quint64 mask)
             case NODE_NETWORK:
                 strList.append("NETWORK");
                 break;
-            case NODE_GETUTXO:
-                strList.append("GETUTXO");
-                break;
             case NODE_BLOOM:
                 strList.append("BLOOM");
-                break;
-            case NODE_WITNESS:
-                strList.append("WITNESS");
-                break;
-            case NODE_XTHIN:
-                strList.append("XTHIN");
                 break;
             default:
                 strList.append(QString("%1[%2]").arg("UNKNOWN").arg(check));

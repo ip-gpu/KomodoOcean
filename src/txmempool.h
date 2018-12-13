@@ -1,23 +1,23 @@
 // Copyright (c) 2009-2010 Satoshi Nakamoto
-// Copyright (c) 2009-2014 The Komodo Core developers
+// Copyright (c) 2009-2014 The Bitcoin Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#ifndef KOMODO_TXMEMPOOL_H
-#define KOMODO_TXMEMPOOL_H
+#ifndef BITCOIN_TXMEMPOOL_H
+#define BITCOIN_TXMEMPOOL_H
 
 #include <list>
 
+#include "addressindex.h"
+#include "spentindex.h"
 #include "amount.h"
 #include "coins.h"
 #include "primitives/transaction.h"
 #include "sync.h"
 
 #undef foreach
-#include <boost/multi_index_container.hpp>
-#include <boost/multi_index/hashed_index.hpp>
-#include <boost/multi_index/ordered_index.hpp>
-#include <boost/multi_index/sequenced_index.hpp>
+#include "boost/multi_index_container.hpp"
+#include "boost/multi_index/ordered_index.hpp"
 
 class CAutoFile;
 
@@ -54,17 +54,6 @@ private:
     bool hadNoDependencies; //! Not dependent on any other txs when it entered the mempool
     bool spendsCoinbase; //! keep track of transactions that spend a coinbase
     uint32_t nBranchId; //! Branch ID this transaction is known to commit to, cached for efficiency
-    int64_t feeDelta;          //!< Used for determining the priority of the transaction for mining in a block
-
-    // Information about descendants of this transaction that are in the
-    // mempool; if we remove this transaction we must remove all of these
-    // descendants as well.
-    uint64_t nSizeWithDescendants;   //!< ... and size
-    CAmount nModFeesWithDescendants; //!< ... and total fees (all including us)
-
-    // Analogous statistics for ancestor transactions
-    uint64_t nSizeWithAncestors;
-    CAmount nModFeesWithAncestors;
 
 public:
     CTxMemPoolEntry(const CTransaction& _tx, const CAmount& _nFee,
@@ -82,16 +71,19 @@ public:
     unsigned int GetHeight() const { return nHeight; }
     bool WasClearAtEntry() const { return hadNoDependencies; }
     size_t DynamicMemoryUsage() const { return nUsageSize; }
+
     bool GetSpendsCoinbase() const { return spendsCoinbase; }
     uint32_t GetValidatedBranchId() const { return nBranchId; }
+};
 
-    int64_t GetModifiedFee() const { return nFee + feeDelta; }
-
-    uint64_t GetSizeWithDescendants() const { return nSizeWithDescendants; }
-    CAmount GetModFeesWithDescendants() const { return nModFeesWithDescendants; }
-
-    uint64_t GetSizeWithAncestors() const { return nSizeWithAncestors; }
-    CAmount GetModFeesWithAncestors() const { return nModFeesWithAncestors; }
+// extracts a TxMemPoolEntry's transaction hash
+struct mempoolentry_txid
+{
+    typedef uint256 result_type;
+    result_type operator() (const CTxMemPoolEntry &entry) const
+    {
+        return entry.GetTx().GetHash();
+    }
 };
 
 class CompareTxMemPoolEntryByFee
@@ -104,128 +96,6 @@ public:
         return a.GetFeeRate() > b.GetFeeRate();
     }
 };
-
-// extracts a transaction hash from CTxMempoolEntry or CTransactionRef
-struct mempoolentry_txid
-{
-    typedef uint256 result_type;
-    result_type operator() (const CTxMemPoolEntry &entry) const
-    {
-        return entry.GetTx().GetHash();
-    }
-
-    result_type operator() (const CTransactionRef& tx) const
-    {
-        return tx->GetHash();
-    }
-};
-
-/** \class CompareTxMemPoolEntryByDescendantScore
- *
- *  Sort an entry by max(score/size of entry's tx, score/size with all descendants).
- */
-class CompareTxMemPoolEntryByDescendantScore
-{
-public:
-    bool operator()(const CTxMemPoolEntry& a, const CTxMemPoolEntry& b)
-    {
-        bool fUseADescendants = UseDescendantScore(a);
-        bool fUseBDescendants = UseDescendantScore(b);
-
-        double aModFee = fUseADescendants ? a.GetModFeesWithDescendants() : a.GetModifiedFee();
-        double aSize = fUseADescendants ? a.GetSizeWithDescendants() : a.GetTxSize();
-
-        double bModFee = fUseBDescendants ? b.GetModFeesWithDescendants() : b.GetModifiedFee();
-        double bSize = fUseBDescendants ? b.GetSizeWithDescendants() : b.GetTxSize();
-
-        // Avoid division by rewriting (a/b > c/d) as (a*d > c*b).
-        double f1 = aModFee * bSize;
-        double f2 = aSize * bModFee;
-
-        if (f1 == f2) {
-            return a.GetTime() >= b.GetTime();
-        }
-        return f1 < f2;
-    }
-
-    // Calculate which score to use for an entry (avoiding division).
-    bool UseDescendantScore(const CTxMemPoolEntry &a)
-    {
-        double f1 = (double)a.GetModifiedFee() * a.GetSizeWithDescendants();
-        double f2 = (double)a.GetModFeesWithDescendants() * a.GetTxSize();
-        return f2 > f1;
-    }
-};
-
-/** \class CompareTxMemPoolEntryByScore
- *
- *  Sort by score of entry ((fee+delta)/size) in descending order
- */
-class CompareTxMemPoolEntryByScore
-{
-public:
-    bool operator()(const CTxMemPoolEntry& a, const CTxMemPoolEntry& b)
-    {
-        double f1 = (double)a.GetModifiedFee() * b.GetTxSize();
-        double f2 = (double)b.GetModifiedFee() * a.GetTxSize();
-        if (f1 == f2) {
-            return b.GetTx().GetHash() < a.GetTx().GetHash();
-        }
-        return f1 > f2;
-    }
-};
-
-class CompareTxMemPoolEntryByEntryTime
-{
-public:
-    bool operator()(const CTxMemPoolEntry& a, const CTxMemPoolEntry& b)
-    {
-        return a.GetTime() < b.GetTime();
-    }
-};
-
-class CompareTxMemPoolEntryByAncestorFee
-{
-public:
-    bool operator()(const CTxMemPoolEntry& a, const CTxMemPoolEntry& b)
-    {
-        double aFees = a.GetModFeesWithAncestors();
-        double aSize = a.GetSizeWithAncestors();
-
-        double bFees = b.GetModFeesWithAncestors();
-        double bSize = b.GetSizeWithAncestors();
-
-        // Avoid division by rewriting (a/b > c/d) as (a*d > c*b).
-        double f1 = aFees * bSize;
-        double f2 = aSize * bFees;
-
-        if (f1 == f2) {
-            return a.GetTx().GetHash() < b.GetTx().GetHash();
-        }
-
-        return f1 > f2;
-    }
-};
-
-class SaltedTxidHasher
-{
-private:
-    /** Salt */
-    const uint64_t k0, k1;
-
-public:
-    SaltedTxidHasher();
-
-    size_t operator()(const uint256& txid) const {
-        return SipHashUint256(k0, k1, txid);
-    }
-};
-
-// Multi_index tag names
-struct descendant_score {};
-struct entry_time {};
-struct mining_score {};
-struct ancestor_score {};
 
 class CBlockPolicyEstimator;
 
@@ -263,46 +133,44 @@ private:
     uint64_t totalTxSize = 0; //! sum of all mempool tx' byte sizes
     uint64_t cachedInnerUsage; //! sum of dynamic memory usage of all the map elements (NOT the maps themselves)
 
+    std::map<uint256, const CTransaction*> mapSproutNullifiers;
+    std::map<uint256, const CTransaction*> mapSaplingNullifiers;
+
+    void checkNullifiers(ShieldedType type) const;
+    
 public:
     typedef boost::multi_index_container<
         CTxMemPoolEntry,
         boost::multi_index::indexed_by<
             // sorted by txid
-            boost::multi_index::hashed_unique<mempoolentry_txid, SaltedTxidHasher>,
+            boost::multi_index::ordered_unique<mempoolentry_txid>,
             // sorted by fee rate
             boost::multi_index::ordered_non_unique<
-                boost::multi_index::tag<descendant_score>,
                 boost::multi_index::identity<CTxMemPoolEntry>,
-                CompareTxMemPoolEntryByDescendantScore
-            >,
-            // sorted by entry time
-            boost::multi_index::ordered_non_unique<
-                boost::multi_index::tag<entry_time>,
-                boost::multi_index::identity<CTxMemPoolEntry>,
-                CompareTxMemPoolEntryByEntryTime
-            >,
-            // sorted by score (for mining prioritization)
-            boost::multi_index::ordered_unique<
-                boost::multi_index::tag<mining_score>,
-                boost::multi_index::identity<CTxMemPoolEntry>,
-                CompareTxMemPoolEntryByScore
-            >,
-            // sorted by fee rate with ancestors
-            boost::multi_index::ordered_non_unique<
-                boost::multi_index::tag<ancestor_score>,
-                boost::multi_index::identity<CTxMemPoolEntry>,
-                CompareTxMemPoolEntryByAncestorFee
+                CompareTxMemPoolEntryByFee
             >
         >
     > indexed_transaction_set;
 
     mutable CCriticalSection cs;
     indexed_transaction_set mapTx;
-    std::map<COutPoint, CInPoint> mapNextTx;
-    std::map<uint256, const CTransaction*> mapNullifiers;
-    std::map<uint256, std::pair<double, CAmount> > mapDeltas;
 
-    typedef indexed_transaction_set::nth_index<0>::type::iterator txiter;
+private:
+    typedef std::map<CMempoolAddressDeltaKey, CMempoolAddressDelta, CMempoolAddressDeltaKeyCompare> addressDeltaMap;
+    addressDeltaMap mapAddress;
+
+    typedef std::map<uint256, std::vector<CMempoolAddressDeltaKey> > addressDeltaMapInserted;
+    addressDeltaMapInserted mapAddressInserted;
+
+    typedef std::map<CSpentIndexKey, CSpentIndexValue, CSpentIndexKeyCompare> mapSpentIndex;
+    mapSpentIndex mapSpent;
+
+    typedef std::map<uint256, std::vector<CSpentIndexKey> > mapSpentIndexInserted;
+    mapSpentIndexInserted mapSpentInserted;
+
+public:
+    std::map<COutPoint, CInPoint> mapNextTx;
+    std::map<uint256, std::pair<double, CAmount> > mapDeltas;
 
     CTxMemPool(const CFeeRate& _minRelayFee);
     ~CTxMemPool();
@@ -314,11 +182,19 @@ public:
      * check does nothing.
      */
     void check(const CCoinsViewCache *pcoins) const;
-    void setSanityCheck(double dFrequency = 1.0) { nCheckFrequency = dFrequency * 4294967296.0; }
+    void setSanityCheck(double dFrequency = 1.0) { nCheckFrequency = static_cast<uint32_t>(dFrequency * 4294967295.0); }
 
     bool addUnchecked(const uint256& hash, const CTxMemPoolEntry &entry, bool fCurrentEstimate = true);
+    void addAddressIndex(const CTxMemPoolEntry &entry, const CCoinsViewCache &view);
+    bool getAddressIndex(std::vector<std::pair<uint160, int> > &addresses,
+                         std::vector<std::pair<CMempoolAddressDeltaKey, CMempoolAddressDelta> > &results);
+    bool removeAddressIndex(const uint256 txhash);
+
+    void addSpentIndex(const CTxMemPoolEntry &entry, const CCoinsViewCache &view);
+    bool getSpentIndex(CSpentIndexKey &key, CSpentIndexValue &value);
+    bool removeSpentIndex(const uint256 txhash);
     void remove(const CTransaction &tx, std::list<CTransaction>& removed, bool fRecursive = false);
-    void removeWithAnchor(const uint256 &invalidRoot);
+    void removeWithAnchor(const uint256 &invalidRoot, ShieldedType type);
     void removeForReorg(const CCoinsViewCache *pcoins, unsigned int nMemPoolHeight, int flags);
     void removeConflicts(const CTransaction &tx, std::list<CTransaction>& removed);
     void removeExpired(unsigned int nBlockHeight);
@@ -340,6 +216,8 @@ public:
     void PrioritiseTransaction(const uint256 hash, const std::string strHash, double dPriorityDelta, const CAmount& nFeeDelta);
     void ApplyDeltas(const uint256 hash, double &dPriorityDelta, CAmount &nFeeDelta);
     void ClearPrioritisation(const uint256 hash);
+
+    bool nullifierExists(const uint256& nullifier, ShieldedType type) const;
 
     unsigned long size()
     {
@@ -372,6 +250,11 @@ public:
     bool ReadFeeEstimates(CAutoFile& filein);
 
     size_t DynamicMemoryUsage() const;
+
+    /** Return nCheckFrequency */
+    uint32_t GetCheckFrequency() const {
+        return nCheckFrequency;
+    }
 };
 
 /** 
@@ -385,9 +268,9 @@ protected:
 
 public:
     CCoinsViewMemPool(CCoinsView *baseIn, CTxMemPool &mempoolIn);
-    bool GetNullifier(const uint256 &txid) const;
+    bool GetNullifier(const uint256 &txid, ShieldedType type) const;
     bool GetCoins(const uint256 &txid, CCoins &coins) const;
     bool HaveCoins(const uint256 &txid) const;
 };
 
-#endif // KOMODO_TXMEMPOOL_H
+#endif // BITCOIN_TXMEMPOOL_H

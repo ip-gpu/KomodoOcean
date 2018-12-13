@@ -1,14 +1,13 @@
 // Copyright (c) 2009-2010 Satoshi Nakamoto
-// Copyright (c) 2009-2014 The Komodo Core developers
+// Copyright (c) 2009-2014 The Bitcoin Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#ifndef KOMODO_NET_H
-#define KOMODO_NET_H
+#ifndef BITCOIN_NET_H
+#define BITCOIN_NET_H
 
 #include "addrdb.h"
-#include "addrman.h"
-#include "bloomfilter.h"
+#include "bloom.h"
 #include "compat.h"
 #include "hash.h"
 #include "limitedmap.h"
@@ -20,13 +19,11 @@
 #include "sync.h"
 #include "uint256.h"
 #include "utilstrencodings.h"
-#include "threadinterrupt.h"
 
 #include <deque>
 #include <stdint.h>
-#include <condition_variable>
 
-#ifndef WIN32
+#ifndef _WIN32
 #include <arpa/inet.h>
 #endif
 
@@ -53,6 +50,8 @@ static const unsigned int MAX_INV_SZ = 50000;
 static const unsigned int MAX_ADDR_TO_SEND = 1000;
 /** Maximum length of incoming protocol messages (no message over 2 MiB is currently acceptable). */
 static const unsigned int MAX_PROTOCOL_MESSAGE_LENGTH = 2 * 1024 * 1024;
+/** Maximum length of strSubVer in `version` message */
+static const unsigned int MAX_SUBVERSION_LENGTH = 256;
 /** -listen default */
 static const bool DEFAULT_LISTEN = true;
 /** The maximum number of entries in mapAskFor */
@@ -60,11 +59,9 @@ static const size_t MAPASKFOR_MAX_SZ = MAX_INV_SZ;
 /** The maximum number of entries in setAskFor (larger due to getdata latency)*/
 static const size_t SETASKFOR_MAX_SZ = 2 * MAX_INV_SZ;
 /** The maximum number of peer connections to maintain. */
-static const unsigned int DEFAULT_MAX_PEER_CONNECTIONS = 125;
+static const unsigned int DEFAULT_MAX_PEER_CONNECTIONS = 384;
 /** The period before a network upgrade activates, where connections to upgrading peers are preferred (in blocks). */
 static const int NETWORK_UPGRADE_PEER_PREFERENCE_BLOCK_PERIOD = 24 * 24 * 3;
-
-static const ServiceFlags REQUIRED_SERVICES = NODE_NETWORK;
 
 extern std::atomic<bool> fNetworkActive;
 extern bool setBannedIsDirty;
@@ -96,16 +93,7 @@ void SetBannedSetDirty(bool dirty=true);
     //!clean unused entries (if bantime has expired)
 void SweepBanned();
 
-
 typedef int NodeId;
-
-struct AddedNodeInfo
-{
-    std::string strAddedNode;
-    CService resolvedAddress;
-    bool fConnected;
-    bool fInbound;
-};
 
 enum NumConnections {
     CONNECTIONS_NONE = 0,
@@ -120,22 +108,7 @@ bool GetNetworkActive();
 void SetNetworkActive(bool active);
 
 class CNodeStats;
-class CClientUIInterface;
-
 void CopyNodeStats(std::vector<CNodeStats>& vstats);
-
-struct CSerializedNetMsg
-{
-    CSerializedNetMsg() = default;
-    CSerializedNetMsg(CSerializedNetMsg&&) = default;
-    CSerializedNetMsg& operator=(CSerializedNetMsg&&) = default;
-    // No copying, only moves.
-    CSerializedNetMsg(const CSerializedNetMsg& msg) = delete;
-    CSerializedNetMsg& operator=(const CSerializedNetMsg&) = delete;
-
-    std::vector<unsigned char> data;
-    std::string command;
-};
 
 struct CombinerAll
 {
@@ -165,21 +138,6 @@ struct CNodeSignals
 
 CNodeSignals& GetNodeSignals();
 
-class NetEventsInterface;
-
-void static Discover(boost::thread_group& threadGroup);
-
-/**
- * Interface for message handling
- */
-class NetEventsInterface
-{
-public:
-    virtual bool ProcessMessages(CNode* pnode, std::atomic<bool>& interrupt) = 0;
-    virtual bool SendMessages(CNode* pnode, std::atomic<bool>& interrupt) = 0;
-    virtual void InitializeNode(CNode* pnode) = 0;
-    virtual void FinalizeNode(NodeId id, bool& update_connection_time) = 0;
-};
 
 enum
 {
@@ -261,8 +219,6 @@ public:
     double dPingWait;
     double dMinPing;
     std::string addrLocal;
-    // Address of this peer
-    CAddress addr;
 };
 
 
@@ -364,6 +320,11 @@ public:
     NodeId id;
 protected:
 
+    // Denial-of-service detection/prevention
+    // Key is IP address, value is banned-until-time
+//    static std::map<CSubNet, int64_t> setBanned;
+//    static CCriticalSection cs_setBanned;
+
     // Whitelisted ranges. Any node connecting from these is automatically
     // whitelisted (as well as those connecting to whitelisted binds).
     static std::vector<CSubNet> vWhitelistedRange;
@@ -431,7 +392,7 @@ public:
     {
         unsigned int total = 0;
         BOOST_FOREACH(const CNetMessage &msg, vRecvMsg)
-            total += (unsigned int)(msg.vRecv.size()) + 24;
+            total += msg.vRecv.size() + 24;
         return total;
     }
 
@@ -691,6 +652,8 @@ public:
     static void Ban(const CSubNet &subNet, const BanReason& reason, int64_t bantimeoffset = 0, bool sinceUnixEpoch = false);
     static bool Unban(const CNetAddr &ip);
     static bool Unban(const CSubNet &ip);
+//    static void GetBanned(std::map<CSubNet, int64_t> &banmap);
+
     void copyStats(CNodeStats &stats);
 
     static bool IsWhitelistedRange(const CNetAddr &ip);
@@ -710,4 +673,15 @@ class CTransaction;
 void RelayTransaction(const CTransaction& tx);
 void RelayTransaction(const CTransaction& tx, const CDataStream& ss);
 
-#endif // KOMODO_NET_H
+/** Access to the (IP) address database (peers.dat) */
+class CAddrDB
+{
+private:
+    boost::filesystem::path pathAddr;
+public:
+    CAddrDB();
+    bool Write(const CAddrMan& addr);
+    bool Read(CAddrMan& addr);
+};
+
+#endif // BITCOIN_NET_H
