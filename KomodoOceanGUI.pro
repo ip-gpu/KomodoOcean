@@ -446,7 +446,6 @@ SOURCES += src\protobuf\google\protobuf\any.cc \
     src\utiltime.cpp \
     src\validationinterface.cpp \
     src\versionbits.cpp \
-    src\veruslaunch.cpp \
     src\wallet\asyncrpcoperation_sendmany.cpp \
     src\wallet\crypter.cpp \
     src\wallet\db.cpp \
