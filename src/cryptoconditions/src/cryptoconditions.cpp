@@ -182,7 +182,7 @@ CC *fulfillmentToCC(Fulfillment_t *ffill) {
 
 CC *cc_readFulfillmentBinary(const unsigned char *ffill_bin, size_t ffill_bin_len) {
     CC *cond = 0;
-    unsigned char *buf = (unsigned char *)malloc(ffill_bin_len);
+    unsigned char *buf = (unsigned char *)calloc(1,ffill_bin_len);
     Fulfillment_t *ffill = 0;
     asn_dec_rval_t rval = ber_decode(0, &asn_DEF_Fulfillment, (void **)&ffill, ffill_bin, ffill_bin_len);
     if (rval.code != RC_OK) {
