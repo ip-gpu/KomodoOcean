@@ -124,7 +124,7 @@ To get rust work correctly with ssh connection, otherwise you will have "error a
 
 If you don't set-up any substitutions https -> ssh for git earlier, no additional actions required.
 
-**4. ** Clone librustzcash repo and build library:
+**4.** Clone librustzcash repo and build library:
 
     git clone https://github.com/zcash/librustzcash
     cd librustzcash
