@@ -2,7 +2,9 @@
 
 ![](./images/image00.png)
 
-This is *early alpha* of KomodoOcean / komodo-qt GUI qt-based wallet for Komodo (KMD). Probably (not sure) is a **world first Qt-Wallet** for ZCash based cryptocurrency forks. Now it available only for Windows (64-bit) and Linux (64-bit) platforms.
+This is KomodoOcean / komodo-qt GUI qt-based wallet for Komodo (KMD). Probably (not sure) is a **world first Qt-Wallet** for ZCash based cryptocurrency forks. Now it available only for Windows (64-bit) and soon for Linux (64-bit) platforms.
+
+Latest version already have [sapling](https://komodoplatform.com/sapling-unifying-blockchain-technology/) support from Dec 15th, 2018 and release **g27**.
 
 **NB!** This repo have two branches:
 
@@ -30,14 +32,21 @@ Before you start create the following configuration file, named `komodo.conf` in
     addnode=144.76.94.38
     addnode=89.248.166.91
 
-And download [sprout-proving.key](https://z.cash/downloads/sprout-proving.key) and [sprout-verifying.key](https://z.cash/downloads/sprout-verifying.key) in %APPDATA%\ZcashParams folder. If you already have installed original komodod.exe (console daemon) for Windows, or Agama Wallet - you already have all needed. 
+And download following files in %APPDATA%\ZcashParams folder: 
 
-Alternative download links for ZcashParams:
+- [sprout-proving.key](https://z.cash/downloads/sprout-proving.key)
+- [sprout-verifying.key](https://z.cash/downloads/sprout-verifying.key)
+- [sapling-spend.params](https://z.cash/downloads/sapling-spend.params)
+- [sapling-output.params](https://z.cash/downloads/sapling-output.params)
+- [sprout-groth16.params](https://z.cash/downloads/sprout-groth16.params)
 
-- https://agama.komodoplatform.com/file/supernet/sprout-proving.key
-- https://agama.komodoplatform.com/file/supernet/sprout-verifying.key
+Also you can use `fetch-params.cmd` batch file in `release` folder to download all needed automatically.
 
-For more information about Komodo Platform, please visit official site: [https://komodoplatform.com/](https://komodoplatform.com/) . Also you can follow original jl777's komodo repo on GitHub - https://github.com/jl777/komodo .
+If you already have installed Agama Wallet - you already have all needed. 
+
+For more information about Komodo Platform, please visit official site: [https://komodoplatform.com/](https://komodoplatform.com/) . 
+
+Komodo-Qt (KomodoOcean) wallet also have official channel in Komodo Discord - [#wallet-ocean-qt](https://discord.gg/U5WWaJR). If you have any questions or just want to be a part of community, please [join](https://discord.gg/U5WWaJR).
 
 ### Project Status ###
 
@@ -47,14 +56,13 @@ Currenly komodo-qt is *under developement*. Use it at your own risk - do not use
 
 ![](./images/image03.png)
 
-Supported (tested) features:
+Features:
 
-- Launching GUI interface and syncing blockchain.
-- Faster blockchain indexes loading in compare with original komodod for Windows. Estimated speed of loading fully synced blockchain indexes on KMD is **50 sec.** on Core i7-6700K / 64 Gb RAM / SSD drive, that approaches speed of Linux PC with same hardware.
+- Native QT wallet written in C/C++ and Rust (librustzcash library).
 - Receiving and sending coins.
 - Extended coin control features, selecting "Inputs..." (UTXOs) when sending coins.
-- Supporting assetchains (launch KomodoOceanGUI.exe with needed `-ac_name`, `-ac_supply` and `-addnode` command-line keys to launch wallet on needed assetchain).
-- Correct quit from app (earlier versions of komodo-qt wasn't correct shutdown all of running threads).
+- Supporting assetchains (launch KomodoOceanGUI.exe with needed `-ac_name`, `-ac_supply` and `-addnode` command-line keys to launch wallet on needed assetchain or use existing batch files in repo).
+- **Sapling support**.
 
 
 Existing issues:
@@ -94,7 +102,40 @@ System requirements:
 
 Congratulations! You built Komodo-Qt (KomodoOcean) for Windows. Now you can run it. 
 
+### Dependencies ###
+
+This repo has prebuilt version (`rustzcash.lib`) of [librustzcash](https://github.com/zcash/librustzcash) library. If you want to build it by yourself, follow next steps:
+
+**1.** [Install](https://www.rust-lang.org/tools/install) Rust language for Windows, you'll need [x86_64-pc-windows-msvc](https://static.rust-lang.org/rustup/dist/x86_64-pc-windows-msvc/rustup-init.exe) version. 
+
+**2.** Add `%USERPROFILE%\.cargo\bin` in `%PATH%` environment variable after install.
+
+**3.** If you have https -> ssh substitution in your `.gitconfig`, like :
+
+	[url "ssh://git@github.com/"]
+	insteadOf = https://github.com/
+
+You'll need to add following lines in `.cargo/config` file:
+
+    [net]
+    git-fetch-with-cli = true
+    
+To get rust work correctly with ssh connection, otherwise you will have "error authenticating: failed connecting agent; class=Ssh (23)" and "attempted ssh-agent authentication, but none of the usernames `git` succeeded" errors, during download rust deps.
+
+If you don't set-up any substitutions https -> ssh for git earlier, no additional actions required.
+
+**4. ** Clone librustzcash repo and build library:
+
+    git clone https://github.com/zcash/librustzcash
+    cd librustzcash
+    cargo build # to build debug version
+	cargo build --release  # to build release version
+
+![](./images/install_04.png)
+
+Your `*.lib` will be available in `target/(release/debug)` folders relatively.
+
 ### Developers of Qt wallet ###
 
-- Main developer: [@Ocean](https://komodo-platform.slack.com/team/U8BRG09EV)
-- IT Expert / Sysengineer: [@Decker](https://komodo-platform.slack.com/messages/D5UHJMCJ3)
+- Main developer: [Ocean](https://github.com/ip-gpu)
+- IT Expert / Sysengineer: [Decker](https://deckersu.github.io/) 
