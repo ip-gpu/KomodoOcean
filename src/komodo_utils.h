@@ -1779,7 +1779,7 @@ void komodo_args(char *argv0)
         // other values
         if ( (ASSETCHAINS_LWMAPOS = GetArg("-ac_veruspos",0)) != 0 )
             ASSETCHAINS_LWMAPOS = 50;
-        
+
         ASSETCHAINS_SAPLING = GetArg("-ac_sapling", -1);
         if (ASSETCHAINS_SAPLING == -1)
         {
