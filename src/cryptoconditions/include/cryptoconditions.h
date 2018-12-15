@@ -56,8 +56,6 @@ typedef struct CC {
     };
 } CC;
 
-
-
 /*
  * Crypto Condition Visitor
  */

@@ -1,18 +1,32 @@
+/******************************************************************************
+ * Copyright © 2014-2018 The SuperNET Developers.                             *
+ *                                                                            *
+ * See the AUTHORS, DEVELOPER-AGREEMENT and LICENSE files at                  *
+ * the top-level directory of this distribution for the individual copyright  *
+ * holder information and the developer policies on copyright and licensing.  *
+ *                                                                            *
+ * Unless otherwise agreed in a custom licensing agreement, no part of the    *
+ * SuperNET software, including this file may be copied, modified, propagated *
+ * or distributed except according to the terms contained in the LICENSE file *
+ *                                                                            *
+ * Removal or modification of this copyright notice is prohibited.            *
+ *                                                                            *
+ ******************************************************************************/
 
 #include "asn/Condition.h"
 #include "asn/Fulfillment.h"
 #include "asn/PrefixFingerprintContents.h"
 #include "asn/OCTET_STRING.h"
-#include "cJSON.h"
+#include "include/cJSON.h"
 #include "cryptoconditions.h"
 
 
-//struct CCType CC_PrefixType;
+struct CCType CC_PrefixType;
 
 
 static int prefixVisitChildren(CC *cond, CCVisitor visitor) {
     size_t prefixedLength = cond->prefixLength + visitor.msgLength;
-    unsigned char *prefixed = (unsigned char *)calloc(1,prefixedLength);
+    unsigned char *prefixed = calloc(1,prefixedLength);
     memcpy(prefixed, cond->prefix, cond->prefixLength);
     memcpy(prefixed + cond->prefixLength, visitor.msg, visitor.msgLength);
     visitor.msg = prefixed;
@@ -24,10 +38,11 @@ static int prefixVisitChildren(CC *cond, CCVisitor visitor) {
 
 
 static unsigned char *prefixFingerprint(const CC *cond) {
-    PrefixFingerprintContents_t *fp = (PrefixFingerprintContents_t *)calloc(1, sizeof(PrefixFingerprintContents_t));
+    PrefixFingerprintContents_t *fp = calloc(1, sizeof(PrefixFingerprintContents_t));
+    //fprintf(stderr,"prefixfinger %p %p\n",fp,cond->prefix);
     asnCondition(cond->subcondition, &fp->subcondition); // TODO: check asnCondition for safety
     fp->maxMessageLength = cond->maxMessageLength;
-    OCTET_STRING_fromBuf(&fp->prefix, (const char*)(cond->prefix), cond->prefixLength);
+    OCTET_STRING_fromBuf(&fp->prefix, cond->prefix, cond->prefixLength);
     return hashFingerprintContents(&asn_DEF_PrefixFingerprintContents, fp);
 }
 
@@ -44,7 +59,7 @@ static CC *prefixFromFulfillment(const Fulfillment_t *ffill) {
     if (!sub) return 0;
     CC *cond = cc_new(CC_Prefix);
     cond->maxMessageLength = p->maxMessageLength;
-    cond->prefix = (uint8_t*)calloc(1, p->prefix.size);
+    cond->prefix = calloc(1, p->prefix.size);
     memcpy(cond->prefix, p->prefix.buf, p->prefix.size);
     cond->prefixLength = p->prefix.size;
     cond->subcondition = sub;
@@ -57,12 +72,12 @@ static Fulfillment_t *prefixToFulfillment(const CC *cond) {
     if (!ffill) {
         return NULL;
     }
-    PrefixFulfillment_t *pf = (PrefixFulfillment_t *)calloc(1, sizeof(PrefixFulfillment_t));
-    OCTET_STRING_fromBuf(&pf->prefix, (const char*)(cond->prefix), cond->prefixLength);
+    PrefixFulfillment_t *pf = calloc(1, sizeof(PrefixFulfillment_t));
+    OCTET_STRING_fromBuf(&pf->prefix, cond->prefix, cond->prefixLength);
     pf->maxMessageLength = cond->maxMessageLength;
     pf->subfulfillment = ffill;
 
-    ffill = (Fulfillment_t *)calloc(1, sizeof(Fulfillment_t));
+    ffill = calloc(1, sizeof(Fulfillment_t));
     ffill->present = Fulfillment_PR_prefixSha256;
     ffill->choice.prefixSha256 = pf;
     return ffill;
@@ -91,7 +106,7 @@ static CC *prefixFromJSON(const cJSON *params, char *err) {
     cond->maxMessageLength = (unsigned long) mml_item->valuedouble;
     cond->subcondition = sub;
     
-    if (!jsonGetBase64(params, (char*)"prefix", err, &cond->prefix, &cond->prefixLength)) {
+    if (!jsonGetBase64(params, "prefix", err, &cond->prefix, &cond->prefixLength)) {
         cc_free(cond);
         return NULL;
     }
@@ -103,7 +118,7 @@ static CC *prefixFromJSON(const cJSON *params, char *err) {
 static void prefixToJSON(const CC *cond, cJSON *params) {
     cJSON_AddNumberToObject(params, "maxMessageLength", (double)cond->maxMessageLength);
     unsigned char *b64 = base64_encode(cond->prefix, cond->prefixLength);
-    cJSON_AddStringToObject(params, "prefix", (const char*)b64);
+    cJSON_AddStringToObject(params, "prefix", b64);
     free(b64);
     cJSON_AddItemToObject(params, "subfulfillment", cc_conditionToJSON(cond->subcondition));
 }
