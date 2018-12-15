@@ -24,6 +24,8 @@ BITCOIN_INCLUDES=-I$(builddir) -I$(builddir)/obj $(BOOST_CPPFLAGS) $(LEVELDB_CPP
 
 BITCOIN_INCLUDES += -I$(srcdir)/secp256k1/include
 BITCOIN_INCLUDES += -I$(srcdir)/cryptoconditions/include
+BITCOIN_INCLUDES += -I$(srcdir)/cryptoconditions/src
+BITCOIN_INCLUDES += -I$(srcdir)/cryptoconditions/src/asn
 BITCOIN_INCLUDES += -I$(srcdir)/snark
 BITCOIN_INCLUDES += -I$(srcdir)/snark/libsnark
 BITCOIN_INCLUDES += -I$(srcdir)/univalue/include
@@ -34,7 +36,7 @@ endif
 if TARGET_DARWIN
 LIBBITCOIN_SERVER=libbitcoin_server.a -lcurl
 else
-LIBBITCOIN_SERVER=libbitcoin_server.a
+LIBBITCOIN_SERVER=libbitcoin_server.a -lcurl
 endif
 
 LIBBITCOIN_WALLET=libbitcoin_wallet.a
@@ -561,7 +563,7 @@ endif
 libzcashconsensus_la_LDFLAGS = -no-undefined $(RELDFLAGS)
 libzcashconsensus_la_LIBADD = $(LIBSECP256K1)
 libzcashconsensus_la_LIBADD = $(CRYPTO_LIBS)
-libzcashconsensus_la_CPPFLAGS = $(CRYPTO_CFLAGS) -I$(builddir)/obj -I$(srcdir)/secp256k1/include -DBUILD_BITCOIN_INTERNAL
+libzcashconsensus_la_CPPFLAGS = $(CRYPTO_CFLAGS) -I$(builddir)/obj -I$(srcdir)/secp256k1/include -I$(srcdir)/cryptoconditions/include -DBUILD_BITCOIN_INTERNAL
 
 endif
 #
