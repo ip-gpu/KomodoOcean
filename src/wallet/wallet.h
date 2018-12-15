@@ -1174,7 +1174,7 @@ public:
     static CFeeRate minTxFee;
     static CFeeRate fallbackFee;
 
-    static CAmount GetMinimumFee(unsigned int nTxBytes, unsigned int nConfirmTarget, const CTxMemPool& pool);
+//    static CAmount GetMinimumFee(unsigned int nTxBytes, unsigned int nConfirmTarget, const CTxMemPool& pool);
 
     bool NewKeyPool();
     bool TopUpKeyPool(unsigned int kpSize = 0);
