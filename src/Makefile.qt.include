@@ -379,7 +379,7 @@ KOMODO_QT_H += \
 KOMODO_QT_CPP += \
 	policy/policy.cpp \
 	wallet/rpcwallet.cpp \
-	rpcserver.cpp
+	rpc/server.cpp
 
 
 RES_IMAGES = 
@@ -499,8 +499,8 @@ qt_komodo_qt_LDADD += $(LIBBITCOIN_COMMON) \
   $(LIBCRYPTOCONDITIONS)
 
 $(info $(red)[ Decker ]$(reset) Check the komodo-qt dependencies ...)
-$(info $$qt_komodo_qt_CPPFLAGS is [${qt_komodo_qt_CPPFLAGS}])
 #$(info $$qt_komodo_qt_CXXFLAGS is [${qt_komodo_qt_CXXFLAGS}])
+$(info $$qt_komodo_qt_CPPFLAGS is [${qt_komodo_qt_CPPFLAGS}])
 $(info $$qt_komodo_qt_LDADD is [${qt_komodo_qt_LDADD}])
 $(info $$qt_komodo_qt_LDFLAGS is [${qt_komodo_qt_LDFLAGS}])
 $(info $(red)[ Decker ]$(reset) Check the komodod dependencies ...)

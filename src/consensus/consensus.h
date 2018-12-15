@@ -11,6 +11,10 @@ typedef signed int            int32_t;
 typedef unsigned int          uint32_t;
 #endif
 
+#if defined(linux) || defined(__linux) 
+#include <stdint.h>
+#endif
+
 /** The minimum allowed block version (network rule) */
 static const int32_t MIN_BLOCK_VERSION = 4;
 /** The minimum allowed transaction version (network rule) */
