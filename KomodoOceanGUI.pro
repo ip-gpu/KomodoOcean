@@ -15,7 +15,7 @@ windows:INCLUDEPATH += depends\openssl-1.1.0f-vs2015\include64 depends\openssl\c
 
 windows:BOOST_LIB_PATH = depends\boost_1_65_1\lib64-msvc-14.0
 windows:OPENSSL_LIB_PATH = depends\openssl-1.1.0f-vs2015\lib64
-RUST_LIB_PATH = depends\librustzcash-master\target\debug
+windows:RUST_LIB_PATH = depends\librustzcash-master\target
 
 QT_VERSION = 0x050902
 QT += network widgets
@@ -632,12 +632,12 @@ macx:QMAKE_CXXFLAGS_THREAD += -pthread
 macx:QMAKE_LFLAGS_THREAD += -pthread
 
 # Set libraries and includes at end, to use platform-defined defaults if not overridden
-LIBS += $$join(BOOST_LIB_PATH,,-L,) $$join(OPENSSL_LIB_PATH,,-L,) $$join(RUST_LIB_PATH,,-L,)
+LIBS += $$join(BOOST_LIB_PATH,,-L,) $$join(OPENSSL_LIB_PATH,,-L,) # $$join(RUST_LIB_PATH,,-L,)
 LIBS += $$BDB_LIB_SUFFIX
 windows:LIBS += -lws2_32 -lshlwapi -lmswsock -lole32 -loleaut32 -luuid -lgdi32 -luser32 -luserenv
 LIBS += -lboost_system$$BOOST_LIB_SUFFIX -lboost_filesystem$$BOOST_LIB_SUFFIX -lboost_program_options$$BOOST_LIB_SUFFIX -lboost_thread$$BOOST_THREAD_LIB_SUFFIX
 windows:LIBS += -lboost_chrono$$BOOST_LIB_SUFFIX
-LIBS += -lrustzcash
+#LIBS += -lrustzcash
 
 Release:LIBS += -ldepends\libgmp_6.1.1_msvc14\lib\x64\gmp
 Release:LIBS += -ldepends\libsodium-1.0.15-msvc\x64\Release\v140\dynamic\libsodium
@@ -645,6 +645,7 @@ Release:LIBS += -ldepends\libcurl-master\lib\dll-release-x64\libcurl
 Release:LIBS += -ldepends\db-6.2.23\build_windows\x64\Release\libdb62
 Release:LIBS += -llibcryptoMD -llibsslMD
 Release:LIBS += -ldepends\pthreads-master\dll\x64\Release\pthreads
+Release:LIBS += -l$$RUST_LIB_PATH\release\rustzcash
 
 Debug:LIBS += -ldepends\libgmp_6.1.1_msvc14\lib\x64\gmp
 Debug:LIBS += -ldepends\libsodium-1.0.15-msvc\x64\Debug\v140\dynamic\libsodium
@@ -652,6 +653,7 @@ Debug:LIBS += -ldepends\libcurl-master\lib\dll-debug-x64\libcurl_debug
 Debug:LIBS += -ldepends\db-6.2.23\build_windows\x64\Debug\libdb62d
 Debug:LIBS += -llibcryptoMDd -llibsslMDd
 Debug:LIBS += -ldepends\pthreads-master\dll\x64\Debug\pthreads
+Debug:LIBS += -l$$RUST_LIB_PATH\debug\rustzcash
 
 !windows:!macx {
     DEFINES += LINUX
