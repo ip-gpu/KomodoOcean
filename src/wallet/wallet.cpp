@@ -3749,6 +3749,8 @@ bool CWallet::CreateTransaction(const vector<CRecipient>& vecSend, CWalletTx& wt
     assert(txNew.nLockTime < LOCKTIME_THRESHOLD);*/
 
     {
+        FeeCalculation feeCalc;
+
         LOCK2(cs_main, cs_wallet);
         {
             nFeeRet = 0;
@@ -4013,9 +4015,10 @@ bool CWallet::CreateTransaction(const vector<CRecipient>& vecSend, CWalletTx& wt
                         break;
                 }
 
-                CAmount nFeeNeeded = GetMinimumFee(nBytes, nTxConfirmTarget, mempool);
-                if ( nFeeNeeded < 5000 )
-                    nFeeNeeded = 5000;
+                CAmount nFeeNeeded = GetMinimumFee(nBytes, *coinControl, ::mempool, ::feeEstimator, &feeCalc);
+//                CAmount nFeeNeeded = GetMinimumFee(nBytes, nTxConfirmTarget, mempool);
+//                if ( nFeeNeeded < 5000 )
+//                    nFeeNeeded = 5000;
 
                 // If we made it here and we aren't even able to meet the relay fee on the next pass, give up
                 // because we must be at the maximum allowed fee.
@@ -4090,7 +4093,7 @@ bool CWallet::CommitTransaction(CWalletTx& wtxNew, CReserveKey& reservekey)
     }
     return true;
 }
-
+/*
 CAmount CWallet::GetMinimumFee(unsigned int nTxBytes, unsigned int nConfirmTarget, const CTxMemPool& pool)
 {
     // payTxFee is user-set "I want to pay this much"
@@ -4113,7 +4116,7 @@ CAmount CWallet::GetMinimumFee(unsigned int nTxBytes, unsigned int nConfirmTarge
         nFeeNeeded = maxTxFee;
     return nFeeNeeded;
 }
-
+*/
 
 void komodo_prefetch(FILE *fp);
 
