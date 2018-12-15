@@ -3749,6 +3749,7 @@ bool CWallet::CreateTransaction(const vector<CRecipient>& vecSend, CWalletTx& wt
     assert(txNew.nLockTime < LOCKTIME_THRESHOLD);*/
 
     {
+        FeeCalculation feeCalc;
         LOCK2(cs_main, cs_wallet);
         {
             nFeeRet = 0;
@@ -4013,9 +4014,12 @@ bool CWallet::CreateTransaction(const vector<CRecipient>& vecSend, CWalletTx& wt
                         break;
                 }
 
+                CAmount nFeeNeeded = GetMinimumFeeEx(nBytes, *coinControl, ::mempool, &feeCalc);
+                /*
                 CAmount nFeeNeeded = GetMinimumFee(nBytes, nTxConfirmTarget, mempool);
                 if ( nFeeNeeded < 5000 )
                     nFeeNeeded = 5000;
+                */
 
                 // If we made it here and we aren't even able to meet the relay fee on the next pass, give up
                 // because we must be at the maximum allowed fee.
@@ -4091,6 +4095,7 @@ bool CWallet::CommitTransaction(CWalletTx& wtxNew, CReserveKey& reservekey)
     return true;
 }
 
+
 CAmount CWallet::GetMinimumFee(unsigned int nTxBytes, unsigned int nConfirmTarget, const CTxMemPool& pool)
 {
     // payTxFee is user-set "I want to pay this much"
@@ -4112,6 +4117,45 @@ CAmount CWallet::GetMinimumFee(unsigned int nTxBytes, unsigned int nConfirmTarge
     if (nFeeNeeded > maxTxFee)
         nFeeNeeded = maxTxFee;
     return nFeeNeeded;
+}
+
+CAmount CWallet::GetMinimumFeeEx(unsigned int nTxBytes, const CCoinControl& coin_control, const CTxMemPool& pool, FeeCalculation *feeCalc) {
+    /* User control of how to calculate fee uses the following parameter precedence:
+       1. coin_control.m_feerate
+       2. coin_control.m_confirm_target
+       3. payTxFee (user-set global variable)
+       4. nTxConfirmTarget (user-set global variable)
+       The first parameter that is set is used.
+    */
+    CAmount fee_needed;
+    if (coin_control.m_feerate) {
+        fee_needed = coin_control.m_feerate->GetFee(nTxBytes);
+        if (feeCalc) feeCalc->reason = FeeReason::PAYTXFEE;
+        // Allow to override automatic min/max check over coin control instance
+        if (coin_control.fOverrideFeeRate) return fee_needed;
+    }
+    else if (!coin_control.m_confirm_target && ::payTxFee != CFeeRate(0)) {
+        fee_needed = ::payTxFee.GetFee(nTxBytes);
+        if (feeCalc) feeCalc->reason = FeeReason::PAYTXFEE;
+    }
+    else { // use fallbackFee
+         fee_needed = CWallet::fallbackFee.GetFee(nTxBytes);
+         if (feeCalc) feeCalc->reason = FeeReason::FALLBACK;
+    }
+
+    // prevent user from paying a fee below minRelayTxFee or minTxFee
+    CAmount required_fee = GetRequiredFee(nTxBytes);
+    if (required_fee > fee_needed) {
+        fee_needed = required_fee;
+        if (feeCalc) feeCalc->reason = FeeReason::REQUIRED;
+    }
+    // But always obey the maximum
+    if (fee_needed > maxTxFee) {
+        fee_needed = maxTxFee;
+        if (feeCalc) feeCalc->reason = FeeReason::MAXTXFEE;
+    }
+    return fee_needed;
+
 }
 
 
