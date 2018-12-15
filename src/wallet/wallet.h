@@ -25,7 +25,6 @@
 #include "zcash/Address.hpp"
 #include "zcash/zip32.h"
 #include "base58.h"
-#include "wallet/wallet_fees.h"
 
 #include <algorithm>
 #include <map>
@@ -1176,7 +1175,6 @@ public:
     static CFeeRate fallbackFee;
 
     static CAmount GetMinimumFee(unsigned int nTxBytes, unsigned int nConfirmTarget, const CTxMemPool& pool);
-    static CAmount GetMinimumFeeEx(unsigned int nTxBytes, const CCoinControl& coin_control, const CTxMemPool& pool, FeeCalculation *feeCalc);
 
     bool NewKeyPool();
     bool TopUpKeyPool(unsigned int kpSize = 0);
