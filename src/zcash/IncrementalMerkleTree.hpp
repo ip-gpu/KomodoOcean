@@ -10,7 +10,7 @@
 #include "serialize.h"
 
 #include "Zcash.h"
-#include "util_zcash.h"
+#include "zcash/util.h"
 
 namespace libzcash {
 

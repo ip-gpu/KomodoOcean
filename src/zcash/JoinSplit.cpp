@@ -2,7 +2,7 @@
 #include "prf.h"
 #include "sodium.h"
 
-#include "zcash/util_zcash.h"
+#include "zcash/util.h"
 
 #include <memory>
 
@@ -288,31 +288,31 @@ public:
             std::vector<unsigned char> auth2(ss2.begin(), ss2.end());
 
             librustzcash_sprout_prove(
-                (unsigned char*)&(*proof.begin()),
+                proof.begin(),
 
-                (const unsigned char*)&(*phi.begin()),
-                (const unsigned char*)&(*rt.begin()),
-                (const unsigned char*)&(*h_sig.begin()),
+                phi.begin(),
+                rt.begin(),
+                h_sig.begin(),
 
-                (const unsigned char*)&(*inputs[0].key.begin()),
+                inputs[0].key.begin(),
                 inputs[0].note.value(),
-                (const unsigned char*)&(*inputs[0].note.rho.begin()),
-                (const unsigned char*)&(*inputs[0].note.r.begin()),
-                (const unsigned char*)&(*auth1.data()),
+                inputs[0].note.rho.begin(),
+                inputs[0].note.r.begin(),
+                auth1.data(),
 
-                (const unsigned char*)&(*inputs[1].key.begin()),
+                inputs[1].key.begin(),
                 inputs[1].note.value(),
-                (const unsigned char*)&(*inputs[1].note.rho.begin()),
-                (const unsigned char*)&(*inputs[1].note.r.begin()),
-                (const unsigned char*)&(*auth2.data()),
+                inputs[1].note.rho.begin(),
+                inputs[1].note.r.begin(),
+                auth2.data(),
 
-                (const unsigned char*)&(*out_notes[0].a_pk.begin()),
+                out_notes[0].a_pk.begin(),
                 out_notes[0].value(),
-                (const unsigned char*)&(*out_notes[0].r.begin()),
+                out_notes[0].r.begin(),
 
-                (const unsigned char*)&(*out_notes[1].a_pk.begin()),
+                out_notes[1].a_pk.begin(),
                 out_notes[1].value(),
-                (const unsigned char*)&(*out_notes[1].r.begin()),
+                out_notes[1].r.begin(),
 
                 vpub_old,
                 vpub_new

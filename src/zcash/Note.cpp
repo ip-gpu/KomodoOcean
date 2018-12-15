@@ -6,7 +6,7 @@
 #include "version.h"
 #include "streams.h"
 
-#include "zcash/util_zcash.h"
+#include "zcash/util.h"
 #include "librustzcash.h"
 
 using namespace libzcash;

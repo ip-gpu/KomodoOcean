@@ -109,9 +109,7 @@ boost::optional<SaplingNoteEncryption> SaplingNoteEncryption::FromDiversifier(di
     librustzcash_sapling_generate_r(esk.begin());
 
     // Compute epk given the diversifier
-    if (!librustzcash_sapling_ka_derivepublic((const unsigned char*)&(*d.begin()),
-                                              (const unsigned char*)&(*esk.begin()),
-                                              (unsigned char*)&(*epk.begin()))) {
+    if (!librustzcash_sapling_ka_derivepublic(d.begin(), esk.begin(), epk.begin())) {
         return boost::none;
     }
 
@@ -143,8 +141,8 @@ boost::optional<SaplingEncCiphertext> SaplingNoteEncryption::encrypt_to_recipien
     SaplingEncCiphertext ciphertext;
 
     crypto_aead_chacha20poly1305_ietf_encrypt(
-        (unsigned char*)&(*ciphertext.begin()), NULL,
-        (const unsigned char*)&(*message.begin()), ZC_SAPLING_ENCPLAINTEXT_SIZE,
+        ciphertext.begin(), NULL,
+        message.begin(), ZC_SAPLING_ENCPLAINTEXT_SIZE,
         NULL, 0, // no "additional data"
         NULL, cipher_nonce, K
     );
@@ -176,9 +174,9 @@ boost::optional<SaplingEncPlaintext> AttemptSaplingEncDecryption(
     SaplingEncPlaintext plaintext;
 
     if (crypto_aead_chacha20poly1305_ietf_decrypt(
-        (unsigned char*)&(*plaintext.begin()), NULL,
+        plaintext.begin(), NULL,
         NULL,
-        (const unsigned char*)&(*ciphertext.begin()), ZC_SAPLING_ENCCIPHERTEXT_SIZE,
+        ciphertext.begin(), ZC_SAPLING_ENCCIPHERTEXT_SIZE,
         NULL,
         0,
         cipher_nonce, K) != 0)
@@ -212,9 +210,9 @@ boost::optional<SaplingEncPlaintext> AttemptSaplingEncDecryption (
     SaplingEncPlaintext plaintext;
 
     if (crypto_aead_chacha20poly1305_ietf_decrypt(
-        (unsigned char*)&(*plaintext.begin()), NULL,
+        plaintext.begin(), NULL,
         NULL,
-        (const unsigned char*)&(*ciphertext.begin()), ZC_SAPLING_ENCCIPHERTEXT_SIZE,
+        ciphertext.begin(), ZC_SAPLING_ENCCIPHERTEXT_SIZE,
         NULL,
         0,
         cipher_nonce, K) != 0)
@@ -247,8 +245,8 @@ SaplingOutCiphertext SaplingNoteEncryption::encrypt_to_ourselves(
     SaplingOutCiphertext ciphertext;
 
     crypto_aead_chacha20poly1305_ietf_encrypt(
-        (unsigned char*)&(*ciphertext.begin()), NULL,
-        (const unsigned char*)&(*message.begin()), ZC_SAPLING_OUTPLAINTEXT_SIZE,
+        ciphertext.begin(), NULL,
+        message.begin(), ZC_SAPLING_OUTPLAINTEXT_SIZE,
         NULL, 0, // no "additional data"
         NULL, cipher_nonce, K
     );
@@ -276,9 +274,9 @@ boost::optional<SaplingOutPlaintext> AttemptSaplingOutDecryption(
     SaplingOutPlaintext plaintext;
 
     if (crypto_aead_chacha20poly1305_ietf_decrypt(
-        (unsigned char*)&(*plaintext.begin()), NULL,
+        plaintext.begin(), NULL,
         NULL,
-        (const unsigned char*)&(*ciphertext.begin()), ZC_SAPLING_OUTCIPHERTEXT_SIZE,
+        ciphertext.begin(), ZC_SAPLING_OUTCIPHERTEXT_SIZE,
         NULL,
         0,
         cipher_nonce, K) != 0)
@@ -332,8 +330,8 @@ typename NoteEncryption<MLEN>::Ciphertext NoteEncryption<MLEN>::encrypt
 
     NoteEncryption<MLEN>::Ciphertext ciphertext;
 
-    crypto_aead_chacha20poly1305_ietf_encrypt((unsigned char*)&(*ciphertext.begin()), NULL,
-                                         (const unsigned char*)&(*message.begin()), MLEN,
+    crypto_aead_chacha20poly1305_ietf_encrypt(ciphertext.begin(), NULL,
+                                         message.begin(), MLEN,
                                          NULL, 0, // no "additional data"
                                          NULL, cipher_nonce, K);
 
@@ -364,9 +362,9 @@ typename NoteDecryption<MLEN>::Plaintext NoteDecryption<MLEN>::decrypt
 
     // Message length is always NOTEENCRYPTION_AUTH_BYTES less than
     // the ciphertext length.
-    if (crypto_aead_chacha20poly1305_ietf_decrypt((unsigned char*)&(*plaintext.begin()), NULL,
+    if (crypto_aead_chacha20poly1305_ietf_decrypt(plaintext.begin(), NULL,
                                              NULL,
-                                             (const unsigned char*)&(*ciphertext.begin()), NoteDecryption<MLEN>::CLEN,
+                                             ciphertext.begin(), NoteDecryption<MLEN>::CLEN,
                                              NULL,
                                              0,
                                              cipher_nonce, K) != 0) {
@@ -407,9 +405,9 @@ typename PaymentDisclosureNoteDecryption<MLEN>::Plaintext PaymentDisclosureNoteD
 
     // Message length is always NOTEENCRYPTION_AUTH_BYTES less than
     // the ciphertext length.
-    if (crypto_aead_chacha20poly1305_ietf_decrypt((unsigned char*)&(*plaintext.begin()), NULL,
+    if (crypto_aead_chacha20poly1305_ietf_decrypt(plaintext.begin(), NULL,
                                              NULL,
-                                             (const unsigned char*)&(*ciphertext.begin()), PaymentDisclosureNoteDecryption<MLEN>::CLEN,
+                                             ciphertext.begin(), PaymentDisclosureNoteDecryption<MLEN>::CLEN,
                                              NULL,
                                              0,
                                              cipher_nonce, K) != 0) {
