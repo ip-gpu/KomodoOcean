@@ -826,12 +826,14 @@ fi
 #AC_CHECK_HEADER([libsnark/gadgetlib1/gadget.hpp],,AC_MSG_ERROR(libsnark headers missing))
 #AC_CHECK_LIB([snark],[main],LIBSNARK_LIBS=-lsnark, [AC_MSG_ERROR(libsnark missing)], [-lgmpxx])
 
-RUST_LIBS=""
-if test x$enable_rust != xno; then
-  RUST_LIBS="-lrustzcash"
-fi
-
-#LIBZCASH_LIBS="-lsnark -lgmp -lgmpxx -lboost_system-mt -lcrypto -lsodium -fopenmp $RUST_LIBS"
+RUST_LIBS="-lrustzcash"
+case $host in
+  *mingw*)
+    ;;
+  *)
+    RUST_LIBS="$RUST_LIBS -ldl"
+    ;;
+esac
 
 dnl Check for OpenMP support
 AX_OPENMP(
