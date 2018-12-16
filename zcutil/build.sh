@@ -108,6 +108,14 @@ DECKER_DEPS="CPPFLAGS=-I$(pwd)/depends/x86_64-unknown-linux-gnu/include LDFLAGS=
 #	CPPFLAGS="-I/path1 -I/path2" LDFLAGS="-L/path1 -L/path2"
 
 echo -e "\n"
-CC="$CC" CXX="$CXX" ./configure CXXFLAGS='-fPIC -fwrapv -fno-strict-aliasing -Werror -g' $DECKER_ARGS $DECKER_DEPS
+
+version=$(lsb_release -sr)
+case $version in
+18.04)
+    CC="$CC" CXX="$CXX" ./configure CXXFLAGS='-fPIC -fwrapv -fno-strict-aliasing -g' $DECKER_ARGS $DECKER_DEPS
+    ;;
+*)
+    CC="$CC" CXX="$CXX" ./configure CXXFLAGS='-fPIC -fwrapv -fno-strict-aliasing -Werror -g' $DECKER_ARGS $DECKER_DEPS
+esac    
 
 "$MAKE" "$@" V=1
