@@ -45,6 +45,8 @@ LIBBITCOIN_CLI=libbitcoin_cli.a
 LIBBITCOIN_UTIL=libbitcoin_util.a
 LIBBITCOIN_CRYPTO=crypto/libbitcoin_crypto.a
 LIBBITCOINQT=qt/libkomodoqt.a
+LIBVERUS_CRYPTO=crypto/libverus_crypto.a
+LIBVERUS_PORTABLE_CRYPTO=crypto/libverus_portable_crypto.a
 LIBSECP256K1=secp256k1/libsecp256k1.la
 LIBCRYPTOCONDITIONS=cryptoconditions/libcryptoconditions_core.la
 LIBSNARK=snark/libsnark.a
@@ -76,6 +78,8 @@ $(LIBCRYPTOCONDITIONS): $(wildcard cryptoconditions/src/*) $(wildcard cryptocond
 # But to build the less dependent modules first, we manually select their order here:
 EXTRA_LIBRARIES = \
   crypto/libbitcoin_crypto.a \
+  $(LIBVERUS_CRYPTO) \
+  $(LIBVERUS_PORTABLE_CRYPTO) \
   libbitcoin_util.a \
   libbitcoin_common.a \
   libbitcoin_server.a \
@@ -402,18 +406,18 @@ crypto_libbitcoin_crypto_a_SOURCES += \
 endif
 
 # Verus hash specific library - optimized
-crypto_libverus_crypto_a_CPPFLAGS = -O3 -Wint-conversion -march=x86-64 -msse4 -msse4.1 -msse4.2 -mssse3 -mavx -maes -g -funroll-loops -fomit-frame-pointer -fPIC $(AM_CPPFLAGS)
-crypto_libverus_crypto_a_CXXFLAGS = -O3 -Wint-conversion -march=x86-64 -msse4 -msse4.1 -msse4.2 -mssse3 -mavx -maes -g -funroll-loops -fomit-frame-pointer -fPIC $(AM_CXXFLAGS)
+crypto_libverus_crypto_a_CPPFLAGS = -O3 -march=x86-64 -msse4 -msse4.1 -msse4.2 -mssse3 -mavx -maes -g -funroll-loops -fomit-frame-pointer -fPIC $(AM_CPPFLAGS)
+crypto_libverus_crypto_a_CXXFLAGS = -O3 -march=x86-64 -msse4 -msse4.1 -msse4.2 -mssse3 -mavx -maes -g -funroll-loops -fomit-frame-pointer -fPIC $(AM_CXXFLAGS)
 crypto_libverus_crypto_a_SOURCES = \
   crypto/haraka.h \
-  crypto/haraka.c
+  crypto/haraka.cpp
 
 # Verus hash specific library - portable
-crypto_libverus_portable_crypto_a_CPPFLAGS = -O3 -Wint-conversion -march=x86-64 -g -funroll-loops -fomit-frame-pointer -fPIC $(AM_CPPFLAGS)
-crypto_libverus_portable_crypto_a_CXXFLAGS = -O3 -Wint-conversion -march=x86-64 -g -funroll-loops -fomit-frame-pointer -fPIC $(AM_CXXFLAGS)
+crypto_libverus_portable_crypto_a_CPPFLAGS = -O3 -march=x86-64 -g -funroll-loops -fomit-frame-pointer -fPIC $(AM_CPPFLAGS)
+crypto_libverus_portable_crypto_a_CXXFLAGS = -O3 -march=x86-64 -g -funroll-loops -fomit-frame-pointer -fPIC $(AM_CXXFLAGS)
 crypto_libverus_portable_crypto_a_SOURCES = \
   crypto/haraka_portable.h \
-  crypto/haraka_portable.c
+  crypto/haraka_portable.cpp
 
 # common: shared between zcashd and non-server tools
 libbitcoin_common_a_CPPFLAGS = $(BITCOIN_INCLUDES)
@@ -508,6 +512,8 @@ komodod_LDADD = \
   $(LIBUNIVALUE) \
   $(LIBBITCOIN_UTIL) \
   $(LIBBITCOIN_CRYPTO) \
+  $(LIBVERUS_CRYPTO) \
+  $(LIBVERUS_PORTABLE_CRYPTO) \
   $(LIBZCASH) \
   $(LIBSNARK) \
   $(LIBLEVELDB) \
@@ -533,6 +539,8 @@ komodod_LDADD += \
   $(EVENT_LIBS) \
   $(LIBZCASH) \
   $(LIBBITCOIN_CRYPTO) \
+  $(LIBVERUS_CRYPTO) \
+  $(LIBVERUS_PORTABLE_CRYPTO) \
   $(LIBZCASH_LIBS)
 
 # bitcoin-cli binary #
@@ -576,6 +584,8 @@ komodo_tx_LDADD = \
   $(LIBZCASH) \
   $(LIBSNARK) \
   $(LIBBITCOIN_CRYPTO) \
+  $(LIBVERUS_CRYPTO) \
+  $(LIBVERUS_PORTABLE_CRYPTO) \
   $(LIBZCASH_LIBS) \
   $(LIBCRYPTOCONDITIONS)
 
@@ -584,20 +594,21 @@ komodo_tx_LDADD += $(BOOST_LIBS) $(CRYPTO_LIBS)
 
 # zcash protocol primitives #
 libzcash_a_SOURCES = \
-  zcash/IncrementalMerkleTree.cpp \
-  zcash/NoteEncryption.cpp \
-  zcash/Address.cpp \
-  zcash/JoinSplit.cpp \
-  zcash/Proof.cpp \
-  zcash/Note.cpp \
-  zcash/prf.cpp \
-  zcash/util.cpp \
-  zcash/circuit/commitment.tcc \
-  zcash/circuit/gadget.tcc \
-  zcash/circuit/merkle.tcc \
-  zcash/circuit/note.tcc \
-  zcash/circuit/prfs.tcc \
-  zcash/circuit/utils.tcc
+	zcash/IncrementalMerkleTree.cpp \
+	zcash/NoteEncryption.cpp \
+	zcash/Address.cpp \
+	zcash/JoinSplit.cpp \
+	zcash/Proof.cpp \
+	zcash/Note.cpp \
+	zcash/prf.cpp \
+	zcash/util.cpp \
+  zcash/zip32.cpp \
+	zcash/circuit/commitment.tcc \
+	zcash/circuit/gadget.tcc \
+	zcash/circuit/merkle.tcc \
+	zcash/circuit/note.tcc \
+	zcash/circuit/prfs.tcc \
+	zcash/circuit/utils.tcc
 
 libzcash_a_CPPFLAGS = -DMULTICORE -fopenmp -fPIC -DBINARY_OUTPUT -DCURVE_ALT_BN128 -DBOOST_SPIRIT_THREADSAFE -DHAVE_BUILD_INFO -D__STDC_FORMAT_MACROS $(HARDENED_CPPFLAGS) -pipe -O1 -g -Wstack-protector -fstack-protector-all -fPIE -fvisibility=hidden -DSTATIC $(BITCOIN_INCLUDES)
 
@@ -619,7 +630,9 @@ libzcashconsensus_la_SOURCES = \
   crypto/sha512.cpp \
   hash_komodo.cpp \
   primitives/transaction.cpp \
+  primitives/nonce.cpp \
   pubkey.cpp \
+  script/zcashconsensus.cpp \
   script/interpreter.cpp \
   script/script.cpp \
   uint256.cpp \
