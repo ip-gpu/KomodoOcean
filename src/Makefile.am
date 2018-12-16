@@ -169,6 +169,7 @@ BITCOIN_CORE_H = \
   crypto/haraka_portable.h \
   crypto/verus_hash.h \
   deprecation.h \
+  fs.h \
   hash.h \
   httprpc.h \
   httpserver.h \
@@ -291,6 +292,7 @@ libbitcoin_server_a_SOURCES = \
   cc/betprotocol.cpp \
   chain.cpp \
   checkpoints.cpp \
+  fs.cpp \
   crosschain.cpp \
   crypto/haraka.h \
   crypto/haraka_portable.h \
