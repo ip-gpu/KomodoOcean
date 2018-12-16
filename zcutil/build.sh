@@ -86,7 +86,7 @@ fi
 
 PREFIX="$(pwd)/depends/$BUILD/"
 
-#HOST="$HOST" BUILD="$BUILD" NO_RUST="$RUST_ARG" "$MAKE" "$@" -C ./depends/ V=1
+HOST="$HOST" BUILD="$BUILD" NO_RUST="$RUST_ARG" "$MAKE" "$@" -C ./depends/ V=1
 
 ./autogen.sh
 DECKER_ARGS="--enable-tests=no --enable-wallet=yes with_boost_libdir=$(pwd)/depends/x86_64-unknown-linux-gnu/lib"
