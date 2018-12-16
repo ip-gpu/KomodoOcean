@@ -197,8 +197,10 @@ void jsonAddBase64(cJSON *params, char *key, unsigned char *bin, size_t size) {
 
 unsigned char *hashFingerprintContents(asn_TYPE_descriptor_t *asnType, void *fp) {
     unsigned char buf[BUF_SIZE];
+    memset(buf,0,sizeof(buf));
     asn_enc_rval_t rc = der_encode_to_buffer(asnType, fp, buf, BUF_SIZE);
-    ASN_STRUCT_FREE(*asnType, fp);
+//    ASN_STRUCT_FREE(*asnType, fp);
+
     if (rc.encoded < 1) {
         fprintf(stderr,"Encoding fingerprint failed\n");
         return 0;
