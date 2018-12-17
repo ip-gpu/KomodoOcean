@@ -3553,14 +3553,15 @@ UniValue z_getnewaddress(const UniValue& params, bool fHelp)
     }
 
     std::string result;
+    string strAccount;
 
     if (addrType == ADDR_TYPE_SPROUT) {
         result = EncodePaymentAddress(pwalletMain->GenerateNewSproutZKey());
+        strAccount = "z-sprout";
     } else if (addrType == ADDR_TYPE_SAPLING) {
         result = EncodePaymentAddress(pwalletMain->GenerateNewSaplingZKey());
+        strAccount = "z-sapling";
     }
-
-    string strAccount = AccountFromValue("");
 
     pwalletMain->SetZAddressBook(DecodePaymentAddress(result), strAccount, "receive");
 
