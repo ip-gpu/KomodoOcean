@@ -80,6 +80,10 @@ ZAddressBookPage::ZAddressBookPage(const PlatformStyle *platformStyle, Mode _mod
     QAction *copyAddressAction = new QAction(tr("&Copy Address"), this);
     QAction *copyLabelAction = new QAction(tr("Copy &Label"), this);
     QAction *editAction = new QAction(tr("&Edit"), this);
+
+    QAction *copyZSendManyTo = new QAction(tr("Copy zsendmany (to) template"), this);
+    QAction *copyZSendManyFrom = new QAction(tr("Copy zsendmany (from) template"), this);
+
     deleteAction = new QAction(ui->deleteAddress->text(), this);
 
     // Build context menu
@@ -87,6 +91,10 @@ ZAddressBookPage::ZAddressBookPage(const PlatformStyle *platformStyle, Mode _mod
     contextMenu->addAction(copyAddressAction);
     contextMenu->addAction(copyLabelAction);
     contextMenu->addAction(editAction);
+
+    contextMenu->addAction(copyZSendManyTo);
+    contextMenu->addAction(copyZSendManyFrom);
+
     if(tab == SendingTab)
         contextMenu->addAction(deleteAction);
     contextMenu->addSeparator();
@@ -96,6 +104,9 @@ ZAddressBookPage::ZAddressBookPage(const PlatformStyle *platformStyle, Mode _mod
     connect(copyLabelAction, SIGNAL(triggered()), this, SLOT(onCopyLabelAction()));
     connect(editAction, SIGNAL(triggered()), this, SLOT(onEditAction()));
     connect(deleteAction, SIGNAL(triggered()), this, SLOT(on_deleteAddress_clicked()));
+
+    connect(copyZSendManyTo, SIGNAL(triggered()), this, SLOT(on_copyZSendManyTo_clicked()));
+    connect(copyZSendManyFrom, SIGNAL(triggered()), this, SLOT(on_copyZSendManyFrom_clicked()));
 
     connect(ui->tableView, SIGNAL(customContextMenuRequested(QPoint)), this, SLOT(contextualMenu(QPoint)));
 
@@ -157,6 +168,28 @@ void ZAddressBookPage::setModel(ZAddressTableModel *_model)
     connect(_model, SIGNAL(rowsInserted(QModelIndex,int,int)), this, SLOT(selectNewAddress(QModelIndex,int,int)));
 
     selectionChanged();
+}
+
+void ZAddressBookPage::on_copyZSendManyFrom_clicked()
+{
+    QModelIndexList selection = GUIUtil::getEntryData(ui->tableView, ZAddressTableModel::Address);
+    if(!selection.isEmpty())
+    {
+        QString commandTemplate;
+        commandTemplate = QString("z_sendmany %1 '[{\"address\":\"%2\",\"amount\":\"%3\"}]'").arg(selection.at(0).data(Qt::DisplayRole).toString(),QString("YOUR_Z_OR_T_ADDRESS_TO"),QString::number(0,'f',8));
+        GUIUtil::setClipboard(commandTemplate);
+    }
+}
+
+void ZAddressBookPage::on_copyZSendManyTo_clicked()
+{
+    QModelIndexList selection = GUIUtil::getEntryData(ui->tableView, ZAddressTableModel::Address);
+    if(!selection.isEmpty())
+    {
+        QString commandTemplate;
+        commandTemplate = QString("z_sendmany %1 '[{\"address\":\"%2\",\"amount\":\"%3\"}]'").arg(QString("YOUR_Z_OR_T_ADDRESS_FROM"),selection.at(0).data(Qt::DisplayRole).toString(),QString::number(0,'f',8));
+        GUIUtil::setClipboard(commandTemplate);
+    }
 }
 
 void ZAddressBookPage::on_copyAddress_clicked()
