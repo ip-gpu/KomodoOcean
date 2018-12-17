@@ -137,7 +137,7 @@ void ZAddressBookPage::setModel(ZAddressTableModel *_model)
     ui->tableView->setSortingEnabled(true);
     ui->tableView->sortByColumn(2, Qt::AscendingOrder);
 
-    ui->tableView->setColumnWidth(ZAddressTableModel::isMine, 75);
+    ui->tableView->setColumnWidth(ZAddressTableModel::isMine, 60);
     ui->tableView->setColumnWidth(ZAddressTableModel::Balance, 80);
     ui->tableView->setColumnWidth(ZAddressTableModel::Label, 80);
 

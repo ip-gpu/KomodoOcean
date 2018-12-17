@@ -553,7 +553,7 @@ ReadKeyValue(CWallet* pwallet, CDataStream& ssKey, CDataStream& ssValue,
             }
 
 //!!!!! there is no label and purpose in DB for z-addresses for now
-            pwallet->mapZAddressBook[addr].name = "z-address";
+            pwallet->mapZAddressBook[addr].name = "z-sprout";
             pwallet->mapZAddressBook[addr].purpose = "unknown";
 
             wss.nZKeys++;
@@ -570,6 +570,10 @@ ReadKeyValue(CWallet* pwallet, CDataStream& ssKey, CDataStream& ssValue,
                 strErr = "Error reading wallet database: LoadSaplingZKey failed";
                 return false;
             }
+
+//!!!!! there is no label and purpose in DB for z-addresses for now
+            pwallet->mapZAddressBook[key.DefaultAddress()].name = "z-sapling";
+            pwallet->mapZAddressBook[key.DefaultAddress()].purpose = "unknown";
 
             //add checks for integrity
             wss.nZKeys++;
@@ -688,7 +692,7 @@ ReadKeyValue(CWallet* pwallet, CDataStream& ssKey, CDataStream& ssValue,
             }
 
 //!!!!! there is no label and purpose in DB for z-addresses for now
-            pwallet->mapZAddressBook[addr].name = "z-address";
+            pwallet->mapZAddressBook[addr].name = "z-sprout";
             pwallet->mapZAddressBook[addr].purpose = "unknown";
 
             wss.fIsEncrypted = true;
@@ -708,6 +712,11 @@ ReadKeyValue(CWallet* pwallet, CDataStream& ssKey, CDataStream& ssValue,
                 strErr = "Error reading wallet database: LoadCryptedSaplingZKey failed";
                 return false;
             }
+
+//!!!!! there is no label and purpose in DB for z-addresses for now
+            pwallet->mapZAddressBook[extfvk.DefaultAddress()].name = "z-sapling";
+            pwallet->mapZAddressBook[extfvk.DefaultAddress()].purpose = "unknown";
+
             wss.fIsEncrypted = true;
         }
         else if (strType == "keymeta")
@@ -736,7 +745,7 @@ ReadKeyValue(CWallet* pwallet, CDataStream& ssKey, CDataStream& ssValue,
             pwallet->LoadZKeyMetadata(addr, keyMeta);
 
 //!!!!! there is no label and purpose in DB for z-addresses for now
-            pwallet->mapZAddressBook[addr].name = "z-address";
+            pwallet->mapZAddressBook[addr].name = "z-sprout";
             pwallet->mapZAddressBook[addr].purpose = "unknown";
 
             // ignore earliest key creation time as taddr will exist before any zaddr
@@ -766,6 +775,10 @@ ReadKeyValue(CWallet* pwallet, CDataStream& ssKey, CDataStream& ssValue,
                 strErr = "Error reading wallet database: LoadSaplingPaymentAddress failed";
                 return false;
             }
+
+//!!!!! there is no label and purpose in DB for z-addresses for now
+            pwallet->mapZAddressBook[addr].name = "z-sapling";
+            pwallet->mapZAddressBook[addr].purpose = "unknown";
         }
         else if (strType == "defaultkey")
         {
