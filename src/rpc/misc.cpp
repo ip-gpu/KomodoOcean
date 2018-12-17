@@ -130,8 +130,8 @@ UniValue getinfo(const UniValue& params, bool fHelp)
         obj.push_back(Pair("walletversion", pwalletMain->GetVersion()));
         if ( ASSETCHAINS_SYMBOL[0] == 0 )
         {
-            obj.push_back(Pair("interest",       ValueFromAmount(KOMODO_INTERESTSUM)));
-            obj.push_back(Pair("balance",       ValueFromAmount(KOMODO_WALLETBALANCE))); //pwalletMain->GetBalance()
+            obj.push_back(Pair("interest",       ValueFromAmount(komodo_interestsum()))); // KOMODO_INTERESTSUM
+            obj.push_back(Pair("balance",       ValueFromAmount(pwalletMain->GetBalance()))); // KOMODO_WALLETBALANCE
         }
         else
         {
