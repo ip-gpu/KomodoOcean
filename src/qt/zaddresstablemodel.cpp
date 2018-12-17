@@ -412,7 +412,7 @@ void ZAddressTableModel::updateEntry(const QString &address,
 
 QString ZAddressTableModel::addRow(const QString &type, const QString &label, const QString &address)
 {
-    std::string strLabel = label.toStdString();
+    std::string strLabel; // = label.toStdString();
     std::string strAddress = address.toStdString();
 
     editStatus = OK;
@@ -439,8 +439,15 @@ QString ZAddressTableModel::addRow(const QString &type, const QString &label, co
     {
         // Generate a new address to associate with given label
         if ( GetTime() < KOMODO_SAPLING_ACTIVATION )
+        {
             strAddress = EncodePaymentAddress(wallet->GenerateNewSproutZKey());
-        else strAddress = EncodePaymentAddress(wallet->GenerateNewSaplingZKey());
+            strLabel = "z-sprout";
+        }
+        else 
+        {
+            strAddress = EncodePaymentAddress(wallet->GenerateNewSaplingZKey());
+            strLabel = "z-sapling";
+        }
     }
     else
     {
