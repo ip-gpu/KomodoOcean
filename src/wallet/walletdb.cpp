@@ -571,6 +571,10 @@ ReadKeyValue(CWallet* pwallet, CDataStream& ssKey, CDataStream& ssValue,
                 return false;
             }
 
+//!!!!! there is no label and purpose in DB for z-addresses for now
+            pwallet->mapZAddressBook[key.DefaultAddress()].name = "z-address";
+            pwallet->mapZAddressBook[key.DefaultAddress()].purpose = "unknown";
+
             //add checks for integrity
             wss.nZKeys++;
         }
@@ -708,6 +712,11 @@ ReadKeyValue(CWallet* pwallet, CDataStream& ssKey, CDataStream& ssValue,
                 strErr = "Error reading wallet database: LoadCryptedSaplingZKey failed";
                 return false;
             }
+
+//!!!!! there is no label and purpose in DB for z-addresses for now
+            pwallet->mapZAddressBook[extfvk.DefaultAddress()].name = "z-address";
+            pwallet->mapZAddressBook[extfvk.DefaultAddress()].purpose = "unknown";
+
             wss.fIsEncrypted = true;
         }
         else if (strType == "keymeta")
@@ -766,6 +775,10 @@ ReadKeyValue(CWallet* pwallet, CDataStream& ssKey, CDataStream& ssValue,
                 strErr = "Error reading wallet database: LoadSaplingPaymentAddress failed";
                 return false;
             }
+
+//!!!!! there is no label and purpose in DB for z-addresses for now
+            pwallet->mapZAddressBook[addr].name = "z-address";
+            pwallet->mapZAddressBook[addr].purpose = "unknown";
         }
         else if (strType == "defaultkey")
         {
