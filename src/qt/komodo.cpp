@@ -336,7 +336,7 @@ void KomodoCore::shutdown()
 
         if ( ASSETCHAINS_SYMBOL[0] == 0 )
         {
-            komodo_passport_iteration();
+            if (!ShutdownRequested()) komodo_passport_iteration();
             MilliSleep(1000);
         } else MilliSleep(1000);
 
