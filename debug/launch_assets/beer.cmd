@@ -1,1 +1,1 @@
-start ..\KomodoOceanGUI.exe -ac_name=BEER -ac_supply=100000000 -addnode=24.54.206.138
+start ..\KomodoOceanGUI.exe -ac_name=BEER -ac_supply=100000000 -addnode=78.47.196.146

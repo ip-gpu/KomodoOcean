@@ -1,1 +1,1 @@
-start ..\KomodoOceanGUI.exe -ac_name=OOT -ac_supply=216000000 -addnode=174.138.107.226
+start ..\KomodoOceanGUI.exe -ac_name=OOT -ac_supply=216000000 -ac_sapling=5000000 -addnode=174.138.107.226

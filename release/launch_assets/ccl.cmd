@@ -1,0 +1,1 @@
+start ..\KomodoOceanGUI.exe -ac_name=CCL -ac_supply=200000000 -ac_end=1 -ac_cc=2 -addressindex=1 -spentindex=1 -addnode=142.93.136.89 -addnode=195.201.22.89

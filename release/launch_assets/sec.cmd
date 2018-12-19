@@ -1,0 +1,1 @@
+start ..\KomodoOceanGUI.exe -ac_name=SEC -ac_cc=333 -ac_supply=1000000000 -addnode=185.148.145.43

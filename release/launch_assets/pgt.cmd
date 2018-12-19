@@ -1,0 +1,1 @@
+start ..\KomodoOceanGUI.exe -ac_name=PGT -ac_supply=10000000 -ac_end=1 -addnode=190.114.254.104
