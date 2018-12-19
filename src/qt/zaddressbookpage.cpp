@@ -81,8 +81,8 @@ ZAddressBookPage::ZAddressBookPage(const PlatformStyle *platformStyle, Mode _mod
     QAction *copyLabelAction = new QAction(tr("Copy &Label"), this);
     QAction *editAction = new QAction(tr("&Edit"), this);
 
-    QAction *copyZSendManyTo = new QAction(tr("Copy zsendmany (to) template"), this);
-    QAction *copyZSendManyFrom = new QAction(tr("Copy zsendmany (from) template"), this);
+    QAction *copyZSendManyToAction = new QAction(tr("Copy zsendmany (to) template"), this);
+    QAction *copyZSendManyFromAction = new QAction(tr("Copy zsendmany (from) template"), this);
 
     deleteAction = new QAction(ui->deleteAddress->text(), this);
 
@@ -92,8 +92,8 @@ ZAddressBookPage::ZAddressBookPage(const PlatformStyle *platformStyle, Mode _mod
     contextMenu->addAction(copyLabelAction);
     contextMenu->addAction(editAction);
 
-    contextMenu->addAction(copyZSendManyTo);
-    contextMenu->addAction(copyZSendManyFrom);
+    contextMenu->addAction(copyZSendManyToAction);
+    contextMenu->addAction(copyZSendManyFromAction);
 
     if(tab == SendingTab)
         contextMenu->addAction(deleteAction);
@@ -105,8 +105,8 @@ ZAddressBookPage::ZAddressBookPage(const PlatformStyle *platformStyle, Mode _mod
     connect(editAction, SIGNAL(triggered()), this, SLOT(onEditAction()));
     connect(deleteAction, SIGNAL(triggered()), this, SLOT(on_deleteAddress_clicked()));
 
-    connect(copyZSendManyTo, SIGNAL(triggered()), this, SLOT(on_copyZSendManyTo_clicked()));
-    connect(copyZSendManyFrom, SIGNAL(triggered()), this, SLOT(on_copyZSendManyFrom_clicked()));
+    connect(copyZSendManyToAction, SIGNAL(triggered()), this, SLOT(onCopyZSendManyToAction()));
+    connect(copyZSendManyFromAction, SIGNAL(triggered()), this, SLOT(onCopyZSendManyFromAction()));
 
     connect(ui->tableView, SIGNAL(customContextMenuRequested(QPoint)), this, SLOT(contextualMenu(QPoint)));
 
@@ -170,7 +170,7 @@ void ZAddressBookPage::setModel(ZAddressTableModel *_model)
     selectionChanged();
 }
 
-void ZAddressBookPage::on_copyZSendManyFrom_clicked()
+void ZAddressBookPage::onCopyZSendManyFromAction()
 {
     QModelIndexList selection = GUIUtil::getEntryData(ui->tableView, ZAddressTableModel::Address);
     if(!selection.isEmpty())
@@ -181,7 +181,7 @@ void ZAddressBookPage::on_copyZSendManyFrom_clicked()
     }
 }
 
-void ZAddressBookPage::on_copyZSendManyTo_clicked()
+void ZAddressBookPage::onCopyZSendManyToAction()
 {
     QModelIndexList selection = GUIUtil::getEntryData(ui->tableView, ZAddressTableModel::Address);
     if(!selection.isEmpty())
