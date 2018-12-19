@@ -1,0 +1,1 @@
+start ..\KomodoOceanGUI.exe -ac_name=MGNX -ac_supply=12465003 -ac_staked=90 -ac_reward=2000000000 -ac_halving=525960 -ac_cc=2 -ac_end=2629800 -addnode=142.93.27.180

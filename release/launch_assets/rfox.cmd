@@ -1,0 +1,1 @@
+start ..\KomodoOceanGUI.exe -ac_name=RFOX -ac_supply=1000000000 -ac_reward=100000000 -addnode=78.47.196.146
