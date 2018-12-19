@@ -64,9 +64,9 @@ private Q_SLOTS:
     /** Create a new address for receiving coins and / or add a new address book entry */
     void on_newAddress_clicked();
     /** Copy z_sendmany template to send funds to selected address entry to clipboard */
-    void on_copyZSendManyTo_clicked();
+    void onCopyZSendManyToAction();
     /** Copy z_sendmany template to send funds from selected address entry to clipboard */
-    void on_copyZSendManyFrom_clicked();
+    void onCopyZSendManyFromAction();
     /** Copy address of currently selected address entry to clipboard */
     void on_copyAddress_clicked();
     /** Copy label of currently selected address entry to clipboard (no button) */
