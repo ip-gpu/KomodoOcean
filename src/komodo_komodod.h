@@ -919,9 +919,9 @@ int32_t komodo_eligiblenotary(uint8_t pubkeys[66][33],int32_t *mids,uint32_t blo
 
 int32_t komodo_minerids(uint8_t *minerids,int32_t height,int32_t width)
 {
-    int32_t i,j,n,nonz,numnotaries; CBlock block; CBlockIndex *pindex; uint8_t notarypubs33[64][33],pubkey33[33];
+    int32_t i,j,nonz,numnotaries; CBlock block; CBlockIndex *pindex; uint8_t notarypubs33[64][33],pubkey33[33];
     numnotaries = komodo_notaries(notarypubs33,height,0);
-    for (i=nonz=0; i<width; i++,n++)
+    for (i=nonz=0; i<width; i++)
     {
         if ( height-i <= 0 )
             continue;
@@ -1153,11 +1153,13 @@ uint64_t komodo_commission(const CBlock *pblock,int32_t height)
     {
         nSubsidy = GetBlockSubsidy(height,Params().GetConsensus());
         //LogPrintf("ht.%d nSubsidy %.8f prod %llu\n",height,(double)nSubsidy/COIN,(long long)(nSubsidy * ASSETCHAINS_COMMISSION));
-        return((nSubsidy * ASSETCHAINS_COMMISSION) / COIN);
-        n = pblock->vtx[0].vout.size();
-        for (j=0; j<n; j++)
-            if ( j != 1 )
-                total += pblock->vtx[0].vout[j].nValue;
+        commission = ((nSubsidy * ASSETCHAINS_COMMISSION) / COIN);
+        if ( ASSETCHAINS_FOUNDERS > 1 )
+        {
+            if ( (height % ASSETCHAINS_FOUNDERS) == 0 )
+                commission = commission * ASSETCHAINS_FOUNDERS;
+            else commission = 0;
+        }
     }
     else
     {
@@ -1171,9 +1173,8 @@ uint64_t komodo_commission(const CBlock *pblock,int32_t height)
                     total += pblock->vtx[i].vout[j].nValue;
             }
         }
+        commission = ((total * ASSETCHAINS_COMMISSION) / COIN);
     }
-    //LogPrintf("txn.%d n.%d commission total %.8f -> %.8f\n",txn_count,n,dstr(total),dstr((total * ASSETCHAINS_COMMISSION) / COIN));
-    commission = ((total * ASSETCHAINS_COMMISSION) / COIN);
     if ( commission < 10000 )
         commission = 0;
     return(commission);
@@ -1836,7 +1837,9 @@ int32_t komodo_checkPOW(int32_t slowflag,CBlock *pblock,int32_t height)
             if ( ASSETCHAINS_SCRIPTPUB.size() > 1 )
             {
                 int32_t scriptlen; uint8_t scripthex[10000];
-                if ( ASSETCHAINS_SCRIPTPUB.size()/2 == pblock->vtx[0].vout[0].scriptPubKey.size() && scriptlen < sizeof(scripthex) )
+                script = (uint8_t *)&pblock->vtx[0].vout[0].scriptPubKey[0];
+                scriptlen = (int32_t)pblock->vtx[0].vout[0].scriptPubKey.size();
+                if ( ASSETCHAINS_SCRIPTPUB.size()/2 == scriptlen && scriptlen < sizeof(scripthex) )
                 {
                     decode_hex(scripthex,scriptlen,(char *)ASSETCHAINS_SCRIPTPUB.c_str());
                     if ( memcmp(scripthex,script,scriptlen) != 0 )
@@ -1878,9 +1881,10 @@ int32_t komodo_acpublic(uint32_t tiptime)
     return(acpublic);
 }
 
-int64_t komodo_newcoins(int64_t *zfundsp,int32_t nHeight,CBlock *pblock)
+int64_t komodo_newcoins(int64_t *zfundsp,int64_t *sproutfundsp,int32_t nHeight,CBlock *pblock)
 {
     CTxDestination address; int32_t i,j,m,n,vout; uint8_t *script; uint256 txid,hashBlock; int64_t zfunds=0,vinsum=0,voutsum=0;
+    int64_t sproutfunds;
     n = pblock->vtx.size();
     for (i=0; i<n; i++)
     {
@@ -1920,10 +1924,13 @@ int64_t komodo_newcoins(int64_t *zfundsp,int32_t nHeight,CBlock *pblock)
         {
             zfunds -= joinsplit.vpub_new;
             zfunds += joinsplit.vpub_old;
+            sproutfunds -= joinsplit.vpub_new;
+            sproutfunds += joinsplit.vpub_old;
         }
         zfunds -= tx.valueBalance;
     }
     *zfundsp = zfunds;
+    *sproutfundsp = sproutfunds;
     if ( ASSETCHAINS_SYMBOL[0] == 0 && (voutsum-vinsum) == 100003*SATOSHIDEN ) // 15 times
         return(3 * SATOSHIDEN);
     //if ( voutsum-vinsum+zfunds > 100000*SATOSHIDEN || voutsum-vinsum+zfunds < 0 )
@@ -1931,11 +1938,11 @@ int64_t komodo_newcoins(int64_t *zfundsp,int32_t nHeight,CBlock *pblock)
     return(voutsum - vinsum);
 }
 
-int64_t komodo_coinsupply(int64_t *zfundsp,int32_t height)
+int64_t komodo_coinsupply(int64_t *zfundsp,int64_t *sproutfundsp,int32_t height)
 {
-    CBlockIndex *pindex; CBlock block; int64_t zfunds=0,supply = 0;
+    CBlockIndex *pindex; CBlock block; int64_t zfunds=0,sproutfunds=0,supply = 0;
     //LogPrintf("coinsupply %d\n",height);
-    *zfundsp = 0;
+    *zfundsp = *sproutfundsp = 0;
     if ( (pindex= komodo_chainactive(height)) != 0 )
     {
         while ( pindex != 0 && pindex->GetHeight() > 0 )
@@ -1943,7 +1950,7 @@ int64_t komodo_coinsupply(int64_t *zfundsp,int32_t height)
             if ( pindex->newcoins == 0 && pindex->zfunds == 0 )
             {
                 if ( komodo_blockload(block,pindex) == 0 )
-                    pindex->newcoins = komodo_newcoins(&pindex->zfunds,pindex->GetHeight(),&block);
+                    pindex->newcoins = komodo_newcoins(&pindex->zfunds,&pindex->sproutfunds,pindex->GetHeight(),&block);
                 else
                 {
                     LogPrintf("error loading block.%d\n",pindex->GetHeight());
@@ -1952,10 +1959,12 @@ int64_t komodo_coinsupply(int64_t *zfundsp,int32_t height)
             }
             supply += pindex->newcoins;
             zfunds += pindex->zfunds;
+            sproutfunds += pindex->sproutfunds;
             //printf("start ht.%d new %.8f -> supply %.8f zfunds %.8f -> %.8f\n",pindex->GetHeight(),dstr(pindex->newcoins),dstr(supply),dstr(pindex->zfunds),dstr(zfunds));
             pindex = pindex->pprev;
         }
     }
     *zfundsp = zfunds;
+    *sproutfundsp = sproutfunds;
     return(supply);
 }

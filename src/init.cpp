@@ -175,6 +175,12 @@ static CCoinsViewDB *pcoinsdbview = NULL;
 static CCoinsViewErrorCatcher *pcoinscatcher = NULL;
 static boost::scoped_ptr<ECCVerifyHandle> globalVerifyHandle;
 
+bool static InitWarning(const std::string &str)
+{
+    uiInterface.ThreadSafeMessageBox(str, "", CClientUIInterface::MSG_WARNING);
+    return true;
+}
+
 void Interrupt(boost::thread_group& threadGroup)
 {
     InterruptHTTPServer();
@@ -204,6 +210,7 @@ void Shutdown()
     StopREST();
     StopRPC();
     StopHTTPServer();
+
 #ifdef ENABLE_WALLET
     if (pwalletMain)
         pwalletMain->Flush(false);
@@ -215,6 +222,7 @@ void Shutdown()
     GenerateKomodos(false, 0);
  #endif
 #endif
+
     StopNode();
     StopTorControl();
     UnregisterNodeSignals(GetNodeSignals());
@@ -301,12 +309,6 @@ bool static InitError(const std::string &str)
 {
     uiInterface.ThreadSafeMessageBox(str, "", CClientUIInterface::MSG_ERROR);
     return false;
-}
-
-bool static InitWarning(const std::string &str)
-{
-    uiInterface.ThreadSafeMessageBox(str, "", CClientUIInterface::MSG_WARNING);
-    return true;
 }
 
 bool static Bind(const CService &addr, unsigned int flags) {
@@ -1899,9 +1901,9 @@ bool AppInit2(boost::thread_group& threadGroup, CScheduler& scheduler)
     VERUS_MINTBLOCKS = GetBoolArg("-mint", false);
 
     if (pwalletMain || !GetArg("-mineraddress", "").empty())
-        GenerateKomodos(GetBoolArg("-gen", false), pwalletMain, GetArg("-genproclimit", 0));
+        GenerateKomodos(GetBoolArg("-gen", false), pwalletMain, GetArg("-genproclimit", -1));
  #else
-    GenerateKomodos(GetBoolArg("-gen", false), GetArg("-genproclimit", 0));
+    GenerateKomodos(GetBoolArg("-gen", false), GetArg("-genproclimit", -1));
  #endif
 #endif
 
