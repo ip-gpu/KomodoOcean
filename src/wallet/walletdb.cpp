@@ -1106,6 +1106,7 @@ void ThreadFlushWalletDB(const string& strFile)
     int64_t nLastWalletUpdate = GetTime();
     while (true)
     {
+        boost::this_thread::interruption_point();
         MilliSleep(500);
 
         if (nLastSeen != nWalletDBUpdated)
