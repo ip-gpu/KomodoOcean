@@ -110,7 +110,7 @@
            </layout>
           </item>
           <item>
-           <layout class="QGridLayout" name="gridLayout">
+           <layout class="QGridLayout" name="gridLayout" rowstretch="0,0,0,0,0,0,0,0">
             <property name="spacing">
              <number>12</number>
             </property>
@@ -386,6 +386,9 @@
               <property name="text">
                <string>Pending:</string>
               </property>
+              <property name="margin">
+               <number>0</number>
+              </property>
              </widget>
             </item>
             <item row="4" column="0">
@@ -437,7 +440,7 @@
               <property name="sizeHint" stdset="0">
                <size>
                 <width>40</width>
-                <height>20</height>
+                <height>13</height>
                </size>
               </property>
              </spacer>
