@@ -178,7 +178,7 @@ void OverviewPage::setBalance(const CAmount& balance, const CAmount& unconfirmed
     ui->labelBalance->setText(KomodoUnits::formatWithUnit(unit, balance, false, KomodoUnits::separatorAlways));
     ui->labelUnconfirmed->setText(KomodoUnits::formatWithUnit(unit, unconfirmedBalance, false, KomodoUnits::separatorAlways));
     ui->labelImmature->setText(KomodoUnits::formatWithUnit(unit, immatureBalance, false, KomodoUnits::separatorAlways));
-    ui->labelTotal->setText(KomodoUnits::formatWithUnit(unit, balance + unconfirmedBalance + immatureBalance, false, KomodoUnits::separatorAlways));
+    ui->labelTotal->setText(KomodoUnits::formatWithUnit(unit, balance + unconfirmedBalance + immatureBalance + privateBalance + interestBalance, false, KomodoUnits::separatorAlways));
     ui->labelWatchAvailable->setText(KomodoUnits::formatWithUnit(unit, watchOnlyBalance, false, KomodoUnits::separatorAlways));
     ui->labelWatchPending->setText(KomodoUnits::formatWithUnit(unit, watchUnconfBalance, false, KomodoUnits::separatorAlways));
     ui->labelWatchImmature->setText(KomodoUnits::formatWithUnit(unit, watchImmatureBalance, false, KomodoUnits::separatorAlways));
@@ -198,7 +198,6 @@ void OverviewPage::setBalance(const CAmount& balance, const CAmount& unconfirmed
     ui->labelImmatureText->setVisible(showImmature || showWatchOnlyImmature);
     ui->labelWatchImmature->setVisible(showWatchOnlyImmature); // show watch-only immature balance
     // we should show interest only for KMD, so we need to use setVisible with condition
-    ui->labelInterest->setVisible(showInterest);
     ui->labelInterestBalance->setVisible(showInterest);
     ui->labelInterestTotalText->setVisible(showInterest);
 

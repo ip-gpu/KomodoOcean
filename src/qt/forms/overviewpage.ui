@@ -57,7 +57,7 @@
                </font>
               </property>
               <property name="text">
-               <string>Transparent Balance</string>
+               <string>Balances</string>
               </property>
              </widget>
             </item>
@@ -114,14 +114,14 @@
             <property name="spacing">
              <number>12</number>
             </property>
-            <item row="5" column="0">
+            <item row="7" column="0">
              <widget class="QLabel" name="labelTotalText">
               <property name="text">
                <string>Total:</string>
               </property>
              </widget>
             </item>
-            <item row="5" column="1">
+            <item row="7" column="1">
              <widget class="QLabel" name="labelTotal">
               <property name="font">
                <font>
@@ -221,7 +221,7 @@
               </property>
              </widget>
             </item>
-            <item row="4" column="0" colspan="2">
+            <item row="6" column="0" colspan="2">
              <widget class="Line" name="line">
               <property name="orientation">
                <enum>Qt::Horizontal</enum>
@@ -253,7 +253,7 @@
               </property>
              </widget>
             </item>
-            <item row="4" column="2">
+            <item row="6" column="2">
              <widget class="Line" name="lineWatchBalance">
               <property name="sizePolicy">
                <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
@@ -304,7 +304,7 @@
               </property>
              </widget>
             </item>
-            <item row="5" column="2">
+            <item row="7" column="2">
              <widget class="QLabel" name="labelWatchTotal">
               <property name="font">
                <font>
@@ -388,6 +388,44 @@
               </property>
              </widget>
             </item>
+            <item row="4" column="0">
+             <widget class="QLabel" name="labelPrivateTotalText">
+              <property name="mouseTracking">
+               <bool>false</bool>
+              </property>
+              <property name="text">
+               <string>Private:</string>
+              </property>
+              <property name="textFormat">
+               <enum>Qt::AutoText</enum>
+              </property>
+             </widget>
+            </item>
+            <item row="4" column="1">
+             <widget class="QLabel" name="labelPrivateBalance">
+              <property name="font">
+               <font>
+                <weight>75</weight>
+                <bold>true</bold>
+               </font>
+              </property>
+              <property name="cursor">
+               <cursorShape>IBeamCursor</cursorShape>
+              </property>
+              <property name="toolTip">
+               <string>Your current private balance</string>
+              </property>
+              <property name="text">
+               <string>0.000 000 00 Coins</string>
+              </property>
+              <property name="alignment">
+               <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+              </property>
+              <property name="textInteractionFlags">
+               <set>Qt::LinksAccessibleByMouse|Qt::TextSelectableByKeyboard|Qt::TextSelectableByMouse</set>
+              </property>
+             </widget>
+            </item>
             <item row="2" column="3">
              <spacer name="horizontalSpacer_2">
               <property name="orientation">
@@ -404,135 +442,7 @@
               </property>
              </spacer>
             </item>
-           </layout>
-          </item>
-          <item>
-           <layout class="QHBoxLayout" name="horizontalLayout_5" stretch="0,0">
-            <property name="topMargin">
-             <number>13</number>
-            </property>
-            <item>
-             <widget class="QLabel" name="label_7">
-              <property name="font">
-               <font>
-                <weight>75</weight>
-                <bold>true</bold>
-               </font>
-              </property>
-              <property name="text">
-               <string>Private Balance</string>
-              </property>
-             </widget>
-            </item>
-            <item>
-             <spacer name="horizontalSpacer_5">
-              <property name="orientation">
-               <enum>Qt::Horizontal</enum>
-              </property>
-              <property name="sizeHint" stdset="0">
-               <size>
-                <width>40</width>
-                <height>20</height>
-               </size>
-              </property>
-             </spacer>
-            </item>
-           </layout>
-          </item>
-          <item>
-           <layout class="QGridLayout" name="gridLayout_5" rowstretch="0" columnstretch="0,0,0">
-            <property name="spacing">
-             <number>12</number>
-            </property>
-            <item row="0" column="0">
-             <widget class="QLabel" name="labelPrivateTotalText">
-              <property name="mouseTracking">
-               <bool>false</bool>
-              </property>
-              <property name="text">
-               <string>Total:</string>
-              </property>
-              <property name="textFormat">
-               <enum>Qt::AutoText</enum>
-              </property>
-             </widget>
-            </item>
-            <item row="0" column="1">
-             <widget class="QLabel" name="labelPrivateBalance">
-              <property name="font">
-               <font>
-                <weight>75</weight>
-                <bold>true</bold>
-               </font>
-              </property>
-              <property name="cursor">
-               <cursorShape>IBeamCursor</cursorShape>
-              </property>
-              <property name="text">
-               <string>0.000 000 00 Coins</string>
-              </property>
-              <property name="alignment">
-               <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-              </property>
-              <property name="textInteractionFlags">
-               <set>Qt::LinksAccessibleByMouse|Qt::TextSelectableByKeyboard|Qt::TextSelectableByMouse</set>
-              </property>
-             </widget>
-            </item>
-            <item row="0" column="2">
-             <spacer name="horizontalSpacer_6">
-              <property name="orientation">
-               <enum>Qt::Horizontal</enum>
-              </property>
-              <property name="sizeHint" stdset="0">
-               <size>
-                <width>40</width>
-                <height>20</height>
-               </size>
-              </property>
-             </spacer>
-            </item>
-           </layout>
-          </item>
-          <item>
-           <layout class="QHBoxLayout" name="horizontalLayout_3">
-            <property name="topMargin">
-             <number>6</number>
-            </property>
-            <item>
-             <widget class="QLabel" name="labelInterest">
-              <property name="font">
-               <font>
-                <weight>75</weight>
-                <bold>true</bold>
-               </font>
-              </property>
-              <property name="text">
-               <string>Interest</string>
-              </property>
-             </widget>
-            </item>
-            <item>
-             <spacer name="horizontalSpacer_3">
-              <property name="orientation">
-               <enum>Qt::Horizontal</enum>
-              </property>
-              <property name="sizeHint" stdset="0">
-               <size>
-                <width>40</width>
-                <height>20</height>
-               </size>
-              </property>
-             </spacer>
-            </item>
-           </layout>
-          </item>
-          <item>
-           <layout class="QGridLayout" name="gridLayout_6">
-            <property name="spacing">
-             <number>12</number>
-            </property>
-            <item row="0" column="1">
+            <item row="5" column="1">
              <widget class="QLabel" name="labelInterestBalance">
               <property name="font">
                <font>
@@ -543,6 +453,9 @@
               <property name="cursor">
                <cursorShape>IBeamCursor</cursorShape>
               </property>
+              <property name="toolTip">
+               <string>Current interest (reward)</string>
+              </property>
               <property name="text">
                <string>0.000 000 00 Coins</string>
               </property>
@@ -554,28 +467,12 @@
               </property>
              </widget>
             </item>
-            <item row="0" column="0">
+            <item row="5" column="0">
              <widget class="QLabel" name="labelInterestTotalText">
               <property name="text">
-               <string>Total:</string>
+               <string>Rewards:</string>
               </property>
              </widget>
-            </item>
-            <item row="0" column="2">
-             <spacer name="horizontalSpacer_7">
-              <property name="orientation">
-               <enum>Qt::Horizontal</enum>
-              </property>
-              <property name="sizeType">
-               <enum>QSizePolicy::Expanding</enum>
-              </property>
-              <property name="sizeHint" stdset="0">
-               <size>
-                <width>40</width>
-                <height>20</height>
-               </size>
-              </property>
-             </spacer>
             </item>
            </layout>
           </item>
