@@ -454,7 +454,7 @@
                <cursorShape>IBeamCursor</cursorShape>
               </property>
               <property name="toolTip">
-               <string>Current interest (reward)</string>
+               <string>Your current rewards (interest)</string>
               </property>
               <property name="text">
                <string>0.000 000 00 Coins</string>
