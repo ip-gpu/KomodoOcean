@@ -14,7 +14,7 @@
 #include "transactionfilterproxy.h"
 #include "transactiontablemodel.h"
 #include "walletmodel.h"
-#include "util.h"
+#include "util.h" // for KOMODO_ASSETCHAIN_MAXLEN
 
 #include <QAbstractItemDelegate>
 #include <QPainter>
