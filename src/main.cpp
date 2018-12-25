@@ -5542,8 +5542,14 @@ bool static LoadBlockIndexDB()
     //LogPrintf("load blockindexDB paired %u\n",(uint32_t)time(NULL));
     sort(vSortedByHeight.begin(), vSortedByHeight.end());
     //LogPrintf("load blockindexDB sorted %u\n",(uint32_t)time(NULL));
+
+    uiInterface.ShowProgress(_("Loading block index DB..."), 0, false);
+    int cur_height_num = 0;
+
     BOOST_FOREACH(const PAIRTYPE(int, CBlockIndex*)& item, vSortedByHeight)
     {
+        boost::this_thread::interruption_point();
+
         CBlockIndex* pindex = item.second;
         pindex->chainPower = (pindex->pprev ? CChainPower(pindex) + pindex->pprev->chainPower : CChainPower(pindex)) + GetBlockProof(*pindex);
         // We can link the chain of blocks for which we've received transactions at some point.
@@ -5596,7 +5602,12 @@ bool static LoadBlockIndexDB()
         if (pindex->IsValid(BLOCK_VALID_TREE) && (pindexBestHeader == NULL || CBlockIndexWorkComparator()(pindexBestHeader, pindex)))
             pindexBestHeader = pindex;
         //komodo_pindex_init(pindex,(int32_t)pindex->GetHeight());
+        uiInterface.ShowProgress(_("Loading block index DB..."), (int)((double)(cur_height_num*100)/(double)(vSortedByHeight.size())), false);
+        cur_height_num++;
     }
+
+    uiInterface.ShowProgress("", 100, false);
+
     //LogPrintf("load blockindexDB chained %u\n",(uint32_t)time(NULL));
 
     // Load block file info
@@ -7935,9 +7946,13 @@ public:
     CMainCleanup() {}
     ~CMainCleanup() {
         // block headers
-        BlockMap::iterator it1 = mapBlockIndex.begin();
-        for (; it1 != mapBlockIndex.end(); it1++)
-            delete (*it1).second;
+//        BlockMap::iterator it1 = mapBlockIndex.begin();
+//        for (; it1 != mapBlockIndex.end(); it1++)
+//            delete (*it1).second;
+        BOOST_FOREACH(BlockMap::value_type& entry, mapBlockIndex) {
+            delete entry.second;
+        }
+
         mapBlockIndex.clear();
 
         // orphan transactions
