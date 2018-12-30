@@ -30,7 +30,7 @@ public:
     ~SendCoinsEntry();
 
     void setModel(WalletModel *model);
-    bool validate();
+    bool validate(bool allowZAddresses=false);
     SendCoinsRecipient getValue();
 
     /** Return whether the entry is still empty and unedited */
@@ -50,6 +50,7 @@ public:
 public Q_SLOTS:
     void clear();
     void checkSubtractFeeFromAmount();
+    void hideCheckboxSubtractFeeFromAmount();
 
 Q_SIGNALS:
     void removeEntry(SendCoinsEntry *entry);

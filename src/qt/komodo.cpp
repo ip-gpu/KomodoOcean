@@ -31,6 +31,8 @@ void komodo_passport_iteration();
 #ifdef ENABLE_WALLET
 #include "paymentserver.h"
 #include "walletmodel.h"
+#include "walletframe.h"
+#include "walletview.h"
 #endif
 
 #include "init.h"
@@ -333,7 +335,6 @@ void KomodoCore::shutdown()
     try
     {
         qDebug() << __func__ << ": Running Shutdown in thread";
-
         if ( ASSETCHAINS_SYMBOL[0] == 0 )
         {
             if (!ShutdownRequested()) komodo_passport_iteration();
@@ -343,6 +344,7 @@ void KomodoCore::shutdown()
         Interrupt(threadGroup);
         threadGroup.join_all();
         Shutdown();
+
         qDebug() << __func__ << ": Shutdown finished";
         Q_EMIT shutdownResult();
     } catch (const std::exception& e) {
@@ -390,14 +392,19 @@ KomodoApplication::~KomodoApplication()
 
     delete window;
     window = 0;
+    qDebug() << __func__ << ": Deleted window";
 #ifdef ENABLE_WALLET
     delete paymentServer;
     paymentServer = 0;
+    qDebug() << __func__ << ": Deleted paymentServer";
 #endif
     delete optionsModel;
     optionsModel = 0;
+    qDebug() << __func__ << ": Deleted optionsModel";
+
     delete platformStyle;
     platformStyle = 0;
+    qDebug() << __func__ << ": Deleted platformStyle";
 }
 
 #ifdef ENABLE_WALLET
@@ -539,6 +546,8 @@ void KomodoApplication::initializeResult(bool success)
         // komodo: URIs or payment requests:
         connect(paymentServer, SIGNAL(receivedPaymentRequest(SendCoinsRecipient)),
                          window, SLOT(handlePaymentRequest(SendCoinsRecipient)));
+        connect(paymentServer, SIGNAL(receivedZPaymentRequest(SendCoinsRecipient)),
+                         window, SLOT(handleZPaymentRequest(SendCoinsRecipient)));
         connect(window, SIGNAL(receivedURI(QString)),
                          paymentServer, SLOT(handleURIOrFile(QString)));
         connect(paymentServer, SIGNAL(message(QString,QString,unsigned int)),
@@ -763,9 +772,11 @@ int main(int argc, char *argv[])
             app.requestShutdown();
             app.exec();
             rv = app.getReturnValue();
+            qDebug() << __func__ << ": Exit success";
         } else {
             // A dialog with detailed error will have been shown by InitError()
             rv = EXIT_FAILURE;
+            qDebug() << __func__ << ": Exit failure";
         }
     } catch (const std::exception& e) {
         PrintExceptionContinue(&e, "Runaway exception");
@@ -774,6 +785,7 @@ int main(int argc, char *argv[])
         PrintExceptionContinue(nullptr, "Runaway exception");
         app.handleRunawayException(QString::fromStdString(GetWarnings("gui")));
     }
+    qDebug() << __func__ << ": Final";
     return rv;
 }
 #endif // KOMODO_QT_TEST

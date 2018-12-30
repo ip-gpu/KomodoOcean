@@ -145,7 +145,7 @@
     <item row="1" column="1">
      <widget class="QLineEdit" name="addAsLabel">
       <property name="toolTip">
-       <string>Enter a label for this address to add it to the list of used addresses</string>
+       <string>Enter a label for this address to add it to the list of used addresses (only for taddrs)</string>
       </property>
      </widget>
     </item>
@@ -163,7 +163,10 @@
      </widget>
     </item>
     <item row="2" column="1">
-     <layout class="QHBoxLayout" name="horizontalLayoutAmount" stretch="0,1">
+     <layout class="QHBoxLayout" name="horizontalLayoutAmount" stretch="0,1,0">
+      <property name="spacing">
+       <number>10</number>
+      </property>
       <item>
        <widget class="KomodoAmountField" name="payAmount"/>
       </item>
@@ -181,6 +184,10 @@
        <widget class="QPushButton" name="useAvailableBalanceButton">
         <property name="text">
          <string>Use available balance</string>
+        </property>
+        <property name="icon">
+         <iconset>
+          <normaloff>:/icons/all_balance</normaloff>:/icons/all_balance</iconset>
         </property>
        </widget>
       </item>
@@ -1261,6 +1268,7 @@
    <class>KomodoAmountField</class>
    <extends>QLineEdit</extends>
    <header>komodoamountfield.h</header>
+   <container>1</container>
   </customwidget>
  </customwidgets>
  <tabstops>
