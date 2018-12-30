@@ -150,6 +150,7 @@ HEADERS += src\komodo_globals.h \
      src\qt\coincontroldialog.h \
      src\qt\coincontroltreewidget.h \
      src\qt\sendcoinsdialog.h \
+     src\qt\zsendcoinsdialog.h \
      src\qt\addressbookpage.h \
      src\qt\zaddressbookpage.h \
      src\qt\signverifymessagedialog.h \
@@ -388,6 +389,7 @@ SOURCES += src\protobuf\google\protobuf\any.cc \
     src\qt\recentrequeststablemodel.cpp \
     src\qt\rpcconsole.cpp \
     src\qt\sendcoinsdialog.cpp \
+    src\qt\zsendcoinsdialog.cpp \
     src\qt\sendcoinsentry.cpp \
     src\qt\signverifymessagedialog.cpp \
     src\qt\splashscreen.cpp \
@@ -402,6 +404,7 @@ SOURCES += src\protobuf\google\protobuf\any.cc \
     src\qt\walletframe.cpp \
     src\qt\walletmodel.cpp \
     src\qt\walletmodeltransaction.cpp \
+    src\qt\walletmodelztransaction.cpp \
     src\qt\walletview.cpp \
     src\qt\winshutdownmonitor.cpp \
     src\random.cpp \
@@ -555,6 +558,7 @@ RESOURCES += \
 FORMS += \
     src\qt\forms\coincontroldialog.ui \
     src\qt\forms\sendcoinsdialog.ui \
+    src\qt\forms\zsendcoinsdialog.ui \
     src\qt\forms\addressbookpage.ui \
     src\qt\forms\zaddressbookpage.ui \
     src\qt\forms\signverifymessagedialog.ui \
@@ -660,5 +664,8 @@ Debug:LIBS += -ldepends\pthreads-master\dll\x64\Debug\pthreads
 
 QMAKE_CXXFLAGS += -O2 -bigobj -Zp8 -GS -wd4800 -wd4100 -wd4267 -wd4244 -wd4101 -w14100 -wd4146 -wd4189 -wd4018 -wd4290 -wd4334 -wd4996
 QMAKE_CFLAGS += -O2 -bigobj -Zp8 -GS -wd4800 -wd4100 -wd4267 -wd4244 -wd4101 -w14100 -wd4146 -wd4189 -wd4018 -wd4290 -wd4334 -wd4996
+
+#QMAKE_CXXFLAGS_RELEASE += $$QMAKE_CFLAGS_RELEASE_WITH_DEBUGINFO
+#QMAKE_LFLAGS_RELEASE += $$QMAKE_LFLAGS_RELEASE_WITH_DEBUGINFO
 
 system($$QMAKE_LRELEASE -silent $$_PRO_FILE_)

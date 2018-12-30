@@ -12,6 +12,8 @@
 #include "platformstyle.h"
 #include "walletmodel.h"
 
+#include "key_io.h"
+
 #include <QApplication>
 #include <QClipboard>
 
@@ -28,13 +30,14 @@ SendCoinsEntry::SendCoinsEntry(const PlatformStyle *_platformStyle, QWidget *par
     ui->deleteButton->setIcon(platformStyle->SingleColorIcon(":/icons/remove"));
     ui->deleteButton_is->setIcon(platformStyle->SingleColorIcon(":/icons/remove"));
     ui->deleteButton_s->setIcon(platformStyle->SingleColorIcon(":/icons/remove"));
+    ui->useAvailableBalanceButton->setIcon(platformStyle->SingleColorIcon(":/icons/all_balance"));
 
     setCurrentWidget(ui->SendCoins);
 
     if (platformStyle->getUseExtraSpacing())
         ui->payToLayout->setSpacing(4);
 #if QT_VERSION >= 0x040700
-    ui->addAsLabel->setPlaceholderText(tr("Enter a label for this address to add it to your address book"));
+    ui->addAsLabel->setPlaceholderText(tr("Enter a label for this address to add it to your address book (only for taddrs)"));
 #endif
 
     // normal komodo address field
@@ -118,6 +121,11 @@ void SendCoinsEntry::checkSubtractFeeFromAmount()
     ui->checkboxSubtractFeeFromAmount->setChecked(true);
 }
 
+void SendCoinsEntry::hideCheckboxSubtractFeeFromAmount()
+{
+    ui->checkboxSubtractFeeFromAmount->hide();
+}
+
 void SendCoinsEntry::deleteClicked()
 {
     Q_EMIT removeEntry(this);
@@ -128,7 +136,7 @@ void SendCoinsEntry::useAvailableBalanceClicked()
     Q_EMIT useAvailableBalance(this);
 }
 
-bool SendCoinsEntry::validate()
+bool SendCoinsEntry::validate(bool allowZAddresses)
 {
     if (!model)
         return false;
@@ -140,7 +148,7 @@ bool SendCoinsEntry::validate()
     if (recipient.paymentRequest.IsInitialized())
         return retval;
 
-    if (!model->validateAddress(ui->payTo->text()))
+    if (!model->validateAddress(ui->payTo->text(), allowZAddresses))
     {
         ui->payTo->setValid(false);
         retval = false;
@@ -159,9 +167,12 @@ bool SendCoinsEntry::validate()
     }
 
     // Reject dust outputs:
-    if (retval && GUIUtil::isDust(ui->payTo->text(), ui->payAmount->value())) {
-        ui->payAmount->setValid(false);
-        retval = false;
+    if (IsValidDestinationString(ui->payTo->text().toStdString()))
+    {
+        if (retval && GUIUtil::isDust(ui->payTo->text(), ui->payAmount->value())) {
+            ui->payAmount->setValid(false);
+            retval = false;
+        }
     }
 
     return retval;

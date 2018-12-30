@@ -11,6 +11,7 @@
 class ZAddressTablePriv;
 class WalletModel;
 class PlatformStyle;
+class ZSendConfirmationDialog;
 
 class CWallet;
 

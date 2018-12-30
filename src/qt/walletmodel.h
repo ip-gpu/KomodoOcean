@@ -7,6 +7,7 @@
 
 #include "paymentrequestplus.h"
 #include "walletmodeltransaction.h"
+#include "walletmodelztransaction.h"
 
 #include "support/allocators/secure.h"
 
@@ -22,6 +23,7 @@ class PlatformStyle;
 class RecentRequestsTableModel;
 class TransactionTableModel;
 class WalletModelTransaction;
+class WalletModelZTransaction;
 
 class CCoinControl;
 class CKeyID;
@@ -108,7 +110,18 @@ public:
     {
         OK,
         InvalidAmount,
+        InvalidFromAddress,
+        HaveNotSpendingKey,
+        SendingBothSproutAndSapling,
+        SproutUsageExpired,
+        SproutUsageWillExpireSoon,
+        SendBetweenSproutAndSapling,
         InvalidAddress,
+        TooManyZaddrs,
+        SaplingHasNotActivated,
+        LargeTransactionSize,
+        TooLargeFeeForSmallTrans,
+        TooLargeFee,
         AmountExceedsBalance,
         AmountWithFeeExceedsBalance,
         DuplicateAddress,
@@ -143,7 +156,7 @@ public:
     EncryptionStatus getEncryptionStatus() const;
 
     // Check address for validity
-    bool validateAddress(const QString &address);
+    bool validateAddress(const QString &address, bool allowZAddresses=false);
 
     // Return status record for SendCoins, contains error id + information
     struct SendCoinsReturn
@@ -160,8 +173,14 @@ public:
     // prepare transaction for getting txfee before sending coins
     SendCoinsReturn prepareTransaction(WalletModelTransaction &transaction, const CCoinControl& coinControl);
 
+    // prepare z-transaction for getting txfee before sending coins
+    SendCoinsReturn prepareZTransaction(WalletModelZTransaction &transaction, const CCoinControl& coinControl);
+
     // Send coins to a list of recipients
     SendCoinsReturn sendCoins(WalletModelTransaction &transaction);
+
+    // Z-Send coins to a list of recipients
+    SendCoinsReturn zsendCoins(WalletModelZTransaction &transaction);
 
     // Wallet encryption
     bool setWalletEncrypted(bool encrypted, const SecureString &passphrase);
@@ -215,6 +234,9 @@ public:
     int getDefaultConfirmTarget() const;
 
     bool getDefaultWalletRbf() const;
+    std::map<CTxDestination, CAmount> getTAddressBalances();
+    std::map<libzcash::PaymentAddress, CAmount> getZAddressBalances();
+    CAmount getAddressBalance(const std::string &sAddress);
 
 private:
     CWallet *wallet;
@@ -267,6 +289,9 @@ Q_SIGNALS:
 
     // Coins sent: from wallet, to recipient, in (serialized) transaction:
     void coinsSent(CWallet* wallet, SendCoinsRecipient recipient, QByteArray transaction);
+
+    // Coins sent: from wallet, to recipient, in (serialized) transaction:
+    void coinsZSent(AsyncRPCOperationId operationId);
 
     // Show progress dialog e.g. for rescan
     void showProgress(const QString &title, int nProgress);
