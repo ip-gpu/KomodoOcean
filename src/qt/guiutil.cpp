@@ -122,7 +122,7 @@ static std::string DummyAddress(const CChainParams &params)
     return "";
 }
 
-void setupAddressWidget(QValidatedLineEdit *widget, QWidget *parent)
+void setupAddressWidget(QValidatedLineEdit *widget, QWidget *parent, bool allowZAddresses)
 {
     parent->setFocusProxy(widget);
 
@@ -133,8 +133,8 @@ void setupAddressWidget(QValidatedLineEdit *widget, QWidget *parent)
     widget->setPlaceholderText(QObject::tr("Enter a Komodo address (e.g. %1)").arg(
         QString::fromStdString(DummyAddress(Params()))));
 #endif
-    widget->setValidator(new KomodoAddressEntryValidator(parent));
-    widget->setCheckValidator(new KomodoAddressCheckValidator(parent));
+    widget->setValidator(new KomodoAddressEntryValidator(parent, allowZAddresses));
+    widget->setCheckValidator(new KomodoAddressCheckValidator(parent, allowZAddresses));
 }
 
 void setupAmountWidget(QLineEdit *widget, QWidget *parent)

@@ -286,7 +286,7 @@ void ZSendCoinsDialog::accept()
 
 SendCoinsEntry *ZSendCoinsDialog::addEntry()
 {
-    SendCoinsEntry *entry = new SendCoinsEntry(platformStyle, this);
+    SendCoinsEntry *entry = new SendCoinsEntry(platformStyle, this, true);
     entry->setModel(model);
     ui->entries->addWidget(entry);
     connect(entry, SIGNAL(removeEntry(SendCoinsEntry*)), this, SLOT(removeEntry(SendCoinsEntry*)));
