@@ -72,7 +72,6 @@ private:
 
 private Q_SLOTS:
     void on_sendButton_clicked();
-    void on_payFromAddress_currentIndexChanged(int index);
     void removeEntry(SendCoinsEntry* entry);
     void useAvailableBalance(SendCoinsEntry* entry);
     void updateDisplayUnit();
