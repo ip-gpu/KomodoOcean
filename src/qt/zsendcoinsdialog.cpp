@@ -580,11 +580,6 @@ void ZSendCoinsDialog::coinControlUpdateLabels()
     }
 }
 
-void ZSendCoinsDialog::on_payFromAddress_currentIndexChanged(int index)
-{
-    clear();
-}
-
 void ZSendCoinsDialog::updatePayFromList()
 {
     ui->payFromAddress->clear();
