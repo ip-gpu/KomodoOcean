@@ -17,11 +17,12 @@
 #include <QApplication>
 #include <QClipboard>
 
-SendCoinsEntry::SendCoinsEntry(const PlatformStyle *_platformStyle, QWidget *parent) :
+SendCoinsEntry::SendCoinsEntry(const PlatformStyle *_platformStyle, QWidget *parent, bool allowZAddresses) :
     QStackedWidget(parent),
     ui(new Ui::SendCoinsEntry),
     model(0),
-    platformStyle(_platformStyle)
+    platformStyle(_platformStyle),
+    _allowZAddresses(allowZAddresses)
 {
     ui->setupUi(this);
 
@@ -41,7 +42,7 @@ SendCoinsEntry::SendCoinsEntry(const PlatformStyle *_platformStyle, QWidget *par
 #endif
 
     // normal komodo address field
-    GUIUtil::setupAddressWidget(ui->payTo, this);
+    GUIUtil::setupAddressWidget(ui->payTo, this, _allowZAddresses);
     // just a label for displaying komodo address(es)
     ui->payTo_is->setFont(GUIUtil::fixedPitchFont());
 

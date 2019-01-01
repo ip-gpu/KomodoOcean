@@ -16,8 +16,9 @@
   - All lower-case letters except for 'l'
 */
 
-KomodoAddressEntryValidator::KomodoAddressEntryValidator(QObject *parent) :
-    QValidator(parent)
+KomodoAddressEntryValidator::KomodoAddressEntryValidator(QObject *parent, bool allowZAddresses) :
+    QValidator(parent),
+    _allowZAddresses(allowZAddresses)
 {
 }
 
@@ -81,8 +82,9 @@ QValidator::State KomodoAddressEntryValidator::validate(QString &input, int &pos
     return state;
 }
 
-KomodoAddressCheckValidator::KomodoAddressCheckValidator(QObject *parent) :
-    QValidator(parent)
+KomodoAddressCheckValidator::KomodoAddressCheckValidator(QObject *parent, bool allowZAddresses) :
+    QValidator(parent),
+    _allowZAddresses(allowZAddresses)
 {
 }
 
@@ -90,6 +92,16 @@ QValidator::State KomodoAddressCheckValidator::validate(QString &input, int &pos
 {
     Q_UNUSED(pos);
     // Validate the passed Komodo address
+    if (_allowZAddresses) {
+
+        // by default we assume SAPLING_BRANCH_ID to allow both type of z-addresses SPROUT and SAPLING,
+        // bcz we can't get CurrentEpochBranchId(chainActive.Height(), Params().GetConsensus()) here.
+        // this affects only validator in QValidateLineEdit, so, nothing other hurts.
+
+        if (IsValidPaymentAddressString(input.toStdString(), SAPLING_BRANCH_ID))
+            return QValidator::Acceptable;
+    }
+
     if (IsValidDestinationString(input.toStdString())) {
         return QValidator::Acceptable;
     }

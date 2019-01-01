@@ -26,7 +26,7 @@ class SendCoinsEntry : public QStackedWidget
     Q_OBJECT
 
 public:
-    explicit SendCoinsEntry(const PlatformStyle *platformStyle, QWidget *parent = 0);
+    explicit SendCoinsEntry(const PlatformStyle *platformStyle, QWidget *parent = 0, bool allowZAddresses = false);
     ~SendCoinsEntry();
 
     void setModel(WalletModel *model);
@@ -73,6 +73,7 @@ private:
     const PlatformStyle *platformStyle;
 
     bool updateLabel(const QString &address);
+    bool _allowZAddresses;
 };
 
 #endif // KOMODO_QT_SENDCOINSENTRY_H
