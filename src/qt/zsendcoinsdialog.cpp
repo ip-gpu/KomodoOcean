@@ -612,7 +612,7 @@ void ZSendCoinsDialog::updatePayFromList()
 
     ComparatorZ compFunctorZ = [](std::pair<libzcash::PaymentAddress, CAmount> elem1 ,std::pair<libzcash::PaymentAddress, CAmount> elem2)
     {
-        return ValueFromAmount(elem1.second).get_real() > ValueFromAmount(elem2.second).get_real();
+        return ValueFromAmount(elem1.second).get_real() >= ValueFromAmount(elem2.second).get_real();
     };
 
     std::map<libzcash::PaymentAddress, CAmount> zbalances = model->getZAddressBalances();
