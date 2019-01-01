@@ -593,7 +593,7 @@ void ZSendCoinsDialog::updatePayFromList()
 
     ComparatorT compFunctorT = [](std::pair<CTxDestination, CAmount> elem1 ,std::pair<CTxDestination, CAmount> elem2)
     {
-        return ValueFromAmount(elem1.second).get_real() > ValueFromAmount(elem2.second).get_real();
+        return ValueFromAmount(elem1.second).get_real() >= ValueFromAmount(elem2.second).get_real();
     };
 
     std::map<CTxDestination, CAmount> balances = model->getTAddressBalances();
