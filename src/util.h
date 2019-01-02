@@ -1,5 +1,5 @@
 // Copyright (c) 2009-2010 Satoshi Nakamoto
-// Copyright (c) 2009-2014 The Komodo Core developers
+// Copyright (c) 2009-2014 The Bitcoin Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -7,8 +7,8 @@
  * Server/client environment: argument handling, config file parsing,
  * logging, thread wrappers
  */
-#ifndef KOMODO_UTIL_H
-#define KOMODO_UTIL_H
+#ifndef BITCOIN_UTIL_H
+#define BITCOIN_UTIL_H
 
 #if defined(HAVE_CONFIG_H)
 #include "config/komodo-config.h"
@@ -36,8 +36,6 @@ static const bool DEFAULT_LOGTIMEMICROS = false;
 static const bool DEFAULT_LOGIPS        = false;
 static const bool DEFAULT_LOGTIMESTAMPS = true;
 
-extern std::atomic<uint32_t> logCategories;
-
 /** Signals for translation. */
 class CTranslationInterface
 {
@@ -58,7 +56,7 @@ extern bool fLogIPs;
 extern std::atomic<bool> fReopenDebugLog;
 extern CTranslationInterface translationInterface;
 
-extern const char * const KOMODO_CONF_FILENAME;
+[[noreturn]] extern void new_handler_terminate();
 
 /**
  * Translation function: Call Translate signal on UI interface, which returns a boost::optional result.
@@ -111,7 +109,6 @@ static inline int LogPrint(const char* category, const char* format)
     if(!LogAcceptCategory(category)) return 0;
     return LogPrintStr(format);
 }
-
 static inline bool error(const char* format)
 {
     LogPrintStr(std::string("ERROR: ") + format + "\n");
@@ -133,7 +130,7 @@ boost::filesystem::path GetDefaultDataDir();
 const boost::filesystem::path &GetDataDir(bool fNetSpecific = true);
 void ClearDatadirCache();
 boost::filesystem::path GetConfigFile();
-#ifndef WIN32
+#ifndef _WIN32
 boost::filesystem::path GetPidFile();
 void CreatePidFile(const boost::filesystem::path &path, pid_t pid);
 #endif
@@ -142,7 +139,7 @@ public:
     missing_zcash_conf() : std::runtime_error("Missing komodo.conf") { }
 };
 void ReadConfigFile(std::map<std::string, std::string>& mapSettingsRet, std::map<std::string, std::vector<std::string> >& mapMultiSettingsRet);
-#ifdef WIN32
+#ifdef _WIN32
 boost::filesystem::path GetSpecialFolderPath(int nFolder, bool fCreate = true);
 #endif
 boost::filesystem::path GetTempPath();
@@ -159,12 +156,23 @@ std::string LicenseInfo();
 
 inline bool IsSwitchChar(char c)
 {
-#ifdef WIN32
+#ifdef _WIN32
     return c == '-' || c == '/';
 #else
     return c == '-';
 #endif
 }
+
+/**
+ * Return string argument or default value
+ *
+ * @param strVal string to split
+ * @param outVals array of numbers from string or default
+ *      if the string is null, nDefault is used for all array entries
+ *      else if the string has fewer than _MAX_ERAS entries, then the last 
+ *      entry fills remaining entries
+ */
+void Split(const std::string& strVal, uint64_t *outVals, uint64_t nDefault);
 
 /**
  * Return string argument or default value
@@ -185,14 +193,6 @@ std::string GetArg(const std::string& strArg, const std::string& strDefault);
 int64_t GetArg(const std::string& strArg, int64_t nDefault);
 
 /**
- * Return true if the given argument has been manually set
- *
- * @param strArg Argument to get (e.g. "-foo")
- * @return true if the argument has been set
- */
-bool IsArgSet(const std::string& strArg);
-
-/**
  * Return boolean argument or default value
  *
  * @param strArg Argument to get (e.g. "-foo")
@@ -200,6 +200,14 @@ bool IsArgSet(const std::string& strArg);
  * @return command-line argument or default value
  */
 bool GetBoolArg(const std::string& strArg, bool fDefault);
+
+/**
+ * Return true if the given argument has been manually set
+ *
+ * @param strArg Argument to get (e.g. "-foo")
+ * @return true if the argument has been set
+ */
+bool IsArgSet(const std::string& strArg);
 
 /**
  * Set an argument if it doesn't already have a value
@@ -236,6 +244,15 @@ std::string HelpMessageGroup(const std::string& message);
  */
 std::string HelpMessageOpt(const std::string& option, const std::string& message);
 
+/**
+ * Return the number of physical cores available on the current system.
+ * @note This does not count virtual cores, such as those provided by HyperThreading
+ * when boost is newer than 1.56.
+ */
+int GetNumCores();
+
+std::string CopyrightHolders(const std::string& strPrefix);
+
 void SetThreadPriority(int nPriority);
 void RenameThread(const char* name);
 
@@ -267,41 +284,7 @@ template <typename Callable> void TraceThread(const char* name,  Callable func)
     }
 }
 
-/**
- * Return the number of physical cores available on the current system.
- * @note This does not count virtual cores, such as those provided by HyperThreading
- * when boost is newer than 1.56.
- */
-int GetNumCores();
+#define KOMODO_ASSETCHAIN_MAXLEN 65
 
-namespace BCLog {
-    enum LogFlags : uint32_t {
-        NONE        = 0,
-        NET         = (1 <<  0),
-        TOR         = (1 <<  1),
-        MEMPOOL     = (1 <<  2),
-        HTTP        = (1 <<  3),
-        BENCH       = (1 <<  4),
-        ZMQ         = (1 <<  5),
-        DB          = (1 <<  6),
-        RPC         = (1 <<  7),
-        ESTIMATEFEE = (1 <<  8),
-        ADDRMAN     = (1 <<  9),
-        SELECTCOINS = (1 << 10),
-        REINDEX     = (1 << 11),
-        CMPCTBLOCK  = (1 << 12),
-        RAND        = (1 << 13),
-        PRUNE       = (1 << 14),
-        PROXY       = (1 << 15),
-        MEMPOOLREJ  = (1 << 16),
-        LIBEVENT    = (1 << 17),
-        COINDB      = (1 << 18),
-        QT          = (1 << 19),
-        LEVELDB     = (1 << 20),
-        ALL         = ~(uint32_t)0,
-    };
-}
 
-std::string CopyrightHolders(const std::string& strPrefix);
-
-#endif // KOMODO_UTIL_H
+#endif // BITCOIN_UTIL_H

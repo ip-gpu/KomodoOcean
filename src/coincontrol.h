@@ -1,9 +1,9 @@
-// Copyright (c) 2011-2013 The Komodo Core developers
+// Copyright (c) 2011-2013 The Bitcoin Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#ifndef KOMODO_COINCONTROL_H
-#define KOMODO_COINCONTROL_H
+#ifndef BITCOIN_COINCONTROL_H
+#define BITCOIN_COINCONTROL_H
 
 #include "primitives/transaction.h"
 #include "wallet/wallet_fees.h"
@@ -35,7 +35,6 @@ public:
     {
         destChange = CNoDestination();
         fAllowOtherInputs = false;
-	fOverrideFeeRate = false;
         setSelected.clear();
     }
 
@@ -74,4 +73,4 @@ private:
     std::set<COutPoint> setSelected;
 };
 
-#endif // KOMODO_COINCONTROL_H
+#endif // BITCOIN_COINCONTROL_H

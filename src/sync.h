@@ -1,13 +1,14 @@
 // Copyright (c) 2009-2010 Satoshi Nakamoto
-// Copyright (c) 2009-2013 The Komodo Core developers
+// Copyright (c) 2009-2013 The Bitcoin Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#ifndef KOMODO_SYNC_H
-#define KOMODO_SYNC_H
+#ifndef BITCOIN_SYNC_H
+#define BITCOIN_SYNC_H
 
 #include "threadsafety.h"
 
+#undef __cpuid
 #include <boost/thread/condition_variable.hpp>
 #include <boost/thread/locks.hpp>
 #include <boost/thread/mutex.hpp>
@@ -89,9 +90,9 @@ void LeaveCritical();
 std::string LocksHeld();
 void AssertLockHeldInternal(const char* pszName, const char* pszFile, int nLine, void* cs);
 #else
-void static inline EnterCritical(const char* pszName, const char* pszFile, int nLine, void* cs, bool fTry = false) { (void)fTry; (void)cs; (void)nLine; (void)pszFile; (void)pszName; }
+void static inline EnterCritical(const char* pszName, const char* pszFile, int nLine, void* cs, bool fTry = false) {}
 void static inline LeaveCritical() {}
-void static inline AssertLockHeldInternal(const char* pszName, const char* pszFile, int nLine, void* cs) { (void)cs; (void)nLine; (void)pszFile; (void)pszName; }
+void static inline AssertLockHeldInternal(const char* pszName, const char* pszFile, int nLine, void* cs) {}
 #endif
 #define AssertLockHeld(cs) AssertLockHeldInternal(#cs, __FILE__, __LINE__, &cs)
 
@@ -277,4 +278,4 @@ public:
     }
 };
 
-#endif // KOMODO_SYNC_H
+#endif // BITCOIN_SYNC_H

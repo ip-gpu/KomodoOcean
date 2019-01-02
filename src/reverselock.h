@@ -1,9 +1,9 @@
-// Copyright (c) 2015 The Komodo Core developers
+// Copyright (c) 2015 The Bitcoin Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#ifndef KOMODO_REVERSELOCK_H
-#define KOMODO_REVERSELOCK_H
+#ifndef BITCOIN_REVERSELOCK_H
+#define BITCOIN_REVERSELOCK_H
 
 /**
  * An RAII-style reverse lock. Unlocks on construction and locks on destruction.
@@ -31,4 +31,4 @@ private:
     Lock templock;
 };
 
-#endif // KOMODO_REVERSELOCK_H
+#endif // BITCOIN_REVERSELOCK_H

@@ -1,10 +1,10 @@
 #include "httprpc.h"
 
-#include "base58.h"
 #include "chainparams.h"
 #include "httpserver.h"
-#include "rpcprotocol.h"
-#include "rpcserver.h"
+#include "key_io.h"
+#include "rpc/protocol.h"
+#include "rpc/server.h"
 #include "random.h"
 #include "sync.h"
 #include "util.h"
@@ -126,7 +126,7 @@ static bool HTTPReq_JSONRPC(HTTPRequest* req, const std::string &)
         // singleton request
         if (valRequest.isObject()) {
             jreq.parse(valRequest);
-
+            
             if (!RPCAuthorized(authHeader.second)) {
                 LogPrintf("ThreadRPCServer incorrect password attempt from %s\n", req->GetPeer().ToString());
                 MilliSleep(250);

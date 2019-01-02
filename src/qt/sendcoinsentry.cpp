@@ -1,4 +1,4 @@
-// Copyright (c) 2011-2016 The Komodo Core developers
+// Copyright (c) 2011-2016 The Bitcoin Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -12,14 +12,17 @@
 #include "platformstyle.h"
 #include "walletmodel.h"
 
+#include "key_io.h"
+
 #include <QApplication>
 #include <QClipboard>
 
-SendCoinsEntry::SendCoinsEntry(const PlatformStyle *_platformStyle, QWidget *parent) :
+SendCoinsEntry::SendCoinsEntry(const PlatformStyle *_platformStyle, QWidget *parent, bool allowZAddresses) :
     QStackedWidget(parent),
     ui(new Ui::SendCoinsEntry),
     model(0),
-    platformStyle(_platformStyle)
+    platformStyle(_platformStyle),
+    _allowZAddresses(allowZAddresses)
 {
     ui->setupUi(this);
 
@@ -28,17 +31,18 @@ SendCoinsEntry::SendCoinsEntry(const PlatformStyle *_platformStyle, QWidget *par
     ui->deleteButton->setIcon(platformStyle->SingleColorIcon(":/icons/remove"));
     ui->deleteButton_is->setIcon(platformStyle->SingleColorIcon(":/icons/remove"));
     ui->deleteButton_s->setIcon(platformStyle->SingleColorIcon(":/icons/remove"));
+    ui->useAvailableBalanceButton->setIcon(platformStyle->SingleColorIcon(":/icons/all_balance"));
 
     setCurrentWidget(ui->SendCoins);
 
     if (platformStyle->getUseExtraSpacing())
         ui->payToLayout->setSpacing(4);
 #if QT_VERSION >= 0x040700
-    ui->addAsLabel->setPlaceholderText(tr("Enter a label for this address to add it to your address book"));
+    ui->addAsLabel->setPlaceholderText(tr("Enter a label for this address to add it to your address book (only for taddrs)"));
 #endif
 
     // normal komodo address field
-    GUIUtil::setupAddressWidget(ui->payTo, this);
+    GUIUtil::setupAddressWidget(ui->payTo, this, _allowZAddresses);
     // just a label for displaying komodo address(es)
     ui->payTo_is->setFont(GUIUtil::fixedPitchFont());
 
@@ -48,6 +52,7 @@ SendCoinsEntry::SendCoinsEntry(const PlatformStyle *_platformStyle, QWidget *par
     connect(ui->deleteButton, SIGNAL(clicked()), this, SLOT(deleteClicked()));
     connect(ui->deleteButton_is, SIGNAL(clicked()), this, SLOT(deleteClicked()));
     connect(ui->deleteButton_s, SIGNAL(clicked()), this, SLOT(deleteClicked()));
+    connect(ui->useAvailableBalanceButton, SIGNAL(clicked()), this, SLOT(useAvailableBalanceClicked()));
 }
 
 SendCoinsEntry::~SendCoinsEntry()
@@ -112,12 +117,27 @@ void SendCoinsEntry::clear()
     updateDisplayUnit();
 }
 
+void SendCoinsEntry::checkSubtractFeeFromAmount()
+{
+    ui->checkboxSubtractFeeFromAmount->setChecked(true);
+}
+
+void SendCoinsEntry::hideCheckboxSubtractFeeFromAmount()
+{
+    ui->checkboxSubtractFeeFromAmount->hide();
+}
+
 void SendCoinsEntry::deleteClicked()
 {
     Q_EMIT removeEntry(this);
 }
 
-bool SendCoinsEntry::validate()
+void SendCoinsEntry::useAvailableBalanceClicked()
+{
+    Q_EMIT useAvailableBalance(this);
+}
+
+bool SendCoinsEntry::validate(bool allowZAddresses)
 {
     if (!model)
         return false;
@@ -129,7 +149,7 @@ bool SendCoinsEntry::validate()
     if (recipient.paymentRequest.IsInitialized())
         return retval;
 
-    if (!model->validateAddress(ui->payTo->text()))
+    if (!model->validateAddress(ui->payTo->text(), allowZAddresses))
     {
         ui->payTo->setValid(false);
         retval = false;
@@ -148,9 +168,12 @@ bool SendCoinsEntry::validate()
     }
 
     // Reject dust outputs:
-    if (retval && GUIUtil::isDust(ui->payTo->text(), ui->payAmount->value())) {
-        ui->payAmount->setValid(false);
-        retval = false;
+    if (IsValidDestinationString(ui->payTo->text().toStdString()))
+    {
+        if (retval && GUIUtil::isDust(ui->payTo->text(), ui->payAmount->value())) {
+            ui->payAmount->setValid(false);
+            retval = false;
+        }
     }
 
     return retval;
@@ -226,6 +249,11 @@ void SendCoinsEntry::setAddress(const QString &address)
 {
     ui->payTo->setText(address);
     ui->payAmount->setFocus();
+}
+
+void SendCoinsEntry::setAmount(const CAmount &amount)
+{
+    ui->payAmount->setValue(amount);
 }
 
 bool SendCoinsEntry::isClear()

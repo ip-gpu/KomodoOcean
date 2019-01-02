@@ -1,5 +1,5 @@
 // Copyright (c) 2009-2010 Satoshi Nakamoto
-// Copyright (c) 2009-2014 The Komodo Core developers
+// Copyright (c) 2009-2014 The Bitcoin Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -104,12 +104,17 @@ bool CTxMemPool::addUnchecked(const uint256& hash, const CTxMemPoolEntry &entry,
     LOCK(cs);
     mapTx.insert(entry);
     const CTransaction& tx = mapTx.find(hash)->GetTx();
-    for (unsigned int i = 0; i < tx.vin.size(); i++)
-        mapNextTx[tx.vin[i].prevout] = CInPoint(&tx, i);
+    if (!tx.IsCoinImport()) {
+        for (unsigned int i = 0; i < tx.vin.size(); i++)
+            mapNextTx[tx.vin[i].prevout] = CInPoint(&tx, i);
+    }
     BOOST_FOREACH(const JSDescription &joinsplit, tx.vjoinsplit) {
         BOOST_FOREACH(const uint256 &nf, joinsplit.nullifiers) {
-            mapNullifiers[nf] = &tx;
+            mapSproutNullifiers[nf] = &tx;
         }
+    }
+    for (const SpendDescription &spendDescription : tx.vShieldedSpend) {
+        mapSaplingNullifiers[spendDescription.nullifier] = &tx;
     }
     nTransactionsUpdated++;
     totalTxSize += entry.GetTxSize();
@@ -119,6 +124,192 @@ bool CTxMemPool::addUnchecked(const uint256& hash, const CTxMemPoolEntry &entry,
     return true;
 }
 
+void CTxMemPool::addAddressIndex(const CTxMemPoolEntry &entry, const CCoinsViewCache &view)
+{
+    LOCK(cs);
+    const CTransaction& tx = entry.GetTx();
+    std::vector<CMempoolAddressDeltaKey> inserted;
+
+    uint256 txhash = tx.GetHash();
+    for (unsigned int j = 0; j < tx.vin.size(); j++) {
+        const CTxIn input = tx.vin[j];
+        const CTxOut &prevout = view.GetOutputFor(input);
+
+        vector<vector<unsigned char>> vSols;
+        txnouttype txType = TX_PUBKEYHASH;
+        int keyType = 1;
+
+        CTxDestination vDest;
+        if (Solver(prevout.scriptPubKey, txType, vSols) || ExtractDestination(prevout.scriptPubKey, vDest))
+        {
+            if (vDest.which())
+            {
+                uint160 hashBytes;
+                if (CKomodoAddress(vDest).GetIndexKey(hashBytes, keyType))
+                {
+                    vSols.push_back(vector<unsigned char>(hashBytes.begin(), hashBytes.end()));
+                }
+            }
+            if (txType == TX_SCRIPTHASH)
+            {
+                keyType =  2;
+            }
+            for (auto addr : vSols)
+            {
+                CMempoolAddressDeltaKey key(keyType, addr.size() == 20 ? uint160(addr) : Hash160(addr), txhash, j, true);
+                CMempoolAddressDelta delta(entry.GetTime(), prevout.nValue * -1, input.prevout.hash, input.prevout.n);
+                mapAddress.insert(make_pair(key, delta));
+                inserted.push_back(key);
+            }
+        }
+    }
+
+    for (unsigned int k = 0; k < tx.vout.size(); k++) {
+        const CTxOut &out = tx.vout[k];
+
+        vector<vector<unsigned char>> vSols;
+        CTxDestination vDest;
+        txnouttype txType = TX_PUBKEYHASH;
+        int keyType = 1;
+        if ((Solver(out.scriptPubKey, txType, vSols) || ExtractDestination(out.scriptPubKey, vDest)) && txType != TX_MULTISIG)
+        {
+            // if we failed to solve, and got a vDest, assume P2PKH or P2PK address returned
+            if (vDest.which())
+            {
+                uint160 hashBytes;
+                if (CKomodoAddress(vDest).GetIndexKey(hashBytes, keyType))
+                {
+                    vSols.push_back(vector<unsigned char>(hashBytes.begin(), hashBytes.end()));
+                }
+            }
+            else if (txType == TX_SCRIPTHASH)
+            {
+                keyType =  2;
+            }
+            for (auto addr : vSols)
+            {
+                CMempoolAddressDeltaKey key(keyType, addr.size() == 20 ? uint160(addr) : Hash160(addr), txhash, k, 0);
+                mapAddress.insert(make_pair(key, CMempoolAddressDelta(entry.GetTime(), out.nValue)));
+                inserted.push_back(key);
+            }
+        }
+    }
+
+    mapAddressInserted.insert(make_pair(txhash, inserted));
+}
+
+bool CTxMemPool::getAddressIndex(std::vector<std::pair<uint160, int> > &addresses,
+                                 std::vector<std::pair<CMempoolAddressDeltaKey, CMempoolAddressDelta> > &results)
+{
+    LOCK(cs);
+    for (std::vector<std::pair<uint160, int> >::iterator it = addresses.begin(); it != addresses.end(); it++) {
+        addressDeltaMap::iterator ait = mapAddress.lower_bound(CMempoolAddressDeltaKey((*it).second, (*it).first));
+        while (ait != mapAddress.end() && (*ait).first.addressBytes == (*it).first && (*ait).first.type == (*it).second) {
+            results.push_back(*ait);
+            ait++;
+        }
+    }
+    return true;
+}
+
+bool CTxMemPool::removeAddressIndex(const uint256 txhash)
+{
+    LOCK(cs);
+    addressDeltaMapInserted::iterator it = mapAddressInserted.find(txhash);
+
+    if (it != mapAddressInserted.end()) {
+        std::vector<CMempoolAddressDeltaKey> keys = (*it).second;
+        for (std::vector<CMempoolAddressDeltaKey>::iterator mit = keys.begin(); mit != keys.end(); mit++) {
+            mapAddress.erase(*mit);
+        }
+        mapAddressInserted.erase(it);
+    }
+
+    return true;
+}
+
+void CTxMemPool::addSpentIndex(const CTxMemPoolEntry &entry, const CCoinsViewCache &view)
+{
+    LOCK(cs);
+
+    const CTransaction& tx = entry.GetTx();
+    std::vector<CSpentIndexKey> inserted;
+
+    uint256 txhash = tx.GetHash();
+    for (unsigned int j = 0; j < tx.vin.size(); j++) {
+        const CTxIn input = tx.vin[j];
+        const CTxOut &prevout = view.GetOutputFor(input);
+
+        vector<vector<unsigned char>> vSols;
+        CTxDestination vDest;
+        txnouttype txType = TX_PUBKEYHASH;
+        int keyType = 1;
+        // some non-standard types, like time lock coinbases, don't solve, but do extract
+        if ((Solver(prevout.scriptPubKey, txType, vSols) || ExtractDestination(prevout.scriptPubKey, vDest)) && txType != TX_MULTISIG)
+        {
+            // if we failed to solve, and got a vDest, assume P2PKH or P2PK address returned
+            if (vDest.which())
+            {
+                CKeyID kid;
+                if (CKomodoAddress(vDest).GetKeyID(kid))
+                {
+                    vSols.push_back(vector<unsigned char>(kid.begin(), kid.end()));
+                }
+            }
+            else if (txType == TX_SCRIPTHASH)
+            {
+                keyType =  2;
+            }
+            for (auto addr : vSols)
+            {
+                CSpentIndexKey key = CSpentIndexKey(input.prevout.hash, input.prevout.n);
+                CSpentIndexValue value = CSpentIndexValue(txhash, j, -1, prevout.nValue, keyType, addr.size() == 20 ? uint160(addr) : Hash160(addr));
+
+                mapSpent.insert(make_pair(key, value));
+                inserted.push_back(key);
+            }
+        }
+        else
+        {
+            // don't know exactly how, but it was spent
+            CSpentIndexKey key = CSpentIndexKey(input.prevout.hash, input.prevout.n);
+            CSpentIndexValue value = CSpentIndexValue(txhash, j, -1, prevout.nValue, 0, uint160());
+
+            mapSpent.insert(make_pair(key, value));
+            inserted.push_back(key);
+        }
+    }
+    mapSpentInserted.insert(make_pair(txhash, inserted));
+}
+
+bool CTxMemPool::getSpentIndex(CSpentIndexKey &key, CSpentIndexValue &value)
+{
+    LOCK(cs);
+    mapSpentIndex::iterator it;
+
+    it = mapSpent.find(key);
+    if (it != mapSpent.end()) {
+        value = it->second;
+        return true;
+    }
+    return false;
+}
+
+bool CTxMemPool::removeSpentIndex(const uint256 txhash)
+{
+    LOCK(cs);
+    mapSpentIndexInserted::iterator it = mapSpentInserted.find(txhash);
+
+    if (it != mapSpentInserted.end()) {
+        std::vector<CSpentIndexKey> keys = (*it).second;
+        for (std::vector<CSpentIndexKey>::iterator mit = keys.begin(); mit != keys.end(); mit++) {
+            mapSpent.erase(*mit);
+        }
+        mapSpentInserted.erase(it);
+    }
+
+    return true;
+}
 
 void CTxMemPool::remove(const CTransaction &origTx, std::list<CTransaction>& removed, bool fRecursive)
 {
@@ -158,24 +349,31 @@ void CTxMemPool::remove(const CTransaction &origTx, std::list<CTransaction>& rem
                 mapNextTx.erase(txin.prevout);
             BOOST_FOREACH(const JSDescription& joinsplit, tx.vjoinsplit) {
                 BOOST_FOREACH(const uint256& nf, joinsplit.nullifiers) {
-                    mapNullifiers.erase(nf);
+                    mapSproutNullifiers.erase(nf);
                 }
             }
-
+            for (const SpendDescription &spendDescription : tx.vShieldedSpend) {
+                mapSaplingNullifiers.erase(spendDescription.nullifier);
+            }
             removed.push_back(tx);
             totalTxSize -= mapTx.find(hash)->GetTxSize();
             cachedInnerUsage -= mapTx.find(hash)->DynamicMemoryUsage();
             mapTx.erase(hash);
             nTransactionsUpdated++;
             minerPolicyEstimator->removeTx(hash);
+            removeAddressIndex(hash);
+            removeSpentIndex(hash);
         }
     }
 }
 
+extern uint64_t ASSETCHAINS_TIMELOCKGTE;
+int64_t komodo_block_unlocktime(uint32_t nHeight);
+
 void CTxMemPool::removeForReorg(const CCoinsViewCache *pcoins, unsigned int nMemPoolHeight, int flags)
 {
     // Remove transactions spending a coinbase which are now immature
-    extern char ASSETCHAINS_SYMBOL[];
+    extern char ASSETCHAINS_SYMBOL[KOMODO_ASSETCHAIN_MAXLEN];
     if ( ASSETCHAINS_SYMBOL[0] == 0 )
         COINBASE_MATURITY = _COINBASE_MATURITY;
     // Remove transactions spending a coinbase which are now immature and no-longer-final transactions
@@ -191,8 +389,10 @@ void CTxMemPool::removeForReorg(const CCoinsViewCache *pcoins, unsigned int nMem
                 if (it2 != mapTx.end())
                     continue;
                 const CCoins *coins = pcoins->AccessCoins(txin.prevout.hash);
-		if (nCheckFrequency != 0) assert(coins);
-                if (!coins || (coins->IsCoinBase() && ((signed long)nMemPoolHeight) - coins->nHeight < COINBASE_MATURITY)) {
+		        if (nCheckFrequency != 0) assert(coins);
+                if (!coins || (coins->IsCoinBase() && (((signed long)nMemPoolHeight) - coins->nHeight < COINBASE_MATURITY) && 
+                                                       ((signed long)nMemPoolHeight < komodo_block_unlocktime(coins->nHeight) && 
+                                                         coins->IsAvailable(0) && coins->vout[0].nValue >= ASSETCHAINS_TIMELOCKGTE))) {
                     transactionsToRemove.push_back(tx);
                     break;
                 }
@@ -206,7 +406,7 @@ void CTxMemPool::removeForReorg(const CCoinsViewCache *pcoins, unsigned int nMem
 }
 
 
-void CTxMemPool::removeWithAnchor(const uint256 &invalidRoot)
+void CTxMemPool::removeWithAnchor(const uint256 &invalidRoot, ShieldedType type)
 {
     // If a block is disconnected from the tip, and the root changed,
     // we must invalidate transactions from the mempool which spend
@@ -217,11 +417,26 @@ void CTxMemPool::removeWithAnchor(const uint256 &invalidRoot)
 
     for (indexed_transaction_set::const_iterator it = mapTx.begin(); it != mapTx.end(); it++) {
         const CTransaction& tx = it->GetTx();
-        BOOST_FOREACH(const JSDescription& joinsplit, tx.vjoinsplit) {
-            if (joinsplit.anchor == invalidRoot) {
-                transactionsToRemove.push_back(tx);
-                break;
-            }
+        switch (type) {
+            case SPROUT:
+                BOOST_FOREACH(const JSDescription& joinsplit, tx.vjoinsplit) {
+                    if (joinsplit.anchor == invalidRoot) {
+                        transactionsToRemove.push_back(tx);
+                        break;
+                    }
+                }
+            break;
+            case SAPLING:
+                BOOST_FOREACH(const SpendDescription& spendDescription, tx.vShieldedSpend) {
+                    if (spendDescription.anchor == invalidRoot) {
+                        transactionsToRemove.push_back(tx);
+                        break;
+                    }
+                }
+            break;
+            default:
+                throw runtime_error("Unknown shielded type");
+            break;
         }
     }
 
@@ -249,19 +464,28 @@ void CTxMemPool::removeConflicts(const CTransaction &tx, std::list<CTransaction>
 
     BOOST_FOREACH(const JSDescription &joinsplit, tx.vjoinsplit) {
         BOOST_FOREACH(const uint256 &nf, joinsplit.nullifiers) {
-            std::map<uint256, const CTransaction*>::iterator it = mapNullifiers.find(nf);
-            if (it != mapNullifiers.end()) {
+            std::map<uint256, const CTransaction*>::iterator it = mapSproutNullifiers.find(nf);
+            if (it != mapSproutNullifiers.end()) {
                 const CTransaction &txConflict = *it->second;
-                if (txConflict != tx)
-                {
+                if (txConflict != tx) {
                     remove(txConflict, removed, true);
                 }
+            }
+        }
+    }
+    for (const SpendDescription &spendDescription : tx.vShieldedSpend) {
+        std::map<uint256, const CTransaction*>::iterator it = mapSaplingNullifiers.find(spendDescription.nullifier);
+        if (it != mapSaplingNullifiers.end()) {
+            const CTransaction &txConflict = *it->second;
+            if (txConflict != tx) {
+                remove(txConflict, removed, true);
             }
         }
     }
 }
 
 int32_t komodo_validate_interest(const CTransaction &tx,int32_t txheight,uint32_t nTime,int32_t dispflag);
+extern char ASSETCHAINS_SYMBOL[];
 
 void CTxMemPool::removeExpired(unsigned int nBlockHeight)
 {
@@ -272,8 +496,8 @@ void CTxMemPool::removeExpired(unsigned int nBlockHeight)
     for (indexed_transaction_set::const_iterator it = mapTx.begin(); it != mapTx.end(); it++)
     {
         const CTransaction& tx = it->GetTx();
-        tipindex = chainActive.Tip();
-        if (IsExpiredTx(tx, nBlockHeight) || (tipindex != 0 && komodo_validate_interest(tx,tipindex->nHeight+1,tipindex->GetMedianTimePast() + 777,1)) < 0)
+        tipindex = chainActive.LastTip();
+        if (IsExpiredTx(tx, nBlockHeight) || (ASSETCHAINS_SYMBOL[0] == 0 && tipindex != 0 && komodo_validate_interest(tx,tipindex->GetHeight()+1,tipindex->GetMedianTimePast() + 777,0)) < 0)
         {
             transactionsToRemove.push_back(tx);
         }
@@ -284,7 +508,6 @@ void CTxMemPool::removeExpired(unsigned int nBlockHeight)
         LogPrint("mempool", "Removing expired txid: %s\n", tx.GetHash().ToString());
     }
 }
-
 
 /**
  * Called when a block is connected. Removes from mempool and updates the miner fee estimator.
@@ -388,19 +611,19 @@ void CTxMemPool::check(const CCoinsViewCache *pcoins) const
             i++;
         }
 
-        boost::unordered_map<uint256, ZCIncrementalMerkleTree, CCoinsKeyHasher> intermediates;
+        boost::unordered_map<uint256, SproutMerkleTree, CCoinsKeyHasher> intermediates;
 
         BOOST_FOREACH(const JSDescription &joinsplit, tx.vjoinsplit) {
             BOOST_FOREACH(const uint256 &nf, joinsplit.nullifiers) {
-                assert(!pcoins->GetNullifier(nf));
+                assert(!pcoins->GetNullifier(nf, SPROUT));
             }
 
-            ZCIncrementalMerkleTree tree;
+            SproutMerkleTree tree;
             auto it = intermediates.find(joinsplit.anchor);
             if (it != intermediates.end()) {
                 tree = it->second;
             } else {
-                assert(pcoins->GetAnchorAt(joinsplit.anchor, tree));
+                assert(pcoins->GetSproutAnchorAt(joinsplit.anchor, tree));
             }
 
             BOOST_FOREACH(const uint256& commitment, joinsplit.commitments)
@@ -409,6 +632,12 @@ void CTxMemPool::check(const CCoinsViewCache *pcoins) const
             }
 
             intermediates.insert(std::make_pair(tree.root(), tree));
+        }
+        for (const SpendDescription &spendDescription : tx.vShieldedSpend) {
+            SaplingMerkleTree tree;
+
+            assert(pcoins->GetSaplingAnchorAt(spendDescription.anchor, tree));
+            assert(!pcoins->GetNullifier(spendDescription.nullifier, SAPLING));
         }
         if (fDependsWait)
             waitingOnDependants.push_back(&(*it));
@@ -447,16 +676,33 @@ void CTxMemPool::check(const CCoinsViewCache *pcoins) const
         assert(it->first == it->second.ptx->vin[it->second.n].prevout);
     }
 
-    for (std::map<uint256, const CTransaction*>::const_iterator it = mapNullifiers.begin(); it != mapNullifiers.end(); it++) {
-        uint256 hash = it->second->GetHash();
-        indexed_transaction_set::const_iterator it2 = mapTx.find(hash);
-        const CTransaction& tx = it2->GetTx();
-        assert(it2 != mapTx.end());
-        assert(&tx == it->second);
-    }
+    checkNullifiers(SPROUT);
+    checkNullifiers(SAPLING);
 
     assert(totalTxSize == checkTotal);
     assert(innerUsage == cachedInnerUsage);
+}
+
+void CTxMemPool::checkNullifiers(ShieldedType type) const
+{
+    const std::map<uint256, const CTransaction*>* mapToUse;
+    switch (type) {
+        case SPROUT:
+            mapToUse = &mapSproutNullifiers;
+            break;
+        case SAPLING:
+            mapToUse = &mapSaplingNullifiers;
+            break;
+        default:
+            throw runtime_error("Unknown nullifier type");
+    }
+    for (const auto& entry : *mapToUse) {
+        uint256 hash = entry.second->GetHash();
+        CTxMemPool::indexed_transaction_set::const_iterator findTx = mapTx.find(hash);
+        const CTransaction& tx = findTx->GetTx();
+        assert(findTx != mapTx.end());
+        assert(&tx == entry.second);
+    }
 }
 
 void CTxMemPool::queryHashes(vector<uint256>& vtxid)
@@ -560,13 +806,23 @@ bool CTxMemPool::HasNoInputsOf(const CTransaction &tx) const
     return true;
 }
 
+bool CTxMemPool::nullifierExists(const uint256& nullifier, ShieldedType type) const
+{
+    switch (type) {
+        case SPROUT:
+            return mapSproutNullifiers.count(nullifier);
+        case SAPLING:
+            return mapSaplingNullifiers.count(nullifier);
+        default:
+            throw runtime_error("Unknown nullifier type");
+    }
+}
+
 CCoinsViewMemPool::CCoinsViewMemPool(CCoinsView *baseIn, CTxMemPool &mempoolIn) : CCoinsViewBacked(baseIn), mempool(mempoolIn) { }
 
-bool CCoinsViewMemPool::GetNullifier(const uint256 &nf) const {
-    if (mempool.mapNullifiers.count(nf))
-        return true;
-
-    return base->GetNullifier(nf);
+bool CCoinsViewMemPool::GetNullifier(const uint256 &nf, ShieldedType type) const
+{
+    return mempool.nullifierExists(nf, type) || base->GetNullifier(nf, type);
 }
 
 bool CCoinsViewMemPool::GetCoins(const uint256 &txid, CCoins &coins) const {
@@ -590,5 +846,3 @@ size_t CTxMemPool::DynamicMemoryUsage() const {
     // Estimate the overhead of mapTx to be 6 pointers + an allocation, as no exact formula for boost::multi_index_contained is implemented.
     return memusage::MallocUsage(sizeof(CTxMemPoolEntry) + 6 * sizeof(void*)) * mapTx.size() + memusage::DynamicUsage(mapNextTx) + memusage::DynamicUsage(mapDeltas) + cachedInnerUsage;
 }
-
-SaltedTxidHasher::SaltedTxidHasher() : k0(GetRand(std::numeric_limits<uint64_t>::max())), k1(GetRand(std::numeric_limits<uint64_t>::max())) {}

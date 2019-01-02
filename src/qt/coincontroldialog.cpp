@@ -1,4 +1,4 @@
-// Copyright (c) 2011-2016 The Komodo Core developers
+// Copyright (c) 2011-2016 The Bitcoin Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -20,6 +20,7 @@
 #include "policy/policy.h"
 #include "wallet/wallet_fees.h"
 #include "wallet/wallet.h"
+#include "key_io.h"
 
 #include <QApplication>
 #include <QCheckBox>
@@ -512,7 +513,7 @@ void CoinControlDialog::updateLabels(WalletModel *model, QDialog* dialog)
 
         // Fee
         nPayFee = GetMinimumFee(nBytes, *coinControl, ::mempool, ::feeEstimator, nullptr /* FeeCalculation */);
-//        nPayFee = CWallet::GetMinimumFee(nBytes, coinControl->m_confirm_target, ::mempool);
+//        nPayFee = CWallet::GetMinimumFee(nBytes, nTxConfirmTarget, ::mempool);
 
         if (nPayAmount > 0)
         {

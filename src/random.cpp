@@ -1,12 +1,12 @@
 // Copyright (c) 2009-2010 Satoshi Nakamoto
-// Copyright (c) 2009-2014 The Komodo Core developers
+// Copyright (c) 2009-2014 The Bitcoin Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #include "random.h"
 
 #include "support/cleanse.h"
-#ifdef WIN32
+#ifdef _WIN32
 #include "compat.h" // for Windows API
 #endif
 #include "serialize.h"        // for begin_ptr(vec)
@@ -15,14 +15,16 @@
 
 #include <limits>
 
+#ifndef _WIN32
 #include <sys/time.h>
+#endif
 
 #include "sodium.h"
 
 static inline int64_t GetPerformanceCounter()
 {
     int64_t nCounter = 0;
-#ifdef WIN32
+#ifdef _WIN32
     QueryPerformanceCounter((LARGE_INTEGER*)&nCounter);
 #else
     timeval t;
@@ -54,7 +56,7 @@ uint64_t GetRand(uint64_t nMax)
 
 int GetRandInt(int nMax)
 {
-    return (int)GetRand(nMax);
+    return GetRand(nMax);
 }
 
 uint256 GetRandHash()

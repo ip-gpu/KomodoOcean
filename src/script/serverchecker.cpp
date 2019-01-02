@@ -1,5 +1,5 @@
 // Copyright (c) 2009-2010 Satoshi Nakamoto
-// Copyright (c) 2009-2014 The Komodo Core developers
+// Copyright (c) 2009-2014 The Bitcoin Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -12,6 +12,7 @@
 #include "uint256.h"
 #include "util.h"
 
+#undef __cpuid
 #include <boost/thread.hpp>
 #include <boost/tuple/tuple_comparison.hpp>
 
@@ -90,7 +91,7 @@ bool ServerTransactionSignatureChecker::VerifySignature(const std::vector<unsign
         signatureCache.Set(sighash, vchSig, pubkey);
     return true;
 }
- 
+
 /*
  * The reason that these functions are here is that the what used to be the
  * CachingTransactionSignatureChecker, now the ServerTransactionSignatureChecker,
@@ -102,5 +103,6 @@ bool ServerTransactionSignatureChecker::VerifySignature(const std::vector<unsign
  */
 int ServerTransactionSignatureChecker::CheckEvalCondition(const CC *cond) const
 {
+    //LogPrintf("call RunCCeval from ServerTransactionSignatureChecker::CheckEvalCondition\n");
     return RunCCEval(cond, *txTo, nIn);
 }

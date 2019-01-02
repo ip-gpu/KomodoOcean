@@ -113,6 +113,7 @@ QT_FORMS_UI = \
   qt/forms/receiverequestdialog.ui \
   qt/forms/debugwindow.ui \
   qt/forms/sendcoinsdialog.ui \
+  qt/forms/zsendcoinsdialog.ui \
   qt/forms/sendcoinsentry.ui \
   qt/forms/signverifymessagedialog.ui \
   qt/forms/transactiondescdialog.ui \
@@ -156,6 +157,7 @@ QT_MOC_CPP = \
   qt/moc_recentrequeststablemodel.cpp \
   qt/moc_rpcconsole.cpp \
   qt/moc_sendcoinsdialog.cpp \
+  qt/moc_zsendcoinsdialog.cpp \
   qt/moc_sendcoinsentry.cpp \
   qt/moc_signverifymessagedialog.cpp \
   qt/moc_splashscreen.cpp \
@@ -232,6 +234,7 @@ KOMODO_QT_H = \
   qt/recentrequeststablemodel.h \
   qt/rpcconsole.h \
   qt/sendcoinsdialog.h \
+  qt/zsendcoinsdialog.h \
   qt/sendcoinsentry.h \
   qt/signverifymessagedialog.h \
   qt/splashscreen.h \
@@ -350,6 +353,7 @@ KOMODO_QT_WALLET_CPP = \
   qt/receiverequestdialog.cpp \
   qt/recentrequeststablemodel.cpp \
   qt/sendcoinsdialog.cpp \
+  qt/zsendcoinsdialog.cpp \
   qt/sendcoinsentry.cpp \
   qt/signverifymessagedialog.cpp \
   qt/transactiondesc.cpp \
@@ -361,6 +365,7 @@ KOMODO_QT_WALLET_CPP = \
   qt/walletframe.cpp \
   qt/walletmodel.cpp \
   qt/walletmodeltransaction.cpp \
+  qt/walletmodelztransaction.cpp \
   qt/walletview.cpp
 
 red:=$(shell tput setaf 11)
@@ -379,7 +384,7 @@ KOMODO_QT_H += \
 KOMODO_QT_CPP += \
 	policy/policy.cpp \
 	wallet/rpcwallet.cpp \
-	rpcserver.cpp
+	rpc/server.cpp
 
 
 RES_IMAGES = 
@@ -481,6 +486,8 @@ qt_komodo_qt_LDADD += $(LIBBITCOIN_COMMON) \
   $(LIBUNIVALUE) \
   $(LIBBITCOIN_UTIL) \
   $(LIBBITCOIN_CRYPTO) \
+  $(LIBVERUS_CRYPTO) \
+  $(LIBVERUS_PORTABLE_CRYPTO) \
   $(LIBZCASH) \
   $(LIBLEVELDB) \
   $(LIBMEMENV) \
@@ -499,8 +506,8 @@ qt_komodo_qt_LDADD += $(LIBBITCOIN_COMMON) \
   $(LIBCRYPTOCONDITIONS)
 
 $(info $(red)[ Decker ]$(reset) Check the komodo-qt dependencies ...)
-$(info $$qt_komodo_qt_CPPFLAGS is [${qt_komodo_qt_CPPFLAGS}])
 #$(info $$qt_komodo_qt_CXXFLAGS is [${qt_komodo_qt_CXXFLAGS}])
+$(info $$qt_komodo_qt_CPPFLAGS is [${qt_komodo_qt_CPPFLAGS}])
 $(info $$qt_komodo_qt_LDADD is [${qt_komodo_qt_LDADD}])
 $(info $$qt_komodo_qt_LDFLAGS is [${qt_komodo_qt_LDFLAGS}])
 $(info $(red)[ Decker ]$(reset) Check the komodod dependencies ...)

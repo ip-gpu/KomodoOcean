@@ -1,13 +1,13 @@
 // Copyright (c) 2009-2010 Satoshi Nakamoto
-// Copyright (c) 2009-2014 The Komodo Core developers
+// Copyright (c) 2009-2014 The Bitcoin Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 /**
  * Utilities for converting data from/to strings.
  */
-#ifndef KOMODO_UTILSTRENCODINGS_H
-#define KOMODO_UTILSTRENCODINGS_H
+#ifndef BITCOIN_UTILSTRENCODINGS_H
+#define BITCOIN_UTILSTRENCODINGS_H
 
 #include <stdint.h>
 #include <string>
@@ -22,8 +22,22 @@
 /** This is needed because the foreach macro can't get over the comma in pair<t1, t2> */
 #define PAIRTYPE(t1, t2)    std::pair<t1, t2>
 
+/** Used by SanitizeString() */
+enum SafeChars
+{
+    SAFE_CHARS_DEFAULT, //!< The full set of allowed chars
+    SAFE_CHARS_UA_COMMENT //!< BIP-0014 subset
+};
+
 std::string SanitizeFilename(const std::string& str);
-std::string SanitizeString(const std::string& str);
+/**
+* Remove unsafe chars. Safe chars chosen to allow simple messages/URLs/email
+* addresses, but avoid anything even possibly remotely dangerous like & or >
+* @param[in] str    The string to sanitize
+* @param[in] rule   The set of safe chars to choose (default: least restrictive)
+* @return           A new string without unsafe chars
+*/
+std::string SanitizeString(const std::string& str, int rule = SAFE_CHARS_DEFAULT);
 std::string HexInt(uint32_t val);
 uint32_t ParseHexToUInt32(const std::string& str);
 std::vector<unsigned char> ParseHex(const char* psz);
@@ -119,9 +133,18 @@ bool TimingResistantEqual(const T& a, const T& b)
  */
 bool ParseFixedPoint(const std::string &val, int decimals, int64_t *amount_out);
 
-/** Convert from one power-of-2 number base to another. */
+/**
+ * Convert from one power-of-2 number base to another.
+ *
+ * Examples using ConvertBits<8, 5, true>():
+ * 000000 -> 0000000000
+ * 202020 -> 0400100200
+ * 757575 -> 0e151a170a
+ * abcdef -> 150f061e1e
+ * ffffff -> 1f1f1f1f1e
+ */
 template<int frombits, int tobits, bool pad, typename O, typename I>
-bool ConvertBits(O& out, I it, I end) {
+bool ConvertBits(const O& outfn, I it, I end) {
     size_t acc = 0;
     size_t bits = 0;
     constexpr size_t maxv = (1 << tobits) - 1;
@@ -131,16 +154,16 @@ bool ConvertBits(O& out, I it, I end) {
         bits += frombits;
         while (bits >= tobits) {
             bits -= tobits;
-            out.push_back((acc >> bits) & maxv);
+            outfn((acc >> bits) & maxv);
         }
         ++it;
     }
     if (pad) {
-        if (bits) out.push_back((acc << (tobits - bits)) & maxv);
+        if (bits) outfn((acc << (tobits - bits)) & maxv);
     } else if (bits >= frombits || ((acc << (tobits - bits)) & maxv)) {
         return false;
     }
     return true;
 }
 
-#endif // KOMODO_UTILSTRENCODINGS_H
+#endif // BITCOIN_UTILSTRENCODINGS_H

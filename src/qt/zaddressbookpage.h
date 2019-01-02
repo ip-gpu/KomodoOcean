@@ -1,4 +1,4 @@
-// Copyright (c) 2011-2015 The Komodo Core developers
+// Copyright (c) 2011-2015 The Bitcoin Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -63,6 +63,10 @@ private Q_SLOTS:
     void on_deleteAddress_clicked();
     /** Create a new address for receiving coins and / or add a new address book entry */
     void on_newAddress_clicked();
+    /** Copy z_sendmany template to send funds to selected address entry to clipboard */
+    void onCopyZSendManyToAction();
+    /** Copy z_sendmany template to send funds from selected address entry to clipboard */
+    void onCopyZSendManyFromAction();
     /** Copy address of currently selected address entry to clipboard */
     void on_copyAddress_clicked();
     /** Copy label of currently selected address entry to clipboard (no button) */

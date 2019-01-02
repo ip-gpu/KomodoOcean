@@ -1,8 +1,5 @@
 #!/usr/bin/env bash
 
-echo You should not use zcutil\\build.sh , use build.sh from the root repo folder instead !!!
-exit 0
-
 set -eu -o pipefail
 
 # Allow user overrides to $MAKE. Typical usage for users who need it:
@@ -90,6 +87,35 @@ fi
 PREFIX="$(pwd)/depends/$BUILD/"
 
 HOST="$HOST" BUILD="$BUILD" NO_RUST="$RUST_ARG" "$MAKE" "$@" -C ./depends/ V=1
+
 ./autogen.sh
-CC="$CC" CXX="$CXX" ./configure --prefix="${PREFIX}" --host="$HOST" --build="$BUILD" "$RUST_ARG" "$HARDENING_ARG" "$LCOV_ARG" "$TEST_ARG" "$MINING_ARG" CXXFLAGS='-fwrapv -fno-strict-aliasing -Werror -g'
+DECKER_ARGS="--enable-tests=no --enable-wallet=yes with_boost_libdir=$(pwd)/depends/x86_64-unknown-linux-gnu/lib"
+DECKER_QT_INCPATH='-isystem /usr/include/x86_64-linux-gnu/qt5 -isystem /usr/include/x86_64-linux-gnu/qt5/QtWidgets -isystem /usr/include/x86_64-linux-gnu/qt5/QtGui -isystem /usr/include/x86_64-linux-gnu/qt5/QtNetwork -isystem /usr/include/x86_64-linux-gnu/qt5/QtDBus -isystem /usr/include/x86_64-linux-gnu/qt5/QtCore'
+#CPPFLAGS="-I$(pwd)/depends/x86_64-unknown-linux-gnu/include/" LDFLAGS="-L$(pwd)/depends/x86_64-unknown-linux-gnu/lib/"
+#BDB_CPPFLAGS=-I$(pwd)/depends/x86_64-unknown-linux-gnu/include BDB_LIBS=-L$(pwd)/depends/x86_64-unknown-linux-gnu/lib/
+
+DECKER_DEPS="CPPFLAGS=-I$(pwd)/depends/x86_64-unknown-linux-gnu/include LDFLAGS=-L$(pwd)/depends/x86_64-unknown-linux-gnu/lib"
+
+# with prefix
+#CC="$CC" CXX="$CXX" ./configure --prefix="${PREFIX}" --host="$HOST" --build="$BUILD" "$RUST_ARG" "$HARDENING_ARG" "$LCOV_ARG" "$TEST_ARG" "$MINING_ARG" CXXFLAGS='-fwrapv -fno-strict-aliasing -Werror -g' "$DECKER_ARGS"
+# example of adding specific BDB
+# 	./configure BDB_CFLAGS="-I${BDB_PREFIX}/include" BDB_LIBS="-L${BDB_PREFIX}/lib -ldb_cxx"
+# example of adding specific BDB via LD and CPP flags
+#  	./configure LDFLAGS="-L${BDB_PREFIX}/lib/" CPPFLAGS="-I${BDB_PREFIX}/include/"
+# same with CONFIG_SITE
+# 	CONFIG_SITE=/home/build/straks/depends/x86_64-w64-mingw32/share/config.site ./configure LDFLAGS="-L${BDB_PREFIX}/lib/" CPPFLAGS="-I${BDB_PREFIX}/include/" --prefix=/
+# example of adding includes and libs
+#	CPPFLAGS="-I/path1 -I/path2" LDFLAGS="-L/path1 -L/path2"
+
+echo -e "\n"
+
+version=$(lsb_release -sr)
+case $version in
+18.04)
+    CC="$CC" CXX="$CXX" ./configure CXXFLAGS='-fPIC -fwrapv -fno-strict-aliasing -g0 -O2' $DECKER_ARGS $DECKER_DEPS
+    ;;
+*)
+    CC="$CC" CXX="$CXX" ./configure CXXFLAGS='-fPIC -fwrapv -fno-strict-aliasing -Werror -g0 -O2' $DECKER_ARGS $DECKER_DEPS
+esac    
+
 "$MAKE" "$@" V=1

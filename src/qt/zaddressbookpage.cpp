@@ -1,4 +1,4 @@
-// Copyright (c) 2011-2016 The Komodo Core developers
+// Copyright (c) 2011-2016 The Bitcoin Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -80,6 +80,10 @@ ZAddressBookPage::ZAddressBookPage(const PlatformStyle *platformStyle, Mode _mod
     QAction *copyAddressAction = new QAction(tr("&Copy Address"), this);
     QAction *copyLabelAction = new QAction(tr("Copy &Label"), this);
     QAction *editAction = new QAction(tr("&Edit"), this);
+
+    QAction *copyZSendManyToAction = new QAction(tr("Copy zsendmany (to) template"), this);
+    QAction *copyZSendManyFromAction = new QAction(tr("Copy zsendmany (from) template"), this);
+
     deleteAction = new QAction(ui->deleteAddress->text(), this);
 
     // Build context menu
@@ -87,6 +91,10 @@ ZAddressBookPage::ZAddressBookPage(const PlatformStyle *platformStyle, Mode _mod
     contextMenu->addAction(copyAddressAction);
     contextMenu->addAction(copyLabelAction);
     contextMenu->addAction(editAction);
+
+    contextMenu->addAction(copyZSendManyToAction);
+    contextMenu->addAction(copyZSendManyFromAction);
+
     if(tab == SendingTab)
         contextMenu->addAction(deleteAction);
     contextMenu->addSeparator();
@@ -96,6 +104,9 @@ ZAddressBookPage::ZAddressBookPage(const PlatformStyle *platformStyle, Mode _mod
     connect(copyLabelAction, SIGNAL(triggered()), this, SLOT(onCopyLabelAction()));
     connect(editAction, SIGNAL(triggered()), this, SLOT(onEditAction()));
     connect(deleteAction, SIGNAL(triggered()), this, SLOT(on_deleteAddress_clicked()));
+
+    connect(copyZSendManyToAction, SIGNAL(triggered()), this, SLOT(onCopyZSendManyToAction()));
+    connect(copyZSendManyFromAction, SIGNAL(triggered()), this, SLOT(onCopyZSendManyFromAction()));
 
     connect(ui->tableView, SIGNAL(customContextMenuRequested(QPoint)), this, SLOT(contextualMenu(QPoint)));
 
@@ -137,7 +148,7 @@ void ZAddressBookPage::setModel(ZAddressTableModel *_model)
     ui->tableView->setSortingEnabled(true);
     ui->tableView->sortByColumn(2, Qt::AscendingOrder);
 
-    ui->tableView->setColumnWidth(ZAddressTableModel::isMine, 75);
+    ui->tableView->setColumnWidth(ZAddressTableModel::isMine, 60);
     ui->tableView->setColumnWidth(ZAddressTableModel::Balance, 80);
     ui->tableView->setColumnWidth(ZAddressTableModel::Label, 80);
 
@@ -157,6 +168,28 @@ void ZAddressBookPage::setModel(ZAddressTableModel *_model)
     connect(_model, SIGNAL(rowsInserted(QModelIndex,int,int)), this, SLOT(selectNewAddress(QModelIndex,int,int)));
 
     selectionChanged();
+}
+
+void ZAddressBookPage::onCopyZSendManyFromAction()
+{
+    QModelIndexList selection = GUIUtil::getEntryData(ui->tableView, ZAddressTableModel::Address);
+    if(!selection.isEmpty())
+    {
+        QString commandTemplate;
+        commandTemplate = QString("z_sendmany %1 '[{\"address\":\"%2\",\"amount\":\"%3\"}]'").arg(selection.at(0).data(Qt::DisplayRole).toString(),QString("YOUR_Z_OR_T_ADDRESS_TO"),QString::number(0,'f',8));
+        GUIUtil::setClipboard(commandTemplate);
+    }
+}
+
+void ZAddressBookPage::onCopyZSendManyToAction()
+{
+    QModelIndexList selection = GUIUtil::getEntryData(ui->tableView, ZAddressTableModel::Address);
+    if(!selection.isEmpty())
+    {
+        QString commandTemplate;
+        commandTemplate = QString("z_sendmany %1 '[{\"address\":\"%2\",\"amount\":\"%3\"}]'").arg(QString("YOUR_Z_OR_T_ADDRESS_FROM"),selection.at(0).data(Qt::DisplayRole).toString(),QString::number(0,'f',8));
+        GUIUtil::setClipboard(commandTemplate);
+    }
 }
 
 void ZAddressBookPage::on_copyAddress_clicked()

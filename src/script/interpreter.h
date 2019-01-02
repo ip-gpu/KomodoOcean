@@ -1,5 +1,5 @@
 // Copyright (c) 2009-2010 Satoshi Nakamoto
-// Copyright (c) 2009-2014 The Komodo Core developers
+// Copyright (c) 2009-2014 The Bitcoin Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -89,9 +89,11 @@ enum
     SCRIPT_VERIFY_CHECKLOCKTIMEVERIFY = (1U << 9),
 };
 
+bool CheckSignatureEncoding(const std::vector<unsigned char> &vchSig, unsigned int flags, ScriptError* serror);
+
 struct PrecomputedTransactionData
 {
-    uint256 hashPrevouts, hashSequence, hashOutputs, hashJoinSplits;
+    uint256 hashPrevouts, hashSequence, hashOutputs, hashJoinSplits, hashShieldedSpends, hashShieldedOutputs;
 
     PrecomputedTransactionData(const CTransaction& tx);
 };
@@ -100,6 +102,7 @@ enum SigVersion
 {
     SIGVERSION_SPROUT = 0,
     SIGVERSION_OVERWINTER = 1,
+    SIGVERSION_SAPLING = 2,
 };
 
 uint256 SignatureHash(

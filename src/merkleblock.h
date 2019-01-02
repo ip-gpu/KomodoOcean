@@ -1,15 +1,15 @@
 // Copyright (c) 2009-2010 Satoshi Nakamoto
-// Copyright (c) 2009-2014 The Komodo Core developers
+// Copyright (c) 2009-2014 The Bitcoin Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#ifndef KOMODO_MERKLEBLOCK_H
-#define KOMODO_MERKLEBLOCK_H
+#ifndef BITCOIN_MERKLEBLOCK_H
+#define BITCOIN_MERKLEBLOCK_H
 
 #include "serialize.h"
 #include "uint256.h"
 #include "primitives/block.h"
-#include "bloomfilter.h"
+#include "bloom.h"
 
 #include <vector>
 
@@ -85,7 +85,7 @@ public:
     ADD_SERIALIZE_METHODS;
 
     template <typename Stream, typename Operation>
-    inline void SerializationOp(Stream& s, Operation ser_action, int nType, int nVersion) {
+    inline void SerializationOp(Stream& s, Operation ser_action) {
         READWRITE(nTransactions);
         READWRITE(vHash);
         std::vector<unsigned char> vBytes;
@@ -147,10 +147,10 @@ public:
     ADD_SERIALIZE_METHODS;
 
     template <typename Stream, typename Operation>
-    inline void SerializationOp(Stream& s, Operation ser_action, int nType, int nVersion) {
+    inline void SerializationOp(Stream& s, Operation ser_action) {
         READWRITE(header);
         READWRITE(txn);
     }
 };
 
-#endif // KOMODO_MERKLEBLOCK_H
+#endif // BITCOIN_MERKLEBLOCK_H

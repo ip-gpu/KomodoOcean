@@ -1,10 +1,10 @@
 // Copyright (c) 2009-2010 Satoshi Nakamoto
-// Copyright (c) 2009-2014 The Komodo Core developers
+// Copyright (c) 2009-2014 The Bitcoin Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#ifndef KOMODO_RANDOM_H
-#define KOMODO_RANDOM_H
+#ifndef BITCOIN_RANDOM_H
+#define BITCOIN_RANDOM_H
 
 #include "uint256.h"
 
@@ -41,7 +41,7 @@ void MappedShuffle(RandomAccessIterator first,
                    std::function<int(int)> gen)
 {
     for (size_t i = len-1; i > 0; --i) {
-        auto r = gen((int)i+1);
+        auto r = gen(i+1);
         assert(r >= 0);
         assert(r <= i);
         std::swap(first[i], first[r]);
@@ -71,4 +71,4 @@ static inline uint32_t insecure_rand(void)
     return (insecure_rand_Rw << 16) + insecure_rand_Rz;
 }
 
-#endif // KOMODO_RANDOM_H
+#endif // BITCOIN_RANDOM_H
