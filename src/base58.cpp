@@ -1,21 +1,15 @@
-// Copyright (c) 2014 The Komodo Core developers
+// Copyright (c) 2014 The Bitcoin Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #include "base58.h"
 
-#include "bech32.h"
-#include "hash.h"
-#include "uint256.h"
-#include "utilstrencodings.h"
-#include "script/standard.h"
-
-#include "version.h"
-#include "streams.h"
+#include <hash.h>
+#include <uint256.h>
 
 #include <assert.h>
-#include <stdint.h>
 #include <string.h>
+#include <stdint.h>
 #include <vector>
 #include <string>
 #include <boost/variant/apply_visitor.hpp>
@@ -44,7 +38,7 @@ bool DecodeBase58(const char* psz, std::vector<unsigned char>& vch)
         if (ch == NULL)
             return false;
         // Apply "b256 = b256 * 58 + ch".
-        int carry = (int)(ch - pszBase58);
+        int carry = ch - pszBase58;
         for (std::vector<unsigned char>::reverse_iterator it = b256.rbegin(); it != b256.rend(); it++) {
             carry += 58 * (*it);
             *it = carry % 256;
@@ -107,7 +101,7 @@ std::string EncodeBase58(const unsigned char* pbegin, const unsigned char* pend)
 
 std::string EncodeBase58(const std::vector<unsigned char>& vch)
 {
-    return EncodeBase58(&vch[0], &vch[0] + vch.size());
+    return EncodeBase58(vch.data(), vch.data() + vch.size());
 }
 
 bool DecodeBase58(const std::string& str, std::vector<unsigned char>& vchRet)
@@ -145,6 +139,7 @@ bool DecodeBase58Check(const std::string& str, std::vector<unsigned char>& vchRe
 {
     return DecodeBase58Check(str.c_str(), vchRet);
 }
+
 
 CBase58Data::CBase58Data()
 {
@@ -218,14 +213,22 @@ public:
     CKomodoAddressVisitor(CKomodoAddress* addrIn) : addr(addrIn) {}
 
     bool operator()(const CKeyID& id) const { return addr->Set(id); }
+    bool operator()(const CPubKey& key) const { return addr->Set(key); }
     bool operator()(const CScriptID& id) const { return addr->Set(id); }
-    bool operator()(const CNoDestination& no) const { (void)no; return false; }
+    bool operator()(const CNoDestination& no) const { return false; }
 };
 
 } // anon namespace
 
 bool CKomodoAddress::Set(const CKeyID& id)
 {
+    SetData(Params().Base58Prefix(CChainParams::PUBKEY_ADDRESS), &id, 20);
+    return true;
+}
+
+bool CKomodoAddress::Set(const CPubKey& key)
+{
+    CKeyID id = key.GetID();
     SetData(Params().Base58Prefix(CChainParams::PUBKEY_ADDRESS), &id, 20);
     return true;
 }
@@ -278,10 +281,35 @@ CTxDestination CKomodoAddress::Get() const
         return CNoDestination();
 }
 
+bool CKomodoAddress::GetIndexKey(uint160& hashBytes, int& type) const
+{
+    if (!IsValid()) {
+        return false;
+    } else if (vchVersion == Params().Base58Prefix(CChainParams::PUBKEY_ADDRESS)) {
+        memcpy(&hashBytes, &vchData[0], 20);
+        type = 1;
+        return true;
+    } else if (vchVersion == Params().Base58Prefix(CChainParams::SCRIPT_ADDRESS)) {
+        memcpy(&hashBytes, &vchData[0], 20);
+        type = 2;
+        return true;
+    }
+
+    return false;
+}
+
 bool CKomodoAddress::GetKeyID(CKeyID& keyID) const
 {
     if (!IsValid() || vchVersion != Params().Base58Prefix(CChainParams::PUBKEY_ADDRESS))
         return false;
+    uint160 id;
+    memcpy(&id, &vchData[0], 20);
+    keyID = CKeyID(id);
+    return true;
+}
+
+bool CKomodoAddress::GetKeyID_NoCheck(CKeyID& keyID) const
+{
     uint160 id;
     memcpy(&id, &vchData[0], 20);
     keyID = CKeyID(id);
@@ -358,102 +386,4 @@ DATA_TYPE CZCEncoding<DATA_TYPE, PREFIX, SER_SIZE>::Get() const
     DATA_TYPE ret;
     ss >> ret;
     return ret;
-}
-
-// Explicit instantiations for libzcash::PaymentAddress
-template bool CZCEncoding<libzcash::PaymentAddress,
-                          CChainParams::ZCPAYMENT_ADDRRESS,
-                          libzcash::SerializedPaymentAddressSize>::Set(const libzcash::PaymentAddress& addr);
-template libzcash::PaymentAddress CZCEncoding<libzcash::PaymentAddress,
-                                              CChainParams::ZCPAYMENT_ADDRRESS,
-                                              libzcash::SerializedPaymentAddressSize>::Get() const;
-
-// Explicit instantiations for libzcash::ViewingKey
-template bool CZCEncoding<libzcash::ViewingKey,
-                          CChainParams::ZCVIEWING_KEY,
-                          libzcash::SerializedViewingKeySize>::Set(const libzcash::ViewingKey& vk);
-template libzcash::ViewingKey CZCEncoding<libzcash::ViewingKey,
-                                          CChainParams::ZCVIEWING_KEY,
-                                          libzcash::SerializedViewingKeySize>::Get() const;
-
-// Explicit instantiations for libzcash::SpendingKey
-template bool CZCEncoding<libzcash::SpendingKey,
-                          CChainParams::ZCSPENDING_KEY,
-                          libzcash::SerializedSpendingKeySize>::Set(const libzcash::SpendingKey& sk);
-template libzcash::SpendingKey CZCEncoding<libzcash::SpendingKey,
-                                           CChainParams::ZCSPENDING_KEY,
-                                           libzcash::SerializedSpendingKeySize>::Get() const;
-
-namespace
-{
-class DestinationEncoder : public boost::static_visitor<std::string>
-{
-private:
-    const CChainParams& m_params;
-
-public:
-    DestinationEncoder(const CChainParams& params) : m_params(params) {}
-
-    std::string operator()(const CKeyID& id) const
-    {
-        std::vector<unsigned char> data = m_params.Base58Prefix(CChainParams::PUBKEY_ADDRESS);
-        data.insert(data.end(), id.begin(), id.end());
-        return EncodeBase58Check(data);
-    }
-
-    std::string operator()(const CScriptID& id) const
-    {
-        std::vector<unsigned char> data = m_params.Base58Prefix(CChainParams::SCRIPT_ADDRESS);
-        data.insert(data.end(), id.begin(), id.end());
-        return EncodeBase58Check(data);
-    }
-
-    std::string operator()(const CNoDestination& no) const { return {}; }
-};
-
-CTxDestination DecodeDestination(const std::string& str, const CChainParams& params)
-{
-    std::vector<unsigned char> data;
-    uint160 hash;
-    if (DecodeBase58Check(str, data)) {
-        // base58-encoded Komodo addresses.
-        // Public-key-hash-addresses have version 0 (or 111 testnet).
-        // The data vector contains RIPEMD160(SHA256(pubkey)), where pubkey is the serialized public key.
-        const std::vector<unsigned char>& pubkey_prefix = params.Base58Prefix(CChainParams::PUBKEY_ADDRESS);
-        if (data.size() == hash.size() + pubkey_prefix.size() && std::equal(pubkey_prefix.begin(), pubkey_prefix.end(), data.begin())) {
-            std::copy(data.begin() + pubkey_prefix.size(), data.end(), hash.begin());
-            return CKeyID(hash);
-        }
-        // Script-hash-addresses have version 5 (or 196 testnet).
-        // The data vector contains RIPEMD160(SHA256(cscript)), where cscript is the serialized redemption script.
-        const std::vector<unsigned char>& script_prefix = params.Base58Prefix(CChainParams::SCRIPT_ADDRESS);
-        if (data.size() == hash.size() + script_prefix.size() && std::equal(script_prefix.begin(), script_prefix.end(), data.begin())) {
-            std::copy(data.begin() + script_prefix.size(), data.end(), hash.begin());
-            return CScriptID(hash);
-        }
-    }
-    data.clear();
-
-    return CNoDestination();
-}
-} // namespace
-
-std::string EncodeDestination(const CTxDestination& dest)
-{
-    return boost::apply_visitor(DestinationEncoder(Params()), dest);
-}
-
-CTxDestination DecodeDestination(const std::string& str)
-{
-    return DecodeDestination(str, Params());
-}
-
-bool IsValidDestinationString(const std::string& str, const CChainParams& params)
-{
-    return IsValidDestination(DecodeDestination(str, params));
-}
-
-bool IsValidDestinationString(const std::string& str)
-{
-    return IsValidDestinationString(str, Params());
 }

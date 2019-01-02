@@ -54,7 +54,7 @@ public:
     ADD_SERIALIZE_METHODS;
 
     template <typename Stream, typename Operation>
-    inline void SerializationOp(Stream& s, Operation ser_action, int nType, int nVersion) {
+    inline void SerializationOp(Stream& s, Operation ser_action) {
         READWRITE(*(CAddress*)this);
         READWRITE(source);
         READWRITE(nLastSuccess);
@@ -279,10 +279,8 @@ public:
      * very little in common.
      */
     template<typename Stream>
-    void Serialize(Stream &s, int nType, int nVersionDummy) const
+    void Serialize(Stream &s) const
     {
-        (void)nType;
-        (void)nVersionDummy;
         LOCK(cs);
 
         unsigned char nVersion = 1;
@@ -331,10 +329,8 @@ public:
     }
 
     template<typename Stream>
-    void Unserialize(Stream& s, int nType, int nVersionDummy)
+    void Unserialize(Stream& s)
     {
-        (void)nType;
-        (void)nVersionDummy;
         LOCK(cs);
 
         Clear();
@@ -366,7 +362,7 @@ public:
             CAddrInfo &info = mapInfo[n];
             s >> info;
             mapAddr[info] = n;
-            info.nRandomPos = (int)vRandom.size();
+            info.nRandomPos = vRandom.size();
             vRandom.push_back(n);
             if (nVersion != 1 || nUBuckets != ADDRMAN_NEW_BUCKET_COUNT) {
                 // In case the new table data cannot be used (nVersion unknown, or bucket count wrong),
@@ -389,7 +385,7 @@ public:
             int nKBucket = info.GetTriedBucket(nKey);
             int nKBucketPos = info.GetBucketPosition(nKey, false, nKBucket);
             if (vvTried[nKBucket][nKBucketPos] == -1) {
-                info.nRandomPos = (int)vRandom.size();
+                info.nRandomPos = vRandom.size();
                 info.fInTried = true;
                 vRandom.push_back(nIdCount);
                 mapInfo[nIdCount] = info;
@@ -436,11 +432,6 @@ public:
         }
 
         Check();
-    }
-
-    unsigned int GetSerializeSize(int nType, int nVersion) const
-    {
-        return (unsigned int)((CSizeComputer(nType, nVersion) << *this).size());
     }
 
     void Clear()
@@ -586,4 +577,4 @@ public:
 
 };
 
-#endif // KOMODO_ADDRMAN_H
+#endif // BITCOIN_ADDRMAN_H

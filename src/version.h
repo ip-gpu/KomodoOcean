@@ -1,15 +1,15 @@
-// Copyright (c) 2012-2014 The Komodo Core developers
+// Copyright (c) 2012-2014 The Bitcoin Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#ifndef KOMODO_VERSION_H
-#define KOMODO_VERSION_H
+#ifndef BITCOIN_VERSION_H
+#define BITCOIN_VERSION_H
 
 /**
  * network protocol versioning
  */
 
-static const int PROTOCOL_VERSION = 170003;
+static const int PROTOCOL_VERSION = 170007;
 
 //! initial proto version, to be increased after version/verack negotiation
 static const int INIT_PROTO_VERSION = 209;
@@ -30,4 +30,7 @@ static const int BIP0031_VERSION = 60000;
 //! "mempool" command, enhanced "getdata" behavior starts with this version
 static const int MEMPOOL_GD_VERSION = 60002;
 
-#endif // KOMODO_VERSION_H
+//! "filter*" commands are disabled without NODE_BLOOM after and including this version
+static const int NO_BLOOM_VERSION = 170004;
+
+#endif // BITCOIN_VERSION_H

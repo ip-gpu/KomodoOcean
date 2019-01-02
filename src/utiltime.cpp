@@ -1,5 +1,5 @@
 // Copyright (c) 2009-2010 Satoshi Nakamoto
-// Copyright (c) 2009-2014 The Komodo Core developers
+// Copyright (c) 2009-2014 The Bitcoin Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -8,7 +8,6 @@
 #endif
 
 #include "utiltime.h"
-#include "time.h"
 
 #include <chrono>
 #include <boost/date_time/posix_time/posix_time.hpp>
@@ -49,20 +48,7 @@ int64_t GetSystemTimeInSeconds()
 
 void MilliSleep(int64_t n)
 {
-    (void)n;
-/**
- * Boost's sleep_for was uninterruptable when backed by nanosleep from 1.50
- * until fixed in 1.52. Use the deprecated sleep method for the broken case.
- * See: https://svn.boost.org/trac/boost/ticket/7238
- */
-#if defined(HAVE_WORKING_BOOST_SLEEP_FOR)
     boost::this_thread::sleep_for(boost::chrono::milliseconds(n));
-#elif defined(HAVE_WORKING_BOOST_SLEEP)
-    boost::this_thread::sleep(boost::posix_time::milliseconds(n));
-#else
-//should never get here
-//#error missing boost sleep implementation
-#endif
 }
 
 std::string DateTimeStrFormat(const char* pszFormat, int64_t nTime)

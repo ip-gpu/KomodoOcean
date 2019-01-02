@@ -1,5 +1,5 @@
 // Copyright (c) 2009-2010 Satoshi Nakamoto
-// Copyright (c) 2009-2014 The Komodo Core developers
+// Copyright (c) 2009-2014 The Bitcoin Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -7,6 +7,7 @@
 #define KOMODO_SCRIPT_SCRIPT_H
 
 #include "crypto/common.h"
+#include "prevector.h"
 
 #include <assert.h>
 #include <climits>
@@ -16,6 +17,10 @@
 #include <string.h>
 #include <string>
 #include <vector>
+
+#define OPRETTYPE_TIMELOCK 1
+#define OPRETTYPE_STAKEPARAMS 2
+#define OPRETTYPE_STAKECHEAT 3
 
 static const unsigned int MAX_SCRIPT_ELEMENT_SIZE = 520; // bytes
 
@@ -173,7 +178,6 @@ enum opcodetype
     OP_NOP9 = 0xb8,
     OP_NOP10 = 0xb9,
 
-
     // template matching params
     OP_SMALLDATA = 0xf9,
     OP_SMALLINTEGER = 0xfa,
@@ -291,13 +295,6 @@ public:
 
     int getint() const
     {
-
-	/*        if (m_value > std::numeric_limits<int64_t>::max())
-            return std::numeric_limits<int64_t>::max();
-        else if (m_value < std::numeric_limits<int64_t>::min())
-            return std::numeric_limits<int64_t>::min();
-        return (int)m_value;
-	*/
         if (m_value > std::numeric_limits<int>::max())
             return std::numeric_limits<int>::max();
         else if (m_value < std::numeric_limits<int>::min())
@@ -364,15 +361,17 @@ private:
     int64_t m_value;
 };
 
+typedef prevector<28, unsigned char> CScriptBase;
+
 /** Serialized script, used inside transaction inputs and outputs */
-class CScript : public std::vector<unsigned char>
+class CScript : public CScriptBase
 {
 protected:
     CScript& push_int64(int64_t n)
     {
         if (n == -1 || (n >= 1 && n <= 16))
         {
-            push_back((unsigned char)(n + (OP_1 - 1)));
+            push_back(n + (OP_1 - 1));
         }
         else if (n == 0)
         {
@@ -384,11 +383,13 @@ protected:
         }
         return *this;
     }
+    bool GetBalancedData(const_iterator& pc, std::vector<std::vector<unsigned char>>& vSolutions) const;
 public:
     CScript() { }
-    CScript(const CScript& b) : std::vector<unsigned char>(b.begin(), b.end()) { }
-    CScript(const_iterator pbegin, const_iterator pend) : std::vector<unsigned char>(pbegin, pend) { }
-    CScript(const unsigned char* pbegin, const unsigned char* pend) : std::vector<unsigned char>(pbegin, pend) { }
+    CScript(const CScript& b) : CScriptBase(b.begin(), b.end()) { }
+    CScript(const_iterator pbegin, const_iterator pend) : CScriptBase(pbegin, pend) { }
+    CScript(std::vector<unsigned char>::const_iterator pbegin, std::vector<unsigned char>::const_iterator pend) : CScriptBase(pbegin, pend) { }
+    CScript(const unsigned char* pbegin, const unsigned char* pend) : CScriptBase(pbegin, pend) { }
 
     CScript& operator+=(const CScript& b)
     {
@@ -404,11 +405,9 @@ public:
     }
 
     CScript(int64_t b)        { operator<<(b); }
-
     explicit CScript(opcodetype b)     { operator<<(b); }
     explicit CScript(const CScriptNum& b) { operator<<(b); }
     explicit CScript(const std::vector<unsigned char>& b) { operator<<(b); }
-
 
     CScript& operator<<(int64_t b) { return push_int64(b); }
 
@@ -441,14 +440,14 @@ public:
         {
             insert(end(), OP_PUSHDATA2);
             uint8_t data[2];
-            WriteLE16(data, (uint16_t)(b.size()));
+            WriteLE16(data, b.size());
             insert(end(), data, data + sizeof(data));
         }
         else
         {
             insert(end(), OP_PUSHDATA4);
             uint8_t data[4];
-            WriteLE32(data, (uint32_t)(b.size()));
+            WriteLE32(data, b.size());
             insert(end(), data, data + sizeof(data));
         }
         insert(end(), b.begin(), b.end());
@@ -457,7 +456,6 @@ public:
 
     CScript& operator<<(const CScript& b)
     {
-        (void)b;
         // I'm not sure if this should push the script or concatenate scripts.
         // If there's ever a use for pushing a script onto a script, delete this member fn
         assert(!"Warning: Pushing a CScript onto a CScript with << is probably not intended, use + to concatenate!");
@@ -561,7 +559,7 @@ public:
     }
 
     /**
-     * Pre-version-0.6, Komodo always counted CHECKMULTISIGs
+     * Pre-version-0.6, Bitcoin always counted CHECKMULTISIGs
      * as 20 sigops. With pay-to-script-hash, that changed:
      * CHECKMULTISIGs serialized in scriptSigs are
      * counted more accurately, assuming they are of the form
@@ -575,14 +573,31 @@ public:
      */
     unsigned int GetSigOpCount(const CScript& scriptSig) const;
 
+    bool IsPayToPublicKeyHash() const;
+    bool IsPayToPublicKey() const;
+
     bool IsPayToScriptHash() const;
+    bool GetPushedData(CScript::const_iterator pc, std::vector<std::vector<unsigned char>>& vData) const;
+    bool IsOpReturn() const { return size() > 0 && (*this)[0] == OP_RETURN; }
+    bool GetOpretData(std::vector<std::vector<unsigned char>>& vData) const;
+
+    bool IsPayToCryptoCondition(CScript *ccSubScript, std::vector<std::vector<unsigned char>>& vSolutions) const;
+    bool IsPayToCryptoCondition(CScript *ccSubScript) const;
     bool IsPayToCryptoCondition() const;
+    bool IsCoinImport() const;
     bool MayAcceptCryptoCondition() const;
 
     bool IsWitnessProgram(int& version, std::vector<unsigned char>& program) const;
 
     /** Called by IsStandardTx and P2SH/BIP62 VerifyScript (which makes it consensus-critical). */
     bool IsPushOnly() const;
+
+    /** if the front of the script has check lock time verify. this is a fairly simple check.
+     * accepts NULL as parameter if unlockTime is not needed.
+     */
+    bool IsCheckLockTimeVerify(int64_t *unlockTime) const;
+
+    bool IsCheckLockTimeVerify() const;
 
     /**
      * Returns whether the script is guaranteed to fail at execution,
@@ -595,27 +610,12 @@ public:
     }
 
     std::string ToString() const;
+
     void clear()
     {
         // The default std::vector::clear() does not release memory.
-        std::vector<unsigned char>().swap(*this);
+        CScriptBase().swap(*this);
     }
-};
-
-struct CScriptWitness
-{
-    // Note that this encodes the data elements being pushed, rather than
-    // encoding them as a CScript that pushes them.
-    std::vector<std::vector<unsigned char> > stack;
-
-    // Some compilers complain without a default constructor
-    CScriptWitness() { }
-
-    bool IsNull() const { return stack.empty(); }
-
-    void SetNull() { stack.clear(); stack.shrink_to_fit(); }
-
-    std::string ToString() const;
 };
 
 #endif // KOMODO_SCRIPT_SCRIPT_H

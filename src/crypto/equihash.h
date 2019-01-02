@@ -124,8 +124,7 @@ public:
                      eh_index i, unsigned int ilen);
     ~TruncatedStepRow() { }
 
-//    TruncatedStepRow(const TruncatedStepRow<WIDTH>& a) : StepRow<WIDTH> {a} { }
-
+    TruncatedStepRow(const TruncatedStepRow<WIDTH>& a) : StepRow<WIDTH> {a} { }
     template<size_t W>
     TruncatedStepRow(const TruncatedStepRow<W>& a, const TruncatedStepRow<W>& b, size_t len, size_t lenIndices, int trim);
     TruncatedStepRow& operator=(const TruncatedStepRow<WIDTH>& a);

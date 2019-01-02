@@ -1,4 +1,4 @@
-// Copyright (c) 2011-2016 The Komodo Core developers
+// Copyright (c) 2011-2016 The Bitcoin Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -9,6 +9,7 @@
 #include "timedata.h"
 #include "main.h"
 #include "wallet/wallet.h"
+#include "key_io.h"
 
 #include <stdint.h>
 
@@ -174,7 +175,7 @@ void TransactionRecord::updateStatus(const CWalletTx &wtx)
 
     // Sort order, unrecorded transactions sort to the top
     status.sortKey = strprintf("%010d-%01d-%010u-%03d",
-        (pindex ? pindex->nHeight : std::numeric_limits<int>::max()),
+        (pindex ? pindex->GetHeight() : std::numeric_limits<int>::max()),
         (wtx.IsCoinBase() ? 1 : 0),
         wtx.nTimeReceived,
         idx);

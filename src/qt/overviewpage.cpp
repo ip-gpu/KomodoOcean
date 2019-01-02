@@ -1,4 +1,4 @@
-// Copyright (c) 2011-2016 The Komodo Core developers
+// Copyright (c) 2011-2016 The Bitcoin Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -14,12 +14,15 @@
 #include "transactionfilterproxy.h"
 #include "transactiontablemodel.h"
 #include "walletmodel.h"
+#include "util.h" // for KOMODO_ASSETCHAIN_MAXLEN
 
 #include <QAbstractItemDelegate>
 #include <QPainter>
 
 #define DECORATION_SIZE 54
 #define NUM_ITEMS 5
+
+extern char ASSETCHAINS_SYMBOL[KOMODO_ASSETCHAIN_MAXLEN];
 
 class TxViewDelegate : public QAbstractItemDelegate
 {
@@ -119,6 +122,8 @@ OverviewPage::OverviewPage(const PlatformStyle *platformStyle, QWidget *parent) 
     currentWatchOnlyBalance(-1),
     currentWatchUnconfBalance(-1),
     currentWatchImmatureBalance(-1),
+    currentPrivateBalance(-1),
+    currentInterestBalance(-1),
     txdelegate(new TxViewDelegate(platformStyle, this))
 {
     ui->setupUi(this);
@@ -159,7 +164,7 @@ OverviewPage::~OverviewPage()
     delete ui;
 }
 
-void OverviewPage::setBalance(const CAmount& balance, const CAmount& unconfirmedBalance, const CAmount& immatureBalance, const CAmount& watchOnlyBalance, const CAmount& watchUnconfBalance, const CAmount& watchImmatureBalance)
+void OverviewPage::setBalance(const CAmount& balance, const CAmount& unconfirmedBalance, const CAmount& immatureBalance, const CAmount& watchOnlyBalance, const CAmount& watchUnconfBalance, const CAmount& watchImmatureBalance, const CAmount& privateBalance, const CAmount& interestBalance)
 {
     int unit = walletModel->getOptionsModel()->getDisplayUnit();
     currentBalance = balance;
@@ -168,35 +173,48 @@ void OverviewPage::setBalance(const CAmount& balance, const CAmount& unconfirmed
     currentWatchOnlyBalance = watchOnlyBalance;
     currentWatchUnconfBalance = watchUnconfBalance;
     currentWatchImmatureBalance = watchImmatureBalance;
+    currentPrivateBalance = privateBalance;
+    currentInterestBalance = interestBalance;
     ui->labelBalance->setText(KomodoUnits::formatWithUnit(unit, balance, false, KomodoUnits::separatorAlways));
     ui->labelUnconfirmed->setText(KomodoUnits::formatWithUnit(unit, unconfirmedBalance, false, KomodoUnits::separatorAlways));
     ui->labelImmature->setText(KomodoUnits::formatWithUnit(unit, immatureBalance, false, KomodoUnits::separatorAlways));
-    ui->labelTotal->setText(KomodoUnits::formatWithUnit(unit, balance + unconfirmedBalance + immatureBalance, false, KomodoUnits::separatorAlways));
+    ui->labelTotal->setText(KomodoUnits::formatWithUnit(unit, balance + unconfirmedBalance + immatureBalance + privateBalance + interestBalance, false, KomodoUnits::separatorAlways));
     ui->labelWatchAvailable->setText(KomodoUnits::formatWithUnit(unit, watchOnlyBalance, false, KomodoUnits::separatorAlways));
     ui->labelWatchPending->setText(KomodoUnits::formatWithUnit(unit, watchUnconfBalance, false, KomodoUnits::separatorAlways));
     ui->labelWatchImmature->setText(KomodoUnits::formatWithUnit(unit, watchImmatureBalance, false, KomodoUnits::separatorAlways));
     ui->labelWatchTotal->setText(KomodoUnits::formatWithUnit(unit, watchOnlyBalance + watchUnconfBalance + watchImmatureBalance, false, KomodoUnits::separatorAlways));
 
+    ui->labelPrivateBalance->setText(KomodoUnits::formatWithUnit(unit, privateBalance, false, KomodoUnits::separatorAlways));
+    ui->labelInterestBalance->setText(KomodoUnits::formatWithUnit(unit, interestBalance, false, KomodoUnits::separatorAlways));
+
     // only show immature (newly mined) balance if it's non-zero, so as not to complicate things
     // for the non-mining users
     bool showImmature = immatureBalance != 0;
     bool showWatchOnlyImmature = watchImmatureBalance != 0;
+    bool showInterest = (ASSETCHAINS_SYMBOL[0] == 0);
 
     // for symmetry reasons also show immature label when the watch-only one is shown
     ui->labelImmature->setVisible(showImmature || showWatchOnlyImmature);
     ui->labelImmatureText->setVisible(showImmature || showWatchOnlyImmature);
     ui->labelWatchImmature->setVisible(showWatchOnlyImmature); // show watch-only immature balance
+    // we should show interest only for KMD, so we need to use setVisible with condition
+    ui->labelInterestBalance->setVisible(showInterest);
+    ui->labelInterestTotalText->setVisible(showInterest);
+
 }
 
 // show/hide watch-only labels
 void OverviewPage::updateWatchOnlyLabels(bool showWatchOnly)
 {
+
     ui->labelSpendable->setVisible(showWatchOnly);      // show spendable label (only when watch-only is active)
     ui->labelWatchonly->setVisible(showWatchOnly);      // show watch-only label
     ui->lineWatchBalance->setVisible(showWatchOnly);    // show watch-only balance separator line
     ui->labelWatchAvailable->setVisible(showWatchOnly); // show watch-only available balance
     ui->labelWatchPending->setVisible(showWatchOnly);   // show watch-only pending balance
     ui->labelWatchTotal->setVisible(showWatchOnly);     // show watch-only total balance
+
+
 
     if (!showWatchOnly)
         ui->labelWatchImmature->hide();
@@ -232,8 +250,9 @@ void OverviewPage::setWalletModel(WalletModel *model)
 
         // Keep up to date with wallet
         setBalance(model->getBalance(), model->getUnconfirmedBalance(), model->getImmatureBalance(),
-                   model->getWatchBalance(), model->getWatchUnconfirmedBalance(), model->getWatchImmatureBalance());
-        connect(model, SIGNAL(balanceChanged(CAmount,CAmount,CAmount,CAmount,CAmount,CAmount)), this, SLOT(setBalance(CAmount,CAmount,CAmount,CAmount,CAmount,CAmount)));
+                   model->getWatchBalance(), model->getWatchUnconfirmedBalance(), model->getWatchImmatureBalance(),
+                   model->getPrivateBalance(),model->getInterestBalance());
+        connect(model, SIGNAL(balanceChanged(CAmount,CAmount,CAmount,CAmount,CAmount,CAmount,CAmount,CAmount)), this, SLOT(setBalance(CAmount,CAmount,CAmount,CAmount,CAmount,CAmount,CAmount,CAmount)));
 
         connect(model->getOptionsModel(), SIGNAL(displayUnitChanged(int)), this, SLOT(updateDisplayUnit()));
 
@@ -251,7 +270,8 @@ void OverviewPage::updateDisplayUnit()
     {
         if(currentBalance != -1)
             setBalance(currentBalance, currentUnconfirmedBalance, currentImmatureBalance,
-                       currentWatchOnlyBalance, currentWatchUnconfBalance, currentWatchImmatureBalance);
+                       currentWatchOnlyBalance, currentWatchUnconfBalance, currentWatchImmatureBalance,
+                       currentPrivateBalance, currentInterestBalance);
 
         // Update txdelegate->unit with the current unit
         txdelegate->unit = walletModel->getOptionsModel()->getDisplayUnit();

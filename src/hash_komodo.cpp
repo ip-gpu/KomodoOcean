@@ -1,4 +1,4 @@
-// Copyright (c) 2013-2014 The Komodo Core developers
+// Copyright (c) 2013-2014 The Bitcoin Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -80,55 +80,4 @@ void BIP32Hash(const ChainCode &chainCode, unsigned int nChild, unsigned char he
     num[2] = (nChild >>  8) & 0xFF;
     num[3] = (nChild >>  0) & 0xFF;
     CHMAC_SHA512(chainCode.begin(), chainCode.size()).Write(&header, 1).Write(data, 32).Write(num, 4).Finalize(output);
-}
-
-#define ROTL(x, b) (uint64_t)(((x) << (b)) | ((x) >> (64 - (b))))
-
-#define SIPROUND do { \
-    v0 += v1; v1 = ROTL(v1, 13); v1 ^= v0; \
-    v0 = ROTL(v0, 32); \
-    v2 += v3; v3 = ROTL(v3, 16); v3 ^= v2; \
-    v0 += v3; v3 = ROTL(v3, 21); v3 ^= v0; \
-    v2 += v1; v1 = ROTL(v1, 17); v1 ^= v2; \
-    v2 = ROTL(v2, 32); \
-} while (0)
-
-uint64_t SipHashUint256(uint64_t k0, uint64_t k1, const uint256& val)
-{
-    /* Specialized implementation for efficiency */
-    uint64_t d = val.GetUint64(0);
-
-    uint64_t v0 = 0x736f6d6570736575ULL ^ k0;
-    uint64_t v1 = 0x646f72616e646f6dULL ^ k1;
-    uint64_t v2 = 0x6c7967656e657261ULL ^ k0;
-    uint64_t v3 = 0x7465646279746573ULL ^ k1 ^ d;
-
-    SIPROUND;
-    SIPROUND;
-    v0 ^= d;
-    d = val.GetUint64(1);
-    v3 ^= d;
-    SIPROUND;
-    SIPROUND;
-    v0 ^= d;
-    d = val.GetUint64(2);
-    v3 ^= d;
-    SIPROUND;
-    SIPROUND;
-    v0 ^= d;
-    d = val.GetUint64(3);
-    v3 ^= d;
-    SIPROUND;
-    SIPROUND;
-    v0 ^= d;
-    v3 ^= ((uint64_t)4) << 59;
-    SIPROUND;
-    SIPROUND;
-    v0 ^= ((uint64_t)4) << 59;
-    v2 ^= 0xFF;
-    SIPROUND;
-    SIPROUND;
-    SIPROUND;
-    SIPROUND;
-    return v0 ^ v1 ^ v2 ^ v3;
 }

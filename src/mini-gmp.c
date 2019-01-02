@@ -4332,7 +4332,7 @@ void mpz_mul_2exp (mpz_t r, const mpz_t u, mp_bitcnt_t bits)
 
 static const char base58_chars[] = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz";
 
-char *komodo_base58encode(char *coinaddr,uint8_t *data,int32_t datalen)
+char *bitcoin_base58encode(char *coinaddr,uint8_t *data,int32_t datalen)
 {
     mpz_t bn0,bn58,dv,rem,bn; char rs[128]; int32_t i,n=0;
     //mpz_init_set_str(bn58,"58",10);
@@ -4359,7 +4359,7 @@ char *komodo_base58encode(char *coinaddr,uint8_t *data,int32_t datalen)
     return(coinaddr);
 }
 
-int32_t komodo_base58decode(uint8_t *data,char *coinaddr)
+int32_t bitcoin_base58decode(uint8_t *data,char *coinaddr)
 {
  	uint32_t zeroes,be_sz=0; size_t count; const char *p,*p1; mpz_t bn58,bn;
     mpz_init_set_ui(bn58,58);

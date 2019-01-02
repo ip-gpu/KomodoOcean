@@ -56,7 +56,7 @@ static int32_t cJSON_strcasecmp(const char *s1,const char *s2)
 
 // the following written by jl777
 /******************************************************************************
- * Copyright © 2014-2017 The SuperNET Developers.                             *
+ * Copyright Â© 2014-2018 The SuperNET Developers.                             *
  *                                                                            *
  * See the AUTHORS, DEVELOPER-AGREEMENT and LICENSE files at                  *
  * the top-level directory of this distribution for the individual copyright  *
@@ -217,13 +217,13 @@ uint64_t get_satoshi_obj(cJSON *json,char *field)
     {
         satoshis += (mult * (numstr.buf[i] - '0'));
         if ( satoshis < prev )
-            printf("get_satoshi_obj numstr.(%s) i.%d prev.%llu vs satoshis.%llu\n",numstr.buf,i,(unsigned long long)prev,(unsigned long long)satoshis);
+            LogPrintf("get_satoshi_obj numstr.(%s) i.%d prev.%llu vs satoshis.%llu\n",numstr.buf,i,(unsigned long long)prev,(unsigned long long)satoshis);
         prev = satoshis;
     }
     sprintf(checkstr.buf,"%llu",(long long)satoshis);
     if ( strcmp(checkstr.buf,numstr.buf) != 0 )
     {
-        printf("SATOSHI GREMLIN?? numstr.(%s) -> %.8f -> (%s)\n",numstr.buf,dstr(satoshis),checkstr.buf);
+        LogPrintf("SATOSHI GREMLIN?? numstr.(%s) -> %.8f -> (%s)\n",numstr.buf,dstr(satoshis),checkstr.buf);
     }
     return(satoshis);
 }
@@ -236,7 +236,7 @@ void add_satoshis_json(cJSON *json,char *field,uint64_t satoshis)
     obj = cJSON_CreateString(numstr);
     cJSON_AddItemToObject(json,field,obj);
     if ( satoshis != get_satoshi_obj(json,field) )
-        printf("error adding satoshi obj %ld -> %ld\n",(unsigned long)satoshis,(unsigned long)get_satoshi_obj(json,field));
+        LogPrintf("error adding satoshi obj %ld -> %ld\n",(unsigned long)satoshis,(unsigned long)get_satoshi_obj(json,field));
 }
 
 char *cJSON_str(cJSON *json)
@@ -500,18 +500,18 @@ uint64_t calc_nxt64bits(const char *NXTaddr)
     uint64_t lastval,mult,nxt64bits = 0;
     if ( NXTaddr == 0 )
     {
-        printf("calling calc_nxt64bits with null ptr!\n");
+        LogPrintf("calling calc_nxt64bits with null ptr!\n");
         return(0);
     }
     n = strlen(NXTaddr);
     if ( n >= 22 )
     {
-        printf("calc_nxt64bits: illegal NXTaddr.(%s) too long\n",NXTaddr);
+        LogPrintf("calc_nxt64bits: illegal NXTaddr.(%s) too long\n",NXTaddr);
         return(0);
     }
     else if ( strcmp(NXTaddr,"0") == 0 || strcmp(NXTaddr,"false") == 0 )
     {
-        // printf("zero address?\n"); getchar();
+        // LogPrintf("zero address?\n"); getchar();
         return(0);
     }
     if ( NXTaddr[0] == '-' )
@@ -523,25 +523,25 @@ uint64_t calc_nxt64bits(const char *NXTaddr)
         c = NXTaddr[i];
         if ( c < '0' || c > '9' )
         {
-            printf("calc_nxt64bits: illegal char.(%c %d) in (%s).%d\n",c,c,NXTaddr,(int32_t)i);
+            LogPrintf("calc_nxt64bits: illegal char.(%c %d) in (%s).%d\n",c,c,NXTaddr,(int32_t)i);
 #ifdef __APPLE__
             //while ( 1 )
             {
                 //sleep(60);
-                printf("calc_nxt64bits: illegal char.(%c %d) in (%s).%d\n",c,c,NXTaddr,(int32_t)i);
+                LogPrintf("calc_nxt64bits: illegal char.(%c %d) in (%s).%d\n",c,c,NXTaddr,(int32_t)i);
             }
 #endif
             return(0);
         }
         nxt64bits += mult * (c - '0');
         if ( nxt64bits < lastval )
-            printf("calc_nxt64bits: warning: 64bit overflow %llx < %llx\n",(long long)nxt64bits,(long long)lastval);
+            LogPrintf("calc_nxt64bits: warning: 64bit overflow %llx < %llx\n",(long long)nxt64bits,(long long)lastval);
         lastval = nxt64bits;
     }
     while ( *NXTaddr == '0' && *NXTaddr != 0 )
         NXTaddr++;
     if ( cmp_nxt64bits(NXTaddr,nxt64bits) != 0 )
-        printf("error calculating nxt64bits: %s -> %llx -> %s\n",NXTaddr,(long long)nxt64bits,nxt64str(nxt64bits));
+        LogPrintf("error calculating nxt64bits: %s -> %llx -> %s\n",NXTaddr,(long long)nxt64bits,nxt64str(nxt64bits));
     if ( polarity < 0 )
         return(-(int64_t)nxt64bits);
     return(nxt64bits);

@@ -1,4 +1,4 @@
-// Copyright (c) 2011-2016 The Komodo Core developers
+// Copyright (c) 2011-2016 The Bitcoin Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -11,7 +11,7 @@
 
 #define KOMODO_ASSETCHAIN_MAXLEN 65
 extern char ASSETCHAINS_SYMBOL[KOMODO_ASSETCHAIN_MAXLEN];
-extern int32_t ASSETCHAIN_INIT;
+extern uint32_t ASSETCHAIN_INIT;
 extern std::string NOTARY_PUBKEY;
 void komodo_passport_iteration();
 
@@ -31,10 +31,12 @@ void komodo_passport_iteration();
 #ifdef ENABLE_WALLET
 #include "paymentserver.h"
 #include "walletmodel.h"
+#include "walletframe.h"
+#include "walletview.h"
 #endif
 
 #include "init.h"
-#include "rpcserver.h"
+#include "rpc/server.h"
 #include "scheduler.h"
 #include "ui_interface.h"
 #include "util.h"
@@ -333,16 +335,16 @@ void KomodoCore::shutdown()
     try
     {
         qDebug() << __func__ << ": Running Shutdown in thread";
-
         if ( ASSETCHAINS_SYMBOL[0] == 0 )
         {
-            komodo_passport_iteration();
+            if (!ShutdownRequested()) komodo_passport_iteration();
             MilliSleep(1000);
         } else MilliSleep(1000);
 
         Interrupt(threadGroup);
         threadGroup.join_all();
         Shutdown();
+
         qDebug() << __func__ << ": Shutdown finished";
         Q_EMIT shutdownResult();
     } catch (const std::exception& e) {
@@ -390,14 +392,19 @@ KomodoApplication::~KomodoApplication()
 
     delete window;
     window = 0;
+    qDebug() << __func__ << ": Deleted window";
 #ifdef ENABLE_WALLET
     delete paymentServer;
     paymentServer = 0;
+    qDebug() << __func__ << ": Deleted paymentServer";
 #endif
     delete optionsModel;
     optionsModel = 0;
+    qDebug() << __func__ << ": Deleted optionsModel";
+
     delete platformStyle;
     platformStyle = 0;
+    qDebug() << __func__ << ": Deleted platformStyle";
 }
 
 #ifdef ENABLE_WALLET
@@ -539,6 +546,8 @@ void KomodoApplication::initializeResult(bool success)
         // komodo: URIs or payment requests:
         connect(paymentServer, SIGNAL(receivedPaymentRequest(SendCoinsRecipient)),
                          window, SLOT(handlePaymentRequest(SendCoinsRecipient)));
+        connect(paymentServer, SIGNAL(receivedZPaymentRequest(SendCoinsRecipient)),
+                         window, SLOT(handleZPaymentRequest(SendCoinsRecipient)));
         connect(window, SIGNAL(receivedURI(QString)),
                          paymentServer, SLOT(handleURIOrFile(QString)));
         connect(paymentServer, SIGNAL(message(QString,QString,unsigned int)),
@@ -763,9 +772,11 @@ int main(int argc, char *argv[])
             app.requestShutdown();
             app.exec();
             rv = app.getReturnValue();
+            qDebug() << __func__ << ": Exit success";
         } else {
             // A dialog with detailed error will have been shown by InitError()
             rv = EXIT_FAILURE;
+            qDebug() << __func__ << ": Exit failure";
         }
     } catch (const std::exception& e) {
         PrintExceptionContinue(&e, "Runaway exception");
@@ -774,6 +785,7 @@ int main(int argc, char *argv[])
         PrintExceptionContinue(nullptr, "Runaway exception");
         app.handleRunawayException(QString::fromStdString(GetWarnings("gui")));
     }
+    qDebug() << __func__ << ": Final";
     return rv;
 }
 #endif // KOMODO_QT_TEST

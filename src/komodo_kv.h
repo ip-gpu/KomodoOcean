@@ -1,5 +1,5 @@
 /******************************************************************************
- * Copyright © 2014-2017 The SuperNET Developers.                             *
+ * Copyright © 2014-2018 The SuperNET Developers.                             *
  *                                                                            *
  * See the AUTHORS, DEVELOPER-AGREEMENT and LICENSE files at                  *
  * the top-level directory of this distribution for the individual copyright  *
@@ -15,6 +15,7 @@
 
 #ifndef H_KOMODOKV_H
 #define H_KOMODOKV_H
+
 #include "komodo_defs.h"
 
 int32_t komodo_kvcmp(uint8_t *refvalue,uint16_t refvaluesize,uint8_t *value,uint16_t valuesize)
@@ -79,15 +80,15 @@ int32_t komodo_kvsearch(uint256 *pubkeyp,int32_t current_height,uint32_t *flagsp
             *flagsp = ptr->flags;
             int32_t i; for (i=0; i<32; i++)
             {
-                //LogPrintf("%02x",((uint8_t *)&ptr->pubkey)[31-i]);
+                //printf("%02x",((uint8_t *)&ptr->pubkey)[31-i]);
                 ((uint8_t *)pubkeyp)[i] = ((uint8_t *)&ptr->pubkey)[31-i];
             }
-            //LogPrintf(" ptr->pubkey\n");
+            //printf(" ptr->pubkey\n");
             memcpy(pubkeyp,&ptr->pubkey,sizeof(*pubkeyp));
             if ( (retval= ptr->valuesize) > 0 )
                 memcpy(value,ptr->value,retval);
         }
-    }
+    } //else LogPrintf("couldnt find (%s)\n",(char *)key);
     portable_mutex_unlock(&KOMODO_KV_mutex);
     if ( retval < 0 )
     {
@@ -99,7 +100,7 @@ int32_t komodo_kvsearch(uint256 *pubkeyp,int32_t current_height,uint32_t *flagsp
 void komodo_kvupdate(uint8_t *opretbuf,int32_t opretlen,uint64_t value)
 {
     static uint256 zeroes;
-    uint32_t flags; uint256 pubkey,refpubkey,sig; int32_t i,refvaluesize,hassig,coresize,haspubkey,height,kvheight; uint16_t keylen,valuesize,newflag = 0; uint8_t *key,*valueptr,keyvalue[IGUANA_MAXSCRIPTSIZE]; struct komodo_kv *ptr; char *transferpubstr,*tstr; uint64_t fee;
+    uint32_t flags; uint256 pubkey,refpubkey,sig; int32_t i,refvaluesize,hassig,coresize,haspubkey,height,kvheight; uint16_t keylen,valuesize,newflag = 0; uint8_t *key,*valueptr,keyvalue[IGUANA_MAXSCRIPTSIZE*8]; struct komodo_kv *ptr; char *transferpubstr,*tstr; uint64_t fee;
     if ( ASSETCHAINS_SYMBOL[0] == 0 ) // disable KV for KMD
         return;
     iguana_rwnum(0,&opretbuf[1],sizeof(keylen),&keylen);
@@ -109,7 +110,6 @@ void komodo_kvupdate(uint8_t *opretbuf,int32_t opretlen,uint64_t value)
     key = &opretbuf[13];
     if ( keylen+13 > opretlen )
     {
-        LogPrintf("komodo_kvupdate: keylen.%d + 13 > opretlen.%d\n",keylen,opretlen);
         static uint32_t counter;
         if ( ++counter < 1 )
             LogPrintf("komodo_kvupdate: keylen.%d + 13 > opretlen.%d, this can be ignored\n",keylen,opretlen);
@@ -142,7 +142,7 @@ void komodo_kvupdate(uint8_t *opretbuf,int32_t opretlen,uint64_t value)
                 {
                     if ( komodo_kvsigverify(keyvalue,keylen+refvaluesize,refpubkey,sig) < 0 )
                     {
-                        LogPrintf("komodo_kvsigverify error [%d]\n",coresize-13);
+                        //LogPrintf("komodo_kvsigverify error [%d]\n",coresize-13);
                         return;
                     }
                 }
@@ -151,6 +151,7 @@ void komodo_kvupdate(uint8_t *opretbuf,int32_t opretlen,uint64_t value)
             HASH_FIND(hh,KOMODO_KV,key,keylen,ptr);
             if ( ptr != 0 )
             {
+                //LogPrintf("(%s) already there\n",(char *)key);
                 //if ( (ptr->flags & KOMODO_KVPROTECTED) != 0 )
                 {
                     tstr = (char *)"transfer:";
@@ -183,7 +184,6 @@ void komodo_kvupdate(uint8_t *opretbuf,int32_t opretlen,uint64_t value)
                     memcpy(ptr->value,valueptr,valuesize);
                 }
             } else LogPrintf("newflag.%d zero or protected %d\n",newflag,(ptr->flags & KOMODO_KVPROTECTED));
-
             /*for (i=0; i<32; i++)
                 LogPrintf("%02x",((uint8_t *)&ptr->pubkey)[i]);
             LogPrintf(" <- ");
@@ -194,7 +194,7 @@ void komodo_kvupdate(uint8_t *opretbuf,int32_t opretlen,uint64_t value)
             ptr->height = height;
             ptr->flags = flags; // jl777 used to or in KVPROTECTED
             portable_mutex_unlock(&KOMODO_KV_mutex);
-        } else LogPrintf("size mismatch %d vs %d\n",opretlen,coresize);
+        } else LogPrintf("KV update size mismatch %d vs %d\n",opretlen,coresize);
     } else LogPrintf("not enough fee\n");
 }
 

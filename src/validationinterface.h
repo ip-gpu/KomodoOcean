@@ -1,14 +1,13 @@
 // Copyright (c) 2009-2010 Satoshi Nakamoto
-// Copyright (c) 2009-2014 The Komodo Core developers
+// Copyright (c) 2009-2014 The Bitcoin Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#ifndef KOMODO_VALIDATIONINTERFACE_H
-#define KOMODO_VALIDATIONINTERFACE_H
+#ifndef BITCOIN_VALIDATIONINTERFACE_H
+#define BITCOIN_VALIDATIONINTERFACE_H
 
 #include <boost/signals2/signal.hpp>
 
-#include "primitives/transaction.h" // CTransaction(Ref)
 #include "zcash/IncrementalMerkleTree.hpp"
 
 class CBlock;
@@ -29,17 +28,22 @@ void UnregisterValidationInterface(CValidationInterface* pwalletIn);
 void UnregisterAllValidationInterfaces();
 /** Push an updated transaction to all registered wallets */
 void SyncWithWallets(const CTransaction& tx, const CBlock* pblock = NULL);
+/** Erase a transaction from all registered wallets */
+void EraseFromWallets(const uint256 &hash);
+/** Rescan all registered wallets */
+void RescanWallets();
 
 class CValidationInterface {
 protected:
-    virtual void UpdatedBlockTip(const CBlockIndex *pindex) { (void)pindex; }
-    virtual void SyncTransaction(const CTransaction &tx, const CBlock *pblock) { (void)pblock; (void)tx; }
-    virtual void EraseFromWallet(const uint256 &hash) { (void)hash; }
-    virtual void ChainTip(const CBlockIndex *pindex, const CBlock *pblock, ZCIncrementalMerkleTree tree, bool added) { (void)added; (void)tree; (void)pblock; (void)pindex; }
-    virtual void SetBestChain(const CBlockLocator &locator) { (void)locator; }
-    virtual void UpdatedTransaction(const uint256 &hash) { (void)hash; }
-    virtual void Inventory(const uint256 &hash) { (void)hash; }
-    virtual void ResendWalletTransactions(int64_t nBestBlockTime) { (void)nBestBlockTime; }
+    virtual void UpdatedBlockTip(const CBlockIndex *pindex) {}
+    virtual void SyncTransaction(const CTransaction &tx, const CBlock *pblock) {}
+    virtual void EraseFromWallet(const uint256 &hash) {}
+    virtual void RescanWallet() {}
+    virtual void ChainTip(const CBlockIndex *pindex, const CBlock *pblock, SproutMerkleTree sproutTree, SaplingMerkleTree saplingTree, bool added) {}
+    virtual void SetBestChain(const CBlockLocator &locator) {}
+    virtual void UpdatedTransaction(const uint256 &hash) {}
+    virtual void Inventory(const uint256 &hash) {}
+    virtual void ResendWalletTransactions(int64_t nBestBlockTime) {}
     virtual void BlockChecked(const CBlock&, const CValidationState&) {}
     friend void ::RegisterValidationInterface(CValidationInterface*);
     friend void ::UnregisterValidationInterface(CValidationInterface*);
@@ -51,12 +55,14 @@ struct CMainSignals {
     boost::signals2::signal<void (const CBlockIndex *)> UpdatedBlockTip;
     /** Notifies listeners of updated transaction data (transaction, and optionally the block it is found in. */
     boost::signals2::signal<void (const CTransaction &, const CBlock *)> SyncTransaction;
-    /** Notifies listeners of an erased transaction (currently disabled, requires transaction replacement). */
+    /** Notifies listeners of an erased transaction. */
     boost::signals2::signal<void (const uint256 &)> EraseTransaction;
+    /** Notifies listeners of the need to rescan the wallet. */
+    boost::signals2::signal<void ()> RescanWallet;
     /** Notifies listeners of an updated transaction without new data (for now: a coinbase potentially becoming visible). */
     boost::signals2::signal<void (const uint256 &)> UpdatedTransaction;
     /** Notifies listeners of a change to the tip of the active block chain. */
-    boost::signals2::signal<void (const CBlockIndex *, const CBlock *, ZCIncrementalMerkleTree, bool)> ChainTip;
+    boost::signals2::signal<void (const CBlockIndex *, const CBlock *, SproutMerkleTree, SaplingMerkleTree, bool)> ChainTip;
     /** Notifies listeners of a new active block chain. */
     boost::signals2::signal<void (const CBlockLocator &)> SetBestChain;
     /** Notifies listeners about an inventory item being seen on the network. */
@@ -69,4 +75,4 @@ struct CMainSignals {
 
 CMainSignals& GetMainSignals();
 
-#endif // KOMODO_VALIDATIONINTERFACE_H
+#endif // BITCOIN_VALIDATIONINTERFACE_H

@@ -1,4 +1,4 @@
-// Copyright (c) 2011-2016 The Komodo Core developers
+// Copyright (c) 2011-2016 The Bitcoin Core developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -41,7 +41,7 @@ namespace GUIUtil
     QFont fixedPitchFont();
 
     // Set up widgets for address and amounts
-    void setupAddressWidget(QValidatedLineEdit *widget, QWidget *parent);
+    void setupAddressWidget(QValidatedLineEdit *widget, QWidget *parent, bool allowZAddresses = false);
     void setupAmountWidget(QLineEdit *widget, QWidget *parent);
 
     // Parse "komodo:" URI into recipient object, return true on successful parsing
