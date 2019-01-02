@@ -99,7 +99,7 @@ void ZSendCoinsDialog::setModel(WalletModel *_model)
 
         // Coin Control
         connect(_model->getOptionsModel(), SIGNAL(displayUnitChanged(int)), this, SLOT(coinControlUpdateLabels()));
-        ui->frameCoinControl->setVisible(_model->getOptionsModel()->getCoinControlFeatures());
+        ui->frameCoinControl->setVisible(true); // frame "coin control" should be always visible, bcz it contains PayFrom combobox
         coinControlUpdateLabels();
 
         connect(ui->payFromAddress, SIGNAL(currentIndexChanged(int)), this, SLOT(coinControlUpdateLabels()));
