@@ -128,8 +128,29 @@ sudo apt install libsodium-dev
 	
 ```
 
-`libssl.so.1.0.0` dependency exists here bcz Ubuntu 16.04 uses Qt version 5.5.1 and that's the reason why we need to use `-rootcertificates=` key during launch. On Ubuntu 18.x it's don't needed bcz it uses newer version of Qt and OpenSSL 1.1.0 system-wide.
+`libssl.so.1.0.0` dependency exists here and that's the reason why we need to use `-rootcertificates=` key during launch. On Ubuntu 18.x it's don't needed bcz it uses OpenSSL 1.1.0 system-wide.
 
+### Qt Versions Notes ###
+
+By default Ubuntu 16.04 uses old version of Qt 5.5.1 (it's installed from by default from Xenial repos), if you want to change this behaviour and build against Qt 5.9.1 you'll need to do the following:
+
+```
+wget http://download.qt.io/official_releases/qt/5.9/5.9.1/qt-opensource-linux-x64-5.9.1.run
+chmod +x qt-opensource-linux-x64-5.9.1.run
+./qt-opensource-linux-x64-5.9.1.run # during installation leave install folder "AS IS", i.e. $HOME/Qt5.9.1
+qtchooser -install -local qt5.9.1 $HOME/Qt5.9.1/5.9.1/gcc_64/bin/qmake 
+# this will create $HOME/.config/qtchooser/qt5.9.1.conf 
+...
+git clone https://github.com/DeckerSU/KomodoOcean
+cd KomodoOcean
+git checkout Linux
+git pull
+QT_LDFLAGS="-Wl,-rpath=$HOME/Qt5.9.1/5.9.1/gcc_64/lib" PKG_CONFIG_PATH="$(pwd)/depends/x86_64-unknown-linux-gnu/lib/pkgconfig:$HOME/Qt5.9.1/5.9.1/gcc_64/lib/pkgconfig" zcutil/build.sh -j$(nproc) # override configure check for Qt package and build
+./src/qt/komodo-qt -rootcertificates= & # for launch
+```
+And seems in this case you will need also build and link protobuf 2.6.1 package manually, or include it to `packages.mk` . 
+
+So, recommended way is build system-installed Qt.
 
 ### Developers of Qt wallet ###
 
