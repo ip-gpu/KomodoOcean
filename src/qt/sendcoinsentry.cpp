@@ -2,6 +2,10 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
+#if defined(HAVE_CONFIG_H)
+#include "config/komodo-config.h"
+#endif
+
 #include "sendcoinsentry.h"
 #include "ui_sendcoinsentry.h"
 
@@ -145,9 +149,11 @@ bool SendCoinsEntry::validate(bool allowZAddresses)
     // Check input validity
     bool retval = true;
 
+    #ifdef ENABLE_BIP70
     // Skip checks for payment request
     if (recipient.paymentRequest.IsInitialized())
         return retval;
+    #endif
 
     if (!model->validateAddress(ui->payTo->text(), allowZAddresses))
     {
@@ -181,9 +187,11 @@ bool SendCoinsEntry::validate(bool allowZAddresses)
 
 SendCoinsRecipient SendCoinsEntry::getValue()
 {
+    #ifdef ENABLE_BIP70
     // Payment request
     if (recipient.paymentRequest.IsInitialized())
         return recipient;
+    #endif
 
     // Normal payment
     recipient.address = ui->payTo->text();
@@ -211,6 +219,7 @@ void SendCoinsEntry::setValue(const SendCoinsRecipient &value)
 {
     recipient = value;
 
+    #ifdef ENABLE_BIP70
     if (recipient.paymentRequest.IsInitialized()) // payment request
     {
         if (recipient.authenticatedMerchant.isEmpty()) // unauthenticated
@@ -231,6 +240,7 @@ void SendCoinsEntry::setValue(const SendCoinsRecipient &value)
         }
     }
     else // normal payment
+    #endif
     {
         // message
         ui->messageTextLabel->setText(recipient.message);
