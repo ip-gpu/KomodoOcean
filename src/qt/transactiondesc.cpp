@@ -2,6 +2,10 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
+#if defined(HAVE_CONFIG_H)
+#include "config/komodo-config.h"
+#endif
+
 #include "transactiondesc.h"
 
 #include "komodounits.h"
@@ -249,6 +253,7 @@ QString TransactionDesc::toHTML(CWallet *wallet, CWalletTx &wtx, TransactionReco
         if (r.first == "Message")
             strHTML += "<br><b>" + tr("Message") + ":</b><br>" + GUIUtil::HtmlEscape(r.second, true) + "<br>";
 
+    #ifdef ENABLE_BIP70
     //
     // PaymentRequest info:
     //
@@ -263,7 +268,8 @@ QString TransactionDesc::toHTML(CWallet *wallet, CWalletTx &wtx, TransactionReco
                 strHTML += "<b>" + tr("Merchant") + ":</b> " + GUIUtil::HtmlEscape(merchant) + "<br>";
         }
     }
-
+    #endif
+    
     if (wtx.IsCoinBase())
     {
         quint32 numBlocksToMaturity = COINBASE_MATURITY +  1;
