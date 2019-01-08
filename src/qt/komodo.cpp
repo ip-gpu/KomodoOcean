@@ -509,7 +509,9 @@ void KomodoApplication::initializeResult(bool success)
         // Log this only after AppInitMain finishes, as then logging setup is guaranteed complete
         qWarning() << "Platform customization:" << platformStyle->getName();
 #ifdef ENABLE_WALLET
+    #ifdef ENABLE_BIP70
         PaymentServer::LoadRootCAs();
+    #endif
         paymentServer->setOptionsModel(optionsModel);
 #endif
 
@@ -524,9 +526,11 @@ void KomodoApplication::initializeResult(bool success)
 
             window->addWallet(KomodoOceanGUI::DEFAULT_WALLET, walletModel);
             window->setCurrentWallet(KomodoOceanGUI::DEFAULT_WALLET);
-
+            
+            #ifdef ENABLE_BIP70
             connect(walletModel, SIGNAL(coinsSent(CWallet*,SendCoinsRecipient,QByteArray)),
                              paymentServer, SLOT(fetchPaymentACK(CWallet*,const SendCoinsRecipient&,QByteArray)));
+            #endif
         }
 #endif
 

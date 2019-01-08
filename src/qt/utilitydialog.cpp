@@ -14,7 +14,9 @@
 #include "clientmodel.h"
 #include "guiconstants.h"
 #include "intro.h"
+#ifdef ENABLE_BIP70
 #include "paymentrequestplus.h"
+#endif
 #include "guiutil.h"
 
 #include "clientversion.h"
@@ -80,9 +82,11 @@ HelpMessageDialog::HelpMessageDialog(QWidget *parent, bool about) :
         std::string strUsage = HelpMessage(HMM_KOMODO_QT);
         const bool showDebug = GetBoolArg("-help-debug", false);
         strUsage += HelpMessageGroup(tr("UI Options:").toStdString());
+        #ifdef ENABLE_BIP70
         if (showDebug) {
             strUsage += HelpMessageOpt("-allowselfsignedrootcertificates", strprintf("Allow self signed root certificates (default: %u)", DEFAULT_SELFSIGNED_ROOTCERTS));
         }
+        #endif
         strUsage += HelpMessageOpt("-choosedatadir", strprintf(tr("Choose data directory on startup (default: %u)").toStdString(), DEFAULT_CHOOSE_DATADIR));
         strUsage += HelpMessageOpt("-lang=<lang>", tr("Set language, for example \"de_DE\" (default: system locale)").toStdString());
         strUsage += HelpMessageOpt("-min", tr("Start minimized").toStdString());

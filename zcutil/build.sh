@@ -112,10 +112,10 @@ echo -e "\n"
 version=$(lsb_release -sr)
 case $version in
 18.04)
-    CC="$CC" CXX="$CXX" ./configure CXXFLAGS='-fPIC -fwrapv -fno-strict-aliasing -g0 -O2' $DECKER_ARGS $DECKER_DEPS
+    CC="$CC" CXX="$CXX" ./configure --disable-bip70 CXXFLAGS='-fPIC -fwrapv -fno-strict-aliasing -g0 -O2' $DECKER_ARGS $DECKER_DEPS
     ;;
 *)
-    CC="$CC" CXX="$CXX" ./configure CXXFLAGS='-fPIC -fwrapv -fno-strict-aliasing -Werror -g0 -O2' $DECKER_ARGS $DECKER_DEPS
+    CC="$CC" CXX="$CXX" ./configure --disable-bip70 CXXFLAGS='-fPIC -fwrapv -fno-strict-aliasing -Werror -g0 -O2' $DECKER_ARGS $DECKER_DEPS
 esac    
 
 "$MAKE" "$@" V=1
