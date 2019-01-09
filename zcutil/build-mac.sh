@@ -40,7 +40,7 @@ fi
 TRIPLET=`./depends/config.guess`
 PREFIX="$(pwd)/depends/$TRIPLET"
 
-#make "$@" -C ./depends/ V=1 NO_QT=1 NO_PROTON=1
+make "$@" -C ./depends/ V=1 NO_QT=1 NO_PROTON=1
 ./autogen.sh
 
 QTDIR="/usr/local/Cellar/qt/5.12.0" # fill this with your latest Qt version from Cellar
