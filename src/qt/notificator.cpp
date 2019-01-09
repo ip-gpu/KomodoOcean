@@ -23,7 +23,7 @@
 // Note: This could also be worked around using:
 // #define __ASSERT_MACROS_DEFINE_VERSIONS_WITHOUT_UNDERSCORES 0
 #ifdef Q_OS_MAC
-#include <ApplicationServices/ApplicationServices.h>
+//#include <ApplicationServices/ApplicationServices.h>
 #include "macnotificationhandler.h"
 #endif
 
@@ -57,9 +57,11 @@ Notificator::Notificator(const QString &_programName, QSystemTrayIcon *_trayIcon
 #endif
 #ifdef Q_OS_MAC
     // check if users OS has support for NSUserNotification
+    /*
     if( MacNotificationHandler::instance()->hasUserNotificationCenterSupport()) {
         mode = UserNotificationCenter;
     }
+    */
 #endif
 }
 
@@ -227,7 +229,7 @@ void Notificator::notifySystray(Class cls, const QString &title, const QString &
 #ifdef Q_OS_MAC
 void Notificator::notifyMacUserNotificationCenter(Class cls, const QString &title, const QString &text, const QIcon &icon) {
     // icon is not supported by the user notification center yet. OSX will use the app icon.
-    MacNotificationHandler::instance()->showNotification(title, text);
+    // MacNotificationHandler::instance()->showNotification(title, text);
 }
 
 #endif

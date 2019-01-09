@@ -498,7 +498,7 @@ if test x$use_hardening != xno; then
   CXXFLAGS="$CXXFLAGS $HARDENED_CXXFLAGS"
   CPPFLAGS="$CPPFLAGS $HARDENED_CPPFLAGS"
   LDFLAGS="$LDFLAGS $HARDENED_LDFLAGS"
-  OBJCXXFLAGS="$CXXFLAGS"
+  OBJCXXFLAGS="-std=c++11 $CXXFLAGS"
 fi
 
 dnl this flag screws up non-darwin gcc even when the check fails. special-case it.
@@ -867,7 +867,9 @@ AX_CHECK_COMPILE_FLAG([-fwrapv],[CXXFLAGS="$CXXFLAGS -fwrapv"])
 AX_CHECK_COMPILE_FLAG([-fno-strict-aliasing],[CXXFLAGS="$CXXFLAGS -fno-strict-aliasing"])
 AX_CHECK_COMPILE_FLAG([-Wno-builtin-declaration-mismatch],[CXXFLAGS="$CXXFLAGS -Wno-builtin-declaration-mismatch"],,[[$CXXFLAG_WERROR]])
 
-if test x$TARGET_OS != xwindows; then
+if test x$TARGET_OS = xdarwin; then
+  LIBZCASH_LIBS="-lgmp -lgmpxx -lboost_system-mt -lcrypto -lsodium $RUST_LIBS"
+elif test x$TARGET_OS != xwindows; then
   LIBZCASH_LIBS="-lgmp -lgmpxx -lboost_system -lcrypto -lsodium $RUST_LIBS"
 else
   LIBZCASH_LIBS="-lgmp -lgmpxx -lboost_system-mt-s -lcrypto -lsodium $RUST_LIBS"

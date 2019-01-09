@@ -6,7 +6,7 @@
 #ifndef KOMODO_CONSENSUS_CONSENSUS_H
 #define KOMODO_CONSENSUS_CONSENSUS_H
 
-#if defined(_MSC_VER)
+#if defined(_MSC_VER) || defined(macintosh) || defined(__APPLE__) || defined(__APPLE_CC__)
 typedef signed int            int32_t;
 typedef unsigned int          uint32_t;
 #endif
