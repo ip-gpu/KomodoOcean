@@ -2,6 +2,10 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
+#if defined(HAVE_CONFIG_H)
+#include "config/komodo-config.h"
+#endif
+
 #include "walletmodeltransaction.h"
 
 #include "policy/policy.h"
@@ -53,7 +57,7 @@ void WalletModelTransaction::reassignAmounts(int nChangePosRet)
     for (QList<SendCoinsRecipient>::iterator it = recipients.begin(); it != recipients.end(); ++it)
     {
         SendCoinsRecipient& rcp = (*it);
-
+        #ifdef ENABLE_BIP70
         if (rcp.paymentRequest.IsInitialized())
         {
             CAmount subtotal = 0;
@@ -70,6 +74,7 @@ void WalletModelTransaction::reassignAmounts(int nChangePosRet)
             rcp.amount = subtotal;
         }
         else // normal recipient (no payment request)
+        #endif
         {
             if (i == nChangePosRet)
                 i++;

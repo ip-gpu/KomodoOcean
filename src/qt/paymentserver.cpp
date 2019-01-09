@@ -2,6 +2,10 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
+#if defined(HAVE_CONFIG_H)
+#include "config/komodo-config.h"
+#endif
+
 #include "paymentserver.h"
 
 #include "komodounits.h"
@@ -50,6 +54,8 @@
 
 const int KOMODO_IPC_CONNECT_TIMEOUT = 1000; // milliseconds
 const QString KOMODO_IPC_PREFIX("komodo:");
+
+#ifdef ENABLE_BIP70
 // BIP70 payment protocol messages
 const char* BIP70_MESSAGE_PAYMENTACK = "PaymentACK";
 const char* BIP70_MESSAGE_PAYMENTREQUEST = "PaymentRequest";
@@ -72,6 +78,7 @@ namespace // Anon namespace
 {
     std::unique_ptr<X509_STORE, X509StoreDeleter> certStore;
 }
+#endif
 
 //
 // Create a name that is unique for:
@@ -98,6 +105,7 @@ static QString ipcServerName()
 
 static QList<QString> savedPaymentRequests;
 
+#ifdef ENABLE_BIP70
 static void ReportInvalidCertificate(const QSslCertificate& cert)
 {
 #if QT_VERSION < 0x050000
@@ -191,6 +199,7 @@ void PaymentServer::LoadRootCAs(X509_STORE* _store)
     //    or use Qt's blacklist?
     //   "certificate stapling" with server-side caching is more efficient
 }
+#endif
 
 //
 // Sending to the server is done synchronously, at startup.
@@ -232,6 +241,7 @@ void PaymentServer::ipcParseCommandLine(int argc, char* argv[])
                 }
             }
         }
+        #ifdef ENABLE_BIP70
         else if (QFile::exists(arg)) // Filename
         {
             savedPaymentRequests.append(arg);
@@ -255,6 +265,7 @@ void PaymentServer::ipcParseCommandLine(int argc, char* argv[])
             // GUI hasn't started yet so we can't pop up a message box.
             qWarning() << "PaymentServer::ipcSendCommandLine: Payment request file does not exist: " << arg;
         }
+        #endif
     }
 }
 
@@ -301,12 +312,16 @@ PaymentServer::PaymentServer(QObject* parent, bool startLocalServer) :
     QObject(parent),
     saveURIs(true),
     uriServer(0),
+    #ifdef ENABLE_BIP70
     netManager(0),
+    #endif
     optionsModel(0)
 {
+    #ifdef ENABLE_BIP70
     // Verify that the version of the library that we linked against is
     // compatible with the version of the headers we compiled against.
     GOOGLE_PROTOBUF_VERIFY_VERSION;
+    #endif
 
     // Install global event filter to catch QFileOpenEvents
     // on Mac: sent when you click komodo: links
@@ -330,14 +345,18 @@ PaymentServer::PaymentServer(QObject* parent, bool startLocalServer) :
         }
         else {
             connect(uriServer, SIGNAL(newConnection()), this, SLOT(handleURIConnection()));
+            #ifdef ENABLE_BIP70
             connect(this, SIGNAL(receivedPaymentACK(QString)), this, SLOT(handlePaymentACK(QString)));
+            #endif
         }
     }
 }
 
 PaymentServer::~PaymentServer()
 {
+    #ifdef ENABLE_BIP70
     google::protobuf::ShutdownProtobufLibrary();
+    #endif
 }
 
 //
@@ -360,6 +379,7 @@ bool PaymentServer::eventFilter(QObject *object, QEvent *event)
     return QObject::eventFilter(object, event);
 }
 
+#ifdef ENABLE_BIP70
 void PaymentServer::initNetManager()
 {
     if (!optionsModel)
@@ -386,10 +406,13 @@ void PaymentServer::initNetManager()
     connect(netManager, SIGNAL(sslErrors(QNetworkReply*, const QList<QSslError> &)),
             this, SLOT(reportSslErrors(QNetworkReply*, const QList<QSslError> &)));
 }
+#endif
 
 void PaymentServer::uiReady()
 {
+    #ifdef ENABLE_BIP70
     initNetManager();
+    #endif
 
     saveURIs = false;
     for (const QString& s : savedPaymentRequests)
@@ -416,6 +439,7 @@ void PaymentServer::handleURIOrFile(const QString& s)
 #endif
         if (uri.hasQueryItem("r")) // payment request URI
         {
+            #ifdef ENABLE_BIP70
             QByteArray temp;
             temp.append(uri.queryItemValue("r"));
             QString decoded = QUrl::fromPercentEncoding(temp);
@@ -433,6 +457,11 @@ void PaymentServer::handleURIOrFile(const QString& s)
                     tr("Payment request fetch URL is invalid: %1").arg(fetchUrl.toString()),
                     CClientUIInterface::ICON_WARNING);
             }
+            #else
+                Q_EMIT message(tr("URI handling"),
+                    tr("Cannot process payment request because BIP70 support was not compiled in."),
+                    CClientUIInterface::ICON_WARNING);
+            #endif
 
             return;
         }
@@ -457,6 +486,7 @@ void PaymentServer::handleURIOrFile(const QString& s)
         }
     }
 
+    #ifdef ENABLE_BIP70
     if (QFile::exists(s)) // payment request file
     {
         PaymentRequestPlus request;
@@ -472,6 +502,7 @@ void PaymentServer::handleURIOrFile(const QString& s)
 
         return;
     }
+    #endif
 }
 
 void PaymentServer::handleURIConnection()
@@ -495,6 +526,7 @@ void PaymentServer::handleURIConnection()
     handleURIOrFile(msg);
 }
 
+#ifdef ENABLE_BIP70
 //
 // Warning: readPaymentRequestFromFile() is used in ipcSendCommandLine()
 // so don't use "Q_EMIT message()", but "QMessageBox::"!
@@ -747,12 +779,14 @@ void PaymentServer::reportSslErrors(QNetworkReply* reply, const QList<QSslError>
     }
     Q_EMIT message(tr("Network request error"), errString, CClientUIInterface::MSG_ERROR);
 }
+#endif
 
 void PaymentServer::setOptionsModel(OptionsModel *_optionsModel)
 {
     this->optionsModel = _optionsModel;
 }
 
+#ifdef ENABLE_BIP70
 void PaymentServer::handlePaymentACK(const QString& paymentACKMsg)
 {
     // currently we don't further process or store the paymentACK message
@@ -811,3 +845,4 @@ X509_STORE* PaymentServer::getCertStore()
 {
     return certStore.get();
 }
+#endif
