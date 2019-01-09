@@ -72,8 +72,7 @@ static const bool DEFAULT_WALLET_RBF = false;
 //! Size of witness cache
 //  Should be large enough that we can expect not to reorg beyond our cache
 //  unless there is some exceptional network disruption.
-#define _COINBASE_MATURITY 100
-static const unsigned int WITNESS_CACHE_SIZE = _COINBASE_MATURITY+10;
+extern unsigned int WITNESS_CACHE_SIZE;
 
 //! Size of HD seed in bytes
 static const size_t HD_WALLET_SEED_LENGTH = 32;
