@@ -635,6 +635,8 @@ void KomodoOceanGUI::createTrayIconMenu()
     trayIconMenu = dockIconHandler->dockMenu();
     */
 
+    return;
+
 #endif
 
     // Configuration of the tray icon (or dock icon) icon menu
