@@ -43,10 +43,12 @@ PREFIX="$(pwd)/depends/$TRIPLET"
 make "$@" -C ./depends/ V=1 NO_QT=1 NO_PROTON=1
 ./autogen.sh
 
-QTDIR="/usr/local/Cellar/qt/5.12.0" # fill this with your latest Qt version from Cellar
-cp ${QTDIR}/lib/pkgconfig/*.pc "${PREFIX}/lib/pkgconfig" || echo
+# QTDIR="/usr/local/Cellar/qt/5.12.0" # fill this with your latest Qt version from Cellar
+# cp ${QTDIR}/lib/pkgconfig/*.pc "${PREFIX}/lib/pkgconfig" || echo
+# cp /usr/local/Cellar/protobuf/3.6.1.3_1/lib/pkgconfig/*.pc "${PREFIX}/lib/pkgconfig" || echo # don't needed
 
-#cp /usr/local/Cellar/protobuf/3.6.1.3_1/lib/pkgconfig/*.pc "${PREFIX}/lib/pkgconfig" || echo
+QTDIR="/usr/local/opt/qt"
+cp ${QTDIR}/lib/pkgconfig/*.pc "${PREFIX}/lib/pkgconfig" || echo
 
 CPPFLAGS="-I$PREFIX/include -arch x86_64" LDFLAGS="-L$PREFIX/lib -arch x86_64 -Wl,-no_pie" \
 CXXFLAGS='-arch x86_64 -I/usr/local/Cellar/gcc\@6/6.4.0_2/include/c++/6.4.0/ -I$PREFIX/include -fwrapv -fno-strict-aliasing -Werror -g0 -O2 -Wl,-undefined -Wl,dynamic_lookup' \
