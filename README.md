@@ -2,6 +2,17 @@
 
 ![](./doc/images/komodo-qt-promo-10.png)
 
+Komodo-Qt (KomodoOcean) is a world-first Qt native wallet for KMD ([Komodo](https://komodoplatform.com/)) and all of assetchains. It's available for three OS platforms - Windows, Linux, MacOS.
+
+**NB!** This repo have **three** branches:
+
+
+- [master](../../tree/master) for Windows
+- [Linux](../../tree/Linux) for Linux
+- [MacOS](../../tree/MacOS) for MacOS
+
+Visit [#wallet-ocean-qt](https://discord.gg/U5WWaJR) channel in Komodo Discord for more information.
+
 ### How to build? ###
 
 The commands in this guide should be executed in a Terminal application. The built-in one is located in `/Applications/Utilities/Terminal.app`.
