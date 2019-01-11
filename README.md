@@ -78,7 +78,9 @@ Enjoy your `komodo-qt` wallet on your Mac :
 
 ### Notes for MacOS users ###
 
-Unfortunatelly current version of Komodo-Qt wallet under MacOS don't have a Mac Dock Icon, so, launched app will looks like app launched from terminal. This behaviour possible will fix in future, for now it's not a primary task.
+~~Unfortunatelly current version of Komodo-Qt wallet under MacOS don't have a Mac Dock Icon, so, launched app will looks like app launched from terminal. This behaviour possible will fix in future, for now it's not a primary task.~~
+
+Mac Dock icon is fixed now.
 
 Build instructions above was successfully tested on latest macOS Mojave 10.14.2 (18C54) installed from scratch.
 
