@@ -7,9 +7,9 @@ Komodo-Qt (KomodoOcean) is a world-first Qt native wallet for KMD ([Komodo](http
 **NB!** This repo have **three** branches:
 
 
-- [master](./tree/master) for Windows
-- [Linux](./tree/Linux) for Linux
-- [MacOS](./tree/MacOS) for MacOS
+- [master](../../tree/master) for Windows
+- [Linux](../../tree/Linux) for Linux
+- [MacOS](../../tree/MacOS) for MacOS
 
 Visit [#wallet-ocean-qt](https://discord.gg/U5WWaJR) channel in Komodo Discord for more information.
 
