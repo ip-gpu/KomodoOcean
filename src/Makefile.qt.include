@@ -173,9 +173,10 @@ QT_MOC_CPP = \
   qt/moc_walletmodel.cpp \
   qt/moc_walletview.cpp
 
-KOMODO_MM = \
-  qt/macdockiconhandler.mm \
-  qt/macnotificationhandler.mm
+KOMODO_MM = qt/macdockiconhandler.mm
+#\
+#  qt/macdockiconhandler.mm \
+#  qt/macnotificationhandler.mm
 
 QT_MOC = \
   qt/komodo.moc \

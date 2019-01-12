@@ -15,64 +15,87 @@ Visit [#wallet-ocean-qt](https://discord.gg/U5WWaJR) channel in Komodo Discord f
 
 ### How to build? ###
 
-Following dependencies are needed:
+The commands in this guide should be executed in a Terminal application. The built-in one is located in `/Applications/Utilities/Terminal.app`.
+
+Install the macOS command line tools:
+
+`xcode-select --install`
+
+When the popup appears, click `Install`.
+
+Then install [Homebrew](https://brew.sh/):
 
 ```
-sudo apt-get install build-essential pkg-config libcurl3-gnutls-dev libc6-dev libevent-dev m4 g++-multilib autoconf libtool ncurses-dev unzip git python zlib1g-dev wget bsdmainutils automake libboost-all-dev libssl-dev libprotobuf-dev protobuf-compiler libqt4-dev libqrencode-dev libdb++-dev ntp ntpdate
-
-sudo apt-get install libcurl4-gnutls-dev 
+/usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
 ```
 
-To build Qt wallet execute first:
+Paste that in a Terminal prompt.
+
+If you already have installed brew before, update it: `brew update`
+
+Install bitcoin-qt dependencies (some of them don't needed to build komodo-qt, but good to have it there):
 
 ```
-sudo apt-get install libqt5gui5 libqt5core5a libqt5dbus5 qttools5-dev qttools5-dev-tools libprotobuf-dev protobuf-compiler
+brew install automake berkeley-db4 libtool boost miniupnpc openssl pkg-config protobuf python qt libevent qrencode
+brew install librsvg
 ```
 
-Aslo, if you issued troubles with dependencies, may be this [doc](https://github.com/bitcoin/bitcoin/blob/master/doc/build-unix.md) will be useful.
-
-To build (Ubuntu 16.x / 18.x):
+Install other needed dependencies:
 
 ```
-cd ~
-git clone https://github.com/DeckerSU/KomodoOcean.git
+brew install gcc@6
+brew install coreutils # to have ginstall
+```
+
+Build:
+
+```
+git clone https://github.com/DeckerSU/KomodoOcean --branch MacOS --single-branch
 cd KomodoOcean
-git checkout Linux
-zcutil/build.sh -j$(nproc)
-cd src/qt
-./komodo-qt & # launch
-```
-
-If during build you get error like "fatal error: sodium.h: No such file or directory compilation terminated.", try to install libsodium-dev:
+./zcutil/fetch-params.sh
+# -j8 = using 8 threads for the compilation - replace 8 with number of threads you want to use. don't use -j$(nproc) here, just place a number of threads after -j
+./zcutil/build-mac.sh -j8 # this can take some time.
 
 ```
-sudo apt install libsodium-dev
-```
 
-### Additional info ###
-
-- `-rootcertificates=` arg for launching under Ubuntu 16.04 don't needed anymore. Since we have payment request support (bip70) disabled by default. 
-
-### Qt Versions Notes ###
-
-By default Ubuntu 16.04 uses old version of Qt 5.5.1 (it's installed from by default from Xenial repos), if you want to change this behaviour and build against Qt 5.9.1 you'll need to do the following:
+Create `komodo.conf` file in `~/Library/Application\ Support/Komodo/komodo.conf` :
 
 ```
-wget http://download.qt.io/official_releases/qt/5.9/5.9.1/qt-opensource-linux-x64-5.9.1.run
-chmod +x qt-opensource-linux-x64-5.9.1.run
-./qt-opensource-linux-x64-5.9.1.run # during installation leave install folder "AS IS", i.e. $HOME/Qt5.9.1
-qtchooser -install -local qt5.9.1 $HOME/Qt5.9.1/5.9.1/gcc_64/bin/qmake 
-# this will create $HOME/.config/qtchooser/qt5.9.1.conf 
-...
-git clone https://github.com/DeckerSU/KomodoOcean
-cd KomodoOcean
-git checkout Linux
-git pull
-QT_LDFLAGS="-Wl,-rpath=$HOME/Qt5.9.1/5.9.1/gcc_64/lib" PKG_CONFIG_PATH="$(pwd)/depends/x86_64-unknown-linux-gnu/lib/pkgconfig:$HOME/Qt5.9.1/5.9.1/gcc_64/lib/pkgconfig" zcutil/build.sh -j$(nproc) # override configure check for Qt package and build
-./src/qt/komodo-qt -rootcertificates= & # for launch
+md ~/Library/Application\ Support/Komodo
+cat > ~/Library/Application\ Support/Komodo/komodo.conf <<EOL
+rpcuser=yourrpcusername
+rpcpassword=yoursecurerpcpassword
+rpcbind=127.0.0.1
+txindex=1
+addnode=5.9.102.210
+addnode=78.47.196.146
+addnode=178.63.69.164
+addnode=88.198.65.74
+addnode=5.9.122.241
+addnode=144.76.94.38
+addnode=89.248.166.91
+EOL
 ```
+
+Launch:
+
+```
+./src/qt/komodo-qt &
+```
+
+Enjoy your `komodo-qt` wallet on your Mac :
+
+![](./doc/images/komodo-qt-macos.png)
+
+### Notes for MacOS users ###
+
+~~Unfortunatelly current version of Komodo-Qt wallet under MacOS don't have a Mac Dock Icon, so, launched app will looks like app launched from terminal. This behaviour possible will fix in future, for now it's not a primary task.~~
+
+Mac Dock icon is fixed now.
+
+Build instructions above was successfully tested on latest macOS Mojave 10.14.2 (18C54) installed from scratch.
 
 ### Developers of Qt wallet ###
 
-- Main developer: [@Ocean](https://komodo-platform.slack.com/team/U8BRG09EV)
-- IT Expert / Sysengineer: [@Decker](https://komodo-platform.slack.com/messages/D5UHJMCJ3)
+- Main developer: [Ocean](https://github.com/ip-gpu)
+- IT Expert / Sysengineer: [Decker](https://github.com/DeckerSU)
