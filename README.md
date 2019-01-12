@@ -2,24 +2,26 @@
 
 ![](./images/image00.png)
 
-This is KomodoOcean / komodo-qt GUI qt-based wallet for Komodo (KMD). Probably (not sure) is a **world first Qt-Wallet** for ZCash based cryptocurrency forks. Now it available only for Windows (64-bit) and soon for Linux (64-bit) platforms.
+Komodo-Qt (KomodoOcean) is a world-first Qt native wallet for KMD ([Komodo](https://komodoplatform.com/)) and all of assetchains. It's available for three OS platforms - Windows, Linux, MacOS.
 
-Latest version already have [sapling](https://komodoplatform.com/sapling-unifying-blockchain-technology/) support from Dec 15th, 2018 and release **g27**.
+**NB!** This repo have **three** branches:
 
-**NB!** This repo have two branches:
 
-- *master* for Windows
-- *Linux* for Linux
+- [master](../../tree/master) for Windows
+- [Linux](../../tree/Linux) for Linux
+- [MacOS](../../tree/MacOS) for MacOS
+
+Visit [#wallet-ocean-qt](https://discord.gg/U5WWaJR) channel in Komodo Discord for more information.
 
 ![](./images/image01.png)
 
 ### System requirements ###
 
 - Windows 8 / 8.1 / 10 (64-bit) based PC.
-- At least 4 Gb of RAM (8 or 16 Gb RAM recommended).
-- About 3.1 Gb of storage space to sync full blockchain (SSD drive is recommended)
+- At least 4 Gb of **free** RAM (8 or 16 Gb physical RAM recommended).
+- About ~10-15 Gb of storage space to sync full blockchain (SSD drive is recommended)
 
-Before you start create the following configuration file, named `komodo.conf` in %APPDATA%\Komodo folder:
+Before you start create the following configuration file, named `komodo.conf` in `%APPDATA%\Komodo` folder:
 
     rpcuser=bitcoinrpc
     rpcpassword=password
@@ -81,17 +83,21 @@ System requirements:
 - [Far Manager v3.0 build 5100 x64](https://www.farmanager.com/download.php?l=en) (not necessary, but very convenient to use command line and execute commands)
 
 **1.** Download and install all needed software. Qt should be installed into it's default path `C:\Qt\Qt5.9.2` . 
+
 **1a.** Don't forget to select `msvc2015 64-bit` component during install:
 
 ![](./images/install_02.png)
 
 **2.** Clone sources repository using `git clone https://github.com/ip-gpu/KomodoOcean` or `git clone https://github.com/DeckerSU/KomodoOcean` .
+
 **3.** Make sure that you are on Windows (master) branch `git checkout master` .
+
 **4.** Unpack the content of `KomodoOcean\depends\depends.zip` archive in `KomodoOcean\depends` folder:
 
 ![](./images/install_01.png)
 
 **5.** Launch Qt Creator and choose Open Project. Navigate to `KomodoOcean` directory and open `KomodoOceanGUI.pro` project file.
+
 **5a.** Make sure that Build directory in Projects -> Build Settings corresponds to your project path (for example `C:\Distr\KomodoOcean`, this is a folder in which we clone repo).
 
 ![](./images/install_03.png)
@@ -138,4 +144,4 @@ Your `*.lib` will be available in `target/(release/debug)` folders relatively.
 ### Developers of Qt wallet ###
 
 - Main developer: [Ocean](https://github.com/ip-gpu)
-- IT Expert / Sysengineer: [Decker](https://deckersu.github.io/) 
+- IT Expert / Sysengineer: [Decker](https://github.com/DeckerSU) 
