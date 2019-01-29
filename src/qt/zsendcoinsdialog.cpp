@@ -588,7 +588,12 @@ void ZSendCoinsDialog::updatePayFromList()
 
     ComparatorT compFunctorT = [](std::pair<CTxDestination, CAmount> elem1 ,std::pair<CTxDestination, CAmount> elem2)
     {
-        return ValueFromAmount(elem1.second).get_real() >= ValueFromAmount(elem2.second).get_real();
+        double v1 = ValueFromAmount(elem1.second).get_real();
+        double v2 = ValueFromAmount(elem2.second).get_real();
+        std::string a1 = EncodeDestination(elem1.first);
+        std::string a2 = EncodeDestination(elem2.first);
+
+        return (v1 > v2) || ( (v1 == v2) && ( a1 > a2 ) );
     };
 
     std::map<CTxDestination, CAmount> balances = model->getTAddressBalances();
@@ -607,7 +612,12 @@ void ZSendCoinsDialog::updatePayFromList()
 
     ComparatorZ compFunctorZ = [](std::pair<libzcash::PaymentAddress, CAmount> elem1 ,std::pair<libzcash::PaymentAddress, CAmount> elem2)
     {
-        return ValueFromAmount(elem1.second).get_real() >= ValueFromAmount(elem2.second).get_real();
+        double v1 = ValueFromAmount(elem1.second).get_real();
+        double v2 = ValueFromAmount(elem2.second).get_real();
+        std::string a1 = EncodePaymentAddress(elem1.first);
+        std::string a2 = EncodePaymentAddress(elem2.first);
+
+        return (v1 > v2) || ( (v1 == v2) && ( a1 > a2 ) );
     };
 
     std::map<libzcash::PaymentAddress, CAmount> zbalances = model->getZAddressBalances();
