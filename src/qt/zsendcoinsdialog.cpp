@@ -47,6 +47,9 @@ ZSendCoinsDialog::ZSendCoinsDialog(const PlatformStyle *_platformStyle, QWidget 
 {
     ui->setupUi(this);
 
+    ui->payFromAddress->setMaxVisibleItems(10);
+    ui->payFromAddress->setStyleSheet("QComboBox { combobox-popup: 0; }");
+
     if (!_platformStyle->getImagesOnButtons()) {
         ui->addButton->setIcon(QIcon());
         ui->clearButton->setIcon(QIcon());
@@ -93,7 +96,7 @@ void ZSendCoinsDialog::setModel(WalletModel *_model)
 
         setBalance(_model->getBalance(), _model->getUnconfirmedBalance(), _model->getImmatureBalance(),
                    _model->getWatchBalance(), _model->getWatchUnconfirmedBalance(), _model->getWatchImmatureBalance());
-        connect(_model, SIGNAL(balanceChanged(CAmount,CAmount,CAmount,CAmount,CAmount,CAmount)), this, SLOT(setBalance(CAmount,CAmount,CAmount,CAmount,CAmount,CAmount)));
+        connect(_model, SIGNAL(balanceChanged(CAmount,CAmount,CAmount,CAmount,CAmount,CAmount,CAmount,CAmount)), this, SLOT(setBalance(CAmount,CAmount,CAmount,CAmount,CAmount,CAmount)));
         connect(_model->getOptionsModel(), SIGNAL(displayUnitChanged(int)), this, SLOT(updateDisplayUnit()));
         updateDisplayUnit();
 
@@ -588,7 +591,12 @@ void ZSendCoinsDialog::updatePayFromList()
 
     ComparatorT compFunctorT = [](std::pair<CTxDestination, CAmount> elem1 ,std::pair<CTxDestination, CAmount> elem2)
     {
-        return ValueFromAmount(elem1.second).get_real() >= ValueFromAmount(elem2.second).get_real();
+        double v1 = ValueFromAmount(elem1.second).get_real();
+        double v2 = ValueFromAmount(elem2.second).get_real();
+        std::string a1 = EncodeDestination(elem1.first);
+        std::string a2 = EncodeDestination(elem2.first);
+
+        return (v1 > v2) || ( (v1 == v2) && ( a1 > a2 ) );
     };
 
     std::map<CTxDestination, CAmount> balances = model->getTAddressBalances();
@@ -607,7 +615,12 @@ void ZSendCoinsDialog::updatePayFromList()
 
     ComparatorZ compFunctorZ = [](std::pair<libzcash::PaymentAddress, CAmount> elem1 ,std::pair<libzcash::PaymentAddress, CAmount> elem2)
     {
-        return ValueFromAmount(elem1.second).get_real() >= ValueFromAmount(elem2.second).get_real();
+        double v1 = ValueFromAmount(elem1.second).get_real();
+        double v2 = ValueFromAmount(elem2.second).get_real();
+        std::string a1 = EncodePaymentAddress(elem1.first);
+        std::string a2 = EncodePaymentAddress(elem2.first);
+
+        return (v1 > v2) || ( (v1 == v2) && ( a1 > a2 ) );
     };
 
     std::map<libzcash::PaymentAddress, CAmount> zbalances = model->getZAddressBalances();

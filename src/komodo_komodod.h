@@ -1884,7 +1884,7 @@ int32_t komodo_acpublic(uint32_t tiptime)
 int64_t komodo_newcoins(int64_t *zfundsp,int64_t *sproutfundsp,int32_t nHeight,CBlock *pblock)
 {
     CTxDestination address; int32_t i,j,m,n,vout; uint8_t *script; uint256 txid,hashBlock; int64_t zfunds=0,vinsum=0,voutsum=0;
-    int64_t sproutfunds;
+    int64_t sproutfunds = 0;
     n = pblock->vtx.size();
     for (i=0; i<n; i++)
     {
