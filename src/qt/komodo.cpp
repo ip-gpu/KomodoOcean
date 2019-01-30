@@ -550,8 +550,8 @@ void KomodoApplication::initializeResult(bool success)
         // komodo: URIs or payment requests:
         connect(paymentServer, SIGNAL(receivedPaymentRequest(SendCoinsRecipient)),
                          window, SLOT(handlePaymentRequest(SendCoinsRecipient)));
-        connect(paymentServer, SIGNAL(receivedZPaymentRequest(SendCoinsRecipient)),
-                         window, SLOT(handleZPaymentRequest(SendCoinsRecipient)));
+        /*connect(paymentServer, SIGNAL(receivedZPaymentRequest(SendCoinsRecipient)),
+                         window, SLOT(handleZPaymentRequest(SendCoinsRecipient)));*/
         connect(window, SIGNAL(receivedURI(QString)),
                          paymentServer, SLOT(handleURIOrFile(QString)));
         connect(paymentServer, SIGNAL(message(QString,QString,unsigned int)),
