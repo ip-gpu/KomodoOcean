@@ -70,6 +70,10 @@ OptionsDialog::OptionsDialog(QWidget *parent, bool enableWallet) :
         ui->tabWidget->removeTab(ui->tabWidget->indexOf(ui->tabWallet));
     }
 
+    /* Theme selector */
+    ui->theme->addItem(QString("DEFAULT"), QVariant("default"));
+    ui->theme->addItem(QString("PIRATE"), QVariant("pirate"));
+
     /* Display elements init */
     QDir translations(":translations");
 
@@ -165,6 +169,7 @@ void OptionsDialog::setModel(OptionsModel *_model)
     connect(ui->connectSocks, SIGNAL(clicked(bool)), this, SLOT(showRestartWarning()));
     connect(ui->connectSocksTor, SIGNAL(clicked(bool)), this, SLOT(showRestartWarning()));
     /* Display */
+    connect(ui->theme, SIGNAL(valueChanged()), this, SLOT(showRestartWarning()));
     connect(ui->lang, SIGNAL(valueChanged()), this, SLOT(showRestartWarning()));
     connect(ui->thirdPartyTxUrls, SIGNAL(textChanged(const QString &)), this, SLOT(showRestartWarning()));
 }
@@ -200,6 +205,7 @@ void OptionsDialog::setMapper()
 #endif
 
     /* Display */
+    mapper->addMapping(ui->theme, OptionsModel::Theme);
     mapper->addMapping(ui->lang, OptionsModel::Language);
     mapper->addMapping(ui->unit, OptionsModel::DisplayUnit);
     mapper->addMapping(ui->thirdPartyTxUrls, OptionsModel::ThirdPartyTxUrls);

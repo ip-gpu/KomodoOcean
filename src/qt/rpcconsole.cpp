@@ -437,12 +437,13 @@ RPCConsole::RPCConsole(const PlatformStyle *_platformStyle, QWidget *parent) :
 
     ui->openDebugLogfileButton->setToolTip(ui->openDebugLogfileButton->toolTip().arg(tr(PACKAGE_NAME)));
 
+    QString theme = GUIUtil::getThemeName();
     if (platformStyle->getImagesOnButtons()) {
-        ui->openDebugLogfileButton->setIcon(platformStyle->SingleColorIcon(":/icons/export"));
+        ui->openDebugLogfileButton->setIcon(platformStyle->SingleColorIcon(":/icons/" + theme + "/export"));
     }
-    ui->clearButton->setIcon(platformStyle->SingleColorIcon(":/icons/remove"));
-    ui->fontBiggerButton->setIcon(platformStyle->SingleColorIcon(":/icons/fontbigger"));
-    ui->fontSmallerButton->setIcon(platformStyle->SingleColorIcon(":/icons/fontsmaller"));
+    ui->clearButton->setIcon(platformStyle->SingleColorIcon(":/icons/" + theme + "/remove"));
+    ui->fontBiggerButton->setIcon(platformStyle->SingleColorIcon(":/icons/" + theme + "/fontbigger"));
+    ui->fontSmallerButton->setIcon(platformStyle->SingleColorIcon(":/icons/" + theme + "/fontsmaller"));
 
     // Install event filter for up and down arrow
     ui->lineEdit->installEventFilter(this);
@@ -720,12 +721,16 @@ void RPCConsole::clear(bool clearHistory)
 
     // Add smoothly scaled icon images.
     // (when using width/height on an img, Qt uses nearest instead of linear interpolation)
+    QString iconPath = ":/icons/" + GUIUtil::getThemeName() + "/";
+    QString iconName = "";
+
     for(int i=0; ICON_MAPPING[i].url; ++i)
     {
+        iconName = ICON_MAPPING[i].source;
         ui->messagesWidget->document()->addResource(
                     QTextDocument::ImageResource,
                     QUrl(ICON_MAPPING[i].url),
-                    platformStyle->SingleColorImage(ICON_MAPPING[i].source).scaled(QSize(consoleFontSize*2, consoleFontSize*2), Qt::IgnoreAspectRatio, Qt::SmoothTransformation));
+                    QImage(iconPath + iconName).scaled(QSize(consoleFontSize*2, consoleFontSize*2), Qt::IgnoreAspectRatio, Qt::SmoothTransformation));
     }
 
     // Set default style sheet

@@ -1,0 +1,53 @@
+QStatusBar {
+    background: #141414;
+    color: #BB9645;
+}
+
+QMenuBar {
+    background: #141414;
+}
+
+QMenuBar::item {
+    background: #141414;
+}
+
+QMenuBar::item:selected {
+    background: #848484;
+}
+
+QMenu {
+    background: #141414;
+    color: #BB9645;
+}
+
+QMenu::item {
+    background: #141414;
+}
+
+QMenu::item:selected {
+    background: #848484;
+}
+
+QToolBar {
+    background: #141414;
+    color: #BB9645;
+}
+
+QLabel { /* Base Text Size & Color */
+    font-size:12px;
+    color: #BB9645;
+}
+
+.QCheckBox { /* Checkbox Labels */
+    color: #BB9645;
+    background-color:transparent;
+}
+
+.QCheckBox:hover {
+    background-color:transparent;
+}
+
+QDialog {
+    background: #141414;
+    color: #BB9645;
+}

@@ -579,6 +579,27 @@
         </layout>
        </item>
        <item>
+        <layout class="QHBoxLayout" name="horizontalLayout_4_Display" stretch="0,0">
+         <item>
+          <widget class="QLabel" name="themeLabel">
+           <property name="text">
+            <string>User Interface Theme:</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QValueComboBox" name="theme"/>
+         </item>
+        </layout>
+       </item>
+       <item>
+        <widget class="Line" name="line">
+         <property name="orientation">
+          <enum>Qt::Horizontal</enum>
+         </property>
+        </widget>
+       </item>
+       <item>
         <layout class="QHBoxLayout" name="horizontalLayout_2_Display">
          <item>
           <widget class="QLabel" name="unitLabel">

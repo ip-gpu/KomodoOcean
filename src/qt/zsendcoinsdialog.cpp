@@ -46,6 +46,7 @@ ZSendCoinsDialog::ZSendCoinsDialog(const PlatformStyle *_platformStyle, QWidget 
     platformStyle(_platformStyle)
 {
     ui->setupUi(this);
+    QString theme = GUIUtil::getThemeName();
 
     ui->payFromAddress->setMaxVisibleItems(10);
     ui->payFromAddress->setStyleSheet("QComboBox { combobox-popup: 0; }");
@@ -56,10 +57,10 @@ ZSendCoinsDialog::ZSendCoinsDialog(const PlatformStyle *_platformStyle, QWidget 
         ui->sendButton->setIcon(QIcon());
         ui->refreshPayFrom->setIcon(QIcon());
     } else {
-        ui->addButton->setIcon(_platformStyle->SingleColorIcon(":/icons/add"));
-        ui->clearButton->setIcon(_platformStyle->SingleColorIcon(":/icons/remove"));
-        ui->sendButton->setIcon(_platformStyle->SingleColorIcon(":/icons/send"));
-        ui->refreshPayFrom->setIcon(platformStyle->SingleColorIcon(":/icons/refresh"));
+        ui->addButton->setIcon(_platformStyle->SingleColorIcon(":/icons/" + theme + "/add"));
+        ui->clearButton->setIcon(_platformStyle->SingleColorIcon(":/icons/" + theme + "/remove"));
+        ui->sendButton->setIcon(_platformStyle->SingleColorIcon(":/icons/" + theme + "/send"));
+        ui->refreshPayFrom->setIcon(platformStyle->SingleColorIcon(":/icons/" + theme + "/refresh"));
     }
 
     addEntry();

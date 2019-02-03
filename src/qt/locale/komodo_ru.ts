@@ -1140,6 +1140,10 @@
         <translation>Здесь можно установить язык пользовательского интерфейса. Настройки вступят в силу после перезагрузки %1</translation>
     </message>
     <message>
+        <source>User Interface Theme:</source>
+        <translation>Тема интерфейса:</translation>
+    </message>
+    <message>
         <source>&amp;Unit to show amounts in:</source>
         <translation>&amp;Отображать суммы в единицах: </translation>
     </message>

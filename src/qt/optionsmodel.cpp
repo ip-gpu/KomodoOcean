@@ -28,6 +28,8 @@
 #include <QSettings>
 #include <QStringList>
 
+extern char ASSETCHAINS_SYMBOL[KOMODO_ASSETCHAIN_MAXLEN];
+
 OptionsModel::OptionsModel(QObject *parent, bool resetSettings) :
     QAbstractListModel(parent)
 {
@@ -76,6 +78,12 @@ void OptionsModel::Init(bool resetSettings)
     if (!settings.contains("strThirdPartyTxUrls"))
         settings.setValue("strThirdPartyTxUrls", "");
     strThirdPartyTxUrls = settings.value("strThirdPartyTxUrls", "").toString();
+
+    if (!settings.contains("theme"))
+    {
+        if (strcmp(ASSETCHAINS_SYMBOL,"PIRATE") == 0) settings.setValue("theme", "pirate");
+        else settings.setValue("theme", "default");
+    }
 
     if (!settings.contains("fCoinControlFeatures"))
         settings.setValue("fCoinControlFeatures", false);
@@ -254,6 +262,8 @@ QVariant OptionsModel::data(const QModelIndex & index, int role) const
             return nDisplayUnit;
         case ThirdPartyTxUrls:
             return strThirdPartyTxUrls;
+        case Theme:
+            return settings.value("theme");
         case Language:
             return settings.value("language");
         case CoinControlFeatures:
@@ -379,6 +389,12 @@ bool OptionsModel::setData(const QModelIndex & index, const QVariant & value, in
                 setRestartRequired(true);
             }
             break;
+        case Theme:
+            if (settings.value("theme") != value) {
+                settings.setValue("theme", value);
+                setRestartRequired(true);
+            }
+            break;            
         case Language:
             if (settings.value("language") != value) {
                 settings.setValue("language", value);

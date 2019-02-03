@@ -30,12 +30,14 @@ SendCoinsEntry::SendCoinsEntry(const PlatformStyle *_platformStyle, QWidget *par
 {
     ui->setupUi(this);
 
-    ui->addressBookButton->setIcon(platformStyle->SingleColorIcon(":/icons/address-book"));
-    ui->pasteButton->setIcon(platformStyle->SingleColorIcon(":/icons/editpaste"));
-    ui->deleteButton->setIcon(platformStyle->SingleColorIcon(":/icons/remove"));
-    ui->deleteButton_is->setIcon(platformStyle->SingleColorIcon(":/icons/remove"));
-    ui->deleteButton_s->setIcon(platformStyle->SingleColorIcon(":/icons/remove"));
-    ui->useAvailableBalanceButton->setIcon(platformStyle->SingleColorIcon(":/icons/all_balance"));
+    QString theme = GUIUtil::getThemeName();
+
+    ui->addressBookButton->setIcon(platformStyle->SingleColorIcon(":/icons/" + theme + "/address-book"));
+    ui->pasteButton->setIcon(platformStyle->SingleColorIcon(":/icons/" + theme + "/editpaste"));
+    ui->deleteButton->setIcon(platformStyle->SingleColorIcon(":/icons/" + theme + "/remove"));
+    ui->deleteButton_is->setIcon(platformStyle->SingleColorIcon(":/icons/" + theme + "/remove"));
+    ui->deleteButton_s->setIcon(platformStyle->SingleColorIcon(":/icons/" + theme + "/remove"));
+    ui->useAvailableBalanceButton->setIcon(platformStyle->SingleColorIcon(":/icons/" + theme + "/all_balance"));
 
     setCurrentWidget(ui->SendCoins);
 
