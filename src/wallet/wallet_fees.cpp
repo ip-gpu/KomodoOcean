@@ -29,13 +29,13 @@ CAmount GetMinimumFee(unsigned int nTxBytes, const CCoinControl& coin_control, c
     */
 
     CAmount fee_needed;
-    if (coin_control.m_feerate) { // 1.
+    if (&coin_control && coin_control.m_feerate) { // 1.
         fee_needed = coin_control.m_feerate->GetFee(nTxBytes);
         if (feeCalc) feeCalc->reason = FeeReason::PAYTXFEE;
         // Allow to override automatic min/max check over coin control instance
         if (coin_control.fOverrideFeeRate) return fee_needed;
     }
-    else if (!coin_control.m_confirm_target && ::payTxFee != CFeeRate(0)) { // 3. TODO: remove magic value of 0 for global payTxFee
+    else if (&coin_control && !coin_control.m_confirm_target && ::payTxFee != CFeeRate(0)) { // 3. TODO: remove magic value of 0 for global payTxFee
         fee_needed = ::payTxFee.GetFee(nTxBytes);
         if (feeCalc) feeCalc->reason = FeeReason::PAYTXFEE;
     }
