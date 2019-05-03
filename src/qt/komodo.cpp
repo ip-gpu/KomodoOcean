@@ -59,7 +59,9 @@ void komodo_passport_iteration();
 #include <QThread>
 #include <QTimer>
 #include <QTranslator>
+#ifdef ENABLE_BIP70
 #include <QSslConfiguration>
+#endif
 
 #if defined(QT_STATICPLUGIN)
 #include <QtPlugin>
@@ -617,9 +619,11 @@ int main(int argc, char *argv[])
 #if QT_VERSION >= 0x050500
     // Because of the POODLE attack it is recommended to disable SSLv3 (https://disablessl3.com/),
     // so set SSL protocols to TLS1.0+.
+    #ifdef ENABLE_BIP70
     QSslConfiguration sslconf = QSslConfiguration::defaultConfiguration();
     sslconf.setProtocol(QSsl::TlsV1_0OrLater);
     QSslConfiguration::setDefaultConfiguration(sslconf);
+    #endif
 #endif
 
     // Register meta types used for QMetaObject::invokeMethod
