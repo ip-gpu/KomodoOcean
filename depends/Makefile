@@ -79,7 +79,7 @@ rust_packages_$(NO_RUST) = $(rust_packages)
 wallet_packages_$(NO_WALLET) = $(wallet_packages)
 upnp_packages_$(NO_UPNP) = $(upnp_packages)
 
-packages += $($(host_arch)_$(host_os)_packages) $($(host_os)_packages) $(rust_packages_) $(wallet_packages_) $(upnp_packages_)
+packages += $($(host_arch)_$(host_os)_packages) $($(host_os)_packages) $(qt_packages_) $(rust_packages_) $(wallet_packages_) $(upnp_packages_)
 native_packages += $($(host_arch)_$(host_os)_native_packages) $($(host_os)_native_packages)
 
 ifneq ($(qt_packages_),)

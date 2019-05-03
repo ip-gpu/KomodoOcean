@@ -6,6 +6,15 @@ else
 	zcash_packages := libgmp libsodium
 endif
 
+qt_native_packages = native_protobuf
+qt_packages = qrencode protobuf zlib
+
+qt_linux_packages:=qt expat dbus libxcb xcb_proto libXau xproto freetype fontconfig libX11 xextproto libXext xtrans
+
+qt_darwin_packages=qt
+qt_mingw32_packages=qt
+
+
 rust_crates := \
   crate_aes \
   crate_aesni \
@@ -46,7 +55,7 @@ native_packages := native_ccache
 wallet_packages=bdb
 
 ifeq ($(host_os),linux)
-	packages := boost openssl libevent zeromq $(zcash_packages) googletest googlemock
+	packages := boost openssl libevent zeromq $(zcash_packages) googletest googlemock libcurl
 else
 	packages := boost openssl libevent zeromq $(zcash_packages) googletest googlemock libcurl
 endif
