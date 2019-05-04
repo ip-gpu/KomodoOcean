@@ -499,8 +499,9 @@ qt_komodo_qt_LDADD += $(LIBBITCOIN_CLI) \
   $(LIBLEVELDB_SSE42) \
   $(LIBMEMENV) \
   $(BOOST_LIBS) \
-  $(QT_DBUS_LIBS) \
   $(QT_LIBS) \
+  $(QT_DBUS_LIBS) \
+  ${QTFONTDATABASE_LIBS} \
   $(QR_LIBS) \
   $(PROTOBUF_LIBS) \
   $(BDB_LIBS) \
@@ -510,9 +511,6 @@ qt_komodo_qt_LDADD += $(LIBBITCOIN_CLI) \
   $(LIBSECP256K1) \
   $(EVENT_PTHREADS_LIBS) \
   $(EVENT_LIBS)
-
-# $(QT_DBUS_LIBS) should be first in list, bcz it includes -lQt5Core and it needs -lfontconfig -lfreetype also in
-# case of static Qt build (it exits in $(QT_LIBS)), so right order is - $(QT_DBUS_LIBS) and after $(QT_LIBS) .
 
 qt_komodo_qt_LDFLAGS = $(RELDFLAGS) $(AM_LDFLAGS) $(QT_LDFLAGS) $(LIBTOOL_APP_LDFLAGS) -fopenmp
 qt_komodo_qt_LIBTOOLFLAGS = --tag CXX
@@ -538,6 +536,7 @@ $(info $$komodod_LDFLAGS is [${komodod_LDFLAGS}])
 # $(info $(red)$$QT_LIBS$(reset) is [${QT_LIBS}])
 # $(info $(red)$$QT_DBUS_LIBS$(reset) is [${QT_DBUS_LIBS}])
 # $(info $(red)$$QR_LIBS$(reset) is [${QR_LIBS}])
+# $(info $(red)$$QTFONTDATABASE_LIBS$(reset) is [${QTFONTDATABASE_LIBS}])
 
 #locale/foo.ts -> locale/foo.qm
 QT_QM=$(QT_TS:.ts=.qm)
