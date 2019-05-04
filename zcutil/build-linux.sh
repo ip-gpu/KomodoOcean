@@ -94,7 +94,7 @@ fi
 
 PREFIX="$(pwd)/depends/$BUILD/"
 
-#HOST="$HOST" BUILD="$BUILD" "$MAKE" "$@" -C ./depends/ V=1
+HOST="$HOST" BUILD="$BUILD" "$MAKE" "$@" -C ./depends/ V=1
 ./autogen.sh
 
 #CONFIG_SITE="$PWD/depends/$HOST/share/config.site" 
