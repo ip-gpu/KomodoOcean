@@ -22,6 +22,7 @@
 #include "zcbenchmarks.h"
 #include "script/interpreter.h"
 #include "zcash/zip32.h"
+#include <coincontrol.h>
 
 #include "utiltime.h"
 #include "asyncrpcoperation.h"
@@ -416,6 +417,9 @@ static void SendMoney(const CTxDestination &address, CAmount nValue, bool fSubtr
     // Create and send the transaction
     CReserveKey reservekey(pwalletMain);
     CAmount nFeeRequired;
+
+    CCoinControl coin_control;
+
     std::string strError;
     vector<CRecipient> vecSend;
     int nChangePosRet = -1;
@@ -434,7 +438,7 @@ static void SendMoney(const CTxDestination &address, CAmount nValue, bool fSubtr
         CRecipient opret = { opretpubkey, opretValue, false };
         vecSend.push_back(opret);
     }
-    if (!pwalletMain->CreateTransaction(vecSend, wtxNew, reservekey, nFeeRequired, nChangePosRet, strError)) {
+    if (!pwalletMain->CreateTransaction(vecSend, wtxNew, reservekey, nFeeRequired, nChangePosRet, strError, &coin_control)) {
         if (!fSubtractFeeFromAmount && nValue + nFeeRequired > pwalletMain->GetBalance())
             strError = strprintf("Error: This transaction requires a transaction fee of at least %s because of its amount, complexity, or use of recently received funds!", FormatMoney(nFeeRequired));
         throw JSONRPCError(RPC_WALLET_ERROR, strError);
@@ -1307,6 +1311,8 @@ UniValue sendmany(const UniValue& params, bool fHelp)
     if (params.size() > 4)
         subtractFeeFromAmount = params[4].get_array();
 
+    CCoinControl coin_control;
+
     std::set<CTxDestination> destinations;
     std::vector<CRecipient> vecSend;
 
@@ -1353,7 +1359,7 @@ UniValue sendmany(const UniValue& params, bool fHelp)
     CAmount nFeeRequired = 0;
     int nChangePosRet = -1;
     string strFailReason;
-    bool fCreated = pwalletMain->CreateTransaction(vecSend, wtx, keyChange, nFeeRequired, nChangePosRet, strFailReason);
+    bool fCreated = pwalletMain->CreateTransaction(vecSend, wtx, keyChange, nFeeRequired, nChangePosRet, strFailReason, &coin_control);
     if (!fCreated)
         throw JSONRPCError(RPC_WALLET_INSUFFICIENT_FUNDS, strFailReason);
     if (!pwalletMain->CommitTransaction(wtx, keyChange))

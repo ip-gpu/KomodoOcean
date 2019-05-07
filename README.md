@@ -43,11 +43,17 @@ cd src/qt
 ./komodo-qt & # launch
 ```
 
-If during build you get error like "fatal error: sodium.h: No such file or directory compilation terminated.", try to install libsodium-dev:
+- If during build you get error like "fatal error: sodium.h: No such file or directory compilation terminated.", try to install libsodium-dev:
 
 ```
 sudo apt install libsodium-dev
 ```
+- "fatal error: gmp.h: No such file or directory compilation terminated.", try to install libgmp-dev:
+
+```
+sudo apt install libgmp-dev
+```
+
 
 ### Additional info ###
 
