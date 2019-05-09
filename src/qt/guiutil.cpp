@@ -938,7 +938,7 @@ QString formatServicesStr(quint64 mask)
 QString formatPingTime(double dPingTime)
 {
     #if !defined(Q_OS_MAC)
-    return (dPingTime == std::numeric_limits<int64_t>::max()/1e6 || dPingTime == 0) ? QObject::tr("N/A") : QString(QObject::tr("%1 ms")).arg(QString::number((int)(dPingTime * 1000), 10)); */
+    return (dPingTime == std::numeric_limits<int64_t>::max()/1e6 || dPingTime == 0) ? QObject::tr("N/A") : QString(QObject::tr("%1 ms")).arg(QString::number((int)(dPingTime * 1000), 10));
     #else
     return (dPingTime == ((int64_t)0x7FFFFFFFFFFFFFFF)/1e6 || dPingTime == 0) ? QObject::tr("N/A") : QString(QObject::tr("%1 ms")).arg(QString::number((int)(dPingTime * 1000), 10));
     #endif
