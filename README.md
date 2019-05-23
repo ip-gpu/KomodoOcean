@@ -1,78 +1,99 @@
-## KomodoOcean (komodo-qt) ##
+# KomodoOcean (komodo-qt) #
 
 ![](./doc/images/komodo-qt-promo-10.png)
 
 Komodo-Qt (KomodoOcean) is a world-first Qt native wallet for KMD ([Komodo](https://komodoplatform.com/)) and all of assetchains. It's available for three OS platforms - Windows, Linux, MacOS.
 
-**NB!** This repo have **three** branches:
+**NB!** Earlier (till 23.05.2019) we had three branches:
 
 
-- [master](../../tree/master) for Windows
-- [Linux](../../tree/Linux) for Linux
-- [MacOS](../../tree/MacOS) for MacOS
+- [master](../../tree/master) for Windows.
+- [Linux](../../tree/Linux) for Linux.
+- [MacOS](../../tree/MacOS) for MacOS.
+
+Now we have only one branch [static](../../tree/static) for build static Komodo-Qt binaries from one branch for each OS.
+
+Use the following scripts to build:
+
+- Linux: `build-linux.sh` (native build)
+- Windows: `build-win.sh` (cross-compilation for Win)
+- MacOS: `build-mac.sh` (native build)
+
+`master` branch still can be used to build Windows version of Komodo-Qt with MSVC compiler.
 
 Visit [#wallet-ocean-qt](https://discord.gg/U5WWaJR) channel in Komodo Discord for more information.
 
-### How to build? ###
+## How to build? ##
 
-Following dependencies are needed:
+#### Linux
 
-```
-sudo apt-get install build-essential pkg-config libcurl3-gnutls-dev libc6-dev libevent-dev m4 g++-multilib autoconf libtool ncurses-dev unzip git python zlib1g-dev wget bsdmainutils automake libboost-all-dev libssl-dev libprotobuf-dev protobuf-compiler libqt4-dev libqrencode-dev libdb++-dev ntp ntpdate
-
-sudo apt-get install libcurl4-gnutls-dev 
-```
-
-To build Qt wallet execute first:
-
-```
-sudo apt-get install libqt5gui5 libqt5core5a libqt5dbus5 qttools5-dev qttools5-dev-tools libprotobuf-dev protobuf-compiler
+```shell
+#The following packages are needed:
+sudo apt-get install build-essential pkg-config libc6-dev m4 g++-multilib autoconf libtool ncurses-dev unzip git python python-zmq zlib1g-dev wget libcurl4-gnutls-dev bsdmainutils automake curl
 ```
 
-Aslo, if you issued troubles with dependencies, may be this [doc](https://github.com/bitcoin/bitcoin/blob/master/doc/build-unix.md) will be useful.
-
-To build (Ubuntu 16.x / 18.x):
-
-```
-cd ~
-git clone https://github.com/DeckerSU/KomodoOcean.git
-cd KomodoOcean
-git checkout Linux
-zcutil/build.sh -j$(nproc)
-cd src/qt
-./komodo-qt & # launch
+```shell
+git clone https://github.com/DeckerSU/KomodoOcean --branch static --single-branch
+cd komodo
+./zcutil/fetch-params.sh
+# -j8 = using 8 threads for the compilation - replace 8 with number of threads you want to use
+./zcutil/build-linux.sh -j8
+#This can take some time.
 ```
 
-If during build you get error like "fatal error: sodium.h: No such file or directory compilation terminated.", try to install libsodium-dev:
 
+#### OSX
+Ensure you have [brew](https://brew.sh) and Command Line Tools installed.
+```shell
+# Install brew
+/usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
+# Install Xcode, opens a pop-up window to install CLT without installing the entire Xcode package
+xcode-select --install 
+# Update brew and install dependencies
+brew update
+brew upgrade
+brew tap discoteq/discoteq; brew install flock
+brew install autoconf autogen automake
+brew install gcc@6
+brew install binutils
+brew install protobuf
+brew install coreutils
+brew install wget
+# Clone the Komodo repo
+git clone https://github.com/DeckerSU/KomodoOcean --branch statoc --single-branch
+# Change master branch to other branch you wish to compile
+cd komodo
+./zcutil/fetch-params.sh
+# -j8 = using 8 threads for the compilation - replace 8 with number of threads you want to use
+./zcutil/build-mac.sh -j8
+# This can take some time.
 ```
-sudo apt install libsodium-dev
+
+#### Windows
+Use a debian cross-compilation setup with mingw for windows and run:
+```shell
+sudo apt-get install build-essential pkg-config libc6-dev m4 g++-multilib autoconf libtool ncurses-dev unzip git python python-zmq zlib1g-dev wget libcurl4-gnutls-dev bsdmainutils automake curl cmake mingw-w64
+curl https://sh.rustup.rs -sSf | sh
+source $HOME/.cargo/env
+rustup target add x86_64-pc-windows-gnu
+
+sudo update-alternatives --config x86_64-w64-mingw32-gcc
+# (configure to use POSIX variant)
+sudo update-alternatives --config x86_64-w64-mingw32-g++
+# (configure to use POSIX variant)
+
+git clone https://github.com/DeckerSU/KomodoOcean --branch static --single-branch
+cd komodo
+./zcutil/fetch-params.sh
+# -j8 = using 8 threads for the compilation - replace 8 with number of threads you want to use
+./zcutil/build-win.sh -j8
+#This can take some time.
 ```
+**komodo is experimental and a work-in-progress.** Use at your own risk.
 
-### Additional info ###
 
-- `-rootcertificates=` arg for launching under Ubuntu 16.04 don't needed anymore. Since we have payment request support (bip70) disabled by default. 
 
-### Qt Versions Notes ###
-
-By default Ubuntu 16.04 uses old version of Qt 5.5.1 (it's installed from by default from Xenial repos), if you want to change this behaviour and build against Qt 5.9.1 you'll need to do the following:
-
-```
-wget http://download.qt.io/official_releases/qt/5.9/5.9.1/qt-opensource-linux-x64-5.9.1.run
-chmod +x qt-opensource-linux-x64-5.9.1.run
-./qt-opensource-linux-x64-5.9.1.run # during installation leave install folder "AS IS", i.e. $HOME/Qt5.9.1
-qtchooser -install -local qt5.9.1 $HOME/Qt5.9.1/5.9.1/gcc_64/bin/qmake 
-# this will create $HOME/.config/qtchooser/qt5.9.1.conf 
-...
-git clone https://github.com/DeckerSU/KomodoOcean
-cd KomodoOcean
-git checkout Linux
-git pull
-QT_LDFLAGS="-Wl,-rpath=$HOME/Qt5.9.1/5.9.1/gcc_64/lib" PKG_CONFIG_PATH="$(pwd)/depends/x86_64-unknown-linux-gnu/lib/pkgconfig:$HOME/Qt5.9.1/5.9.1/gcc_64/lib/pkgconfig" zcutil/build.sh -j$(nproc) # override configure check for Qt package and build
-./src/qt/komodo-qt -rootcertificates= & # for launch
-```
-
-### Developers of Qt wallet ###
+## Developers of Qt wallet ##
 
 - Main developer: [@Ocean](https://komodo-platform.slack.com/team/U8BRG09EV)
 - IT Expert / Sysengineer: [@Decker](https://komodo-platform.slack.com/messages/D5UHJMCJ3)
