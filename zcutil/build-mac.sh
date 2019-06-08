@@ -1,6 +1,6 @@
 #!/bin/bash
-export CC=gcc-5
-export CXX=g++-5
+export CC=gcc-6
+export CXX=g++-6
 export LIBTOOL=libtool
 export AR=ar
 export RANLIB=ranlib
@@ -40,11 +40,22 @@ fi
 TRIPLET=`./depends/config.guess`
 PREFIX="$(pwd)/depends/$TRIPLET"
 
-make "$@" -C ./depends/ V=1 NO_QT=1
-
+make "$@" -C ./depends/ V=1 # NO_PROTON=1
 ./autogen.sh
+
+LDFLAGS="-static-libgcc -static-libstdc++"
 CPPFLAGS="-I$PREFIX/include -arch x86_64" LDFLAGS="-L$PREFIX/lib -arch x86_64 -Wl,-no_pie" \
-CXXFLAGS='-arch x86_64 -I/usr/local/Cellar/gcc5/5.4.0/include/c++/5.4.0 -I$PREFIX/include -fwrapv -fno-strict-aliasing -Werror -g -Wl,-undefined -Wl,dynamic_lookup' \
-./configure --prefix="${PREFIX}" --with-gui=no "$HARDENING_ARG" "$LCOV_ARG"
+
+# -Werror should be removed from CPPFLAGS, othewise Qt static plugins determine on ./configure
+# step will cause an error and static Qt plugins will not be linked.
+
+CXXFLAGS='-arch x86_64 -I/usr/local/Cellar/gcc@6/6.5.0_2/include/c++/6.5.0 '"-I${PREFIX}/include"' -fwrapv -fno-strict-aliasing -g0 -O2 -Wl,-undefined -Wl,dynamic_lookup' \
+./configure --prefix="${PREFIX}" --disable-bip70 --with-gui=qt5 "$HARDENING_ARG" "$LCOV_ARG"
+
+# here we need a small hacks, bcz QT_QPA_PLATFORM_COCOA and QT_STATICPLUGIN still have
+# incorect values after configure (TODO: fix it)
+
+# sed -i -e "s/\/\* #undef QT_QPA_PLATFORM_COCOA \*\//#define QT_QPA_PLATFORM_COCOA 1/" src/config/komodo-config.h
+# sed -i -e "s/\/\* #undef QT_STATICPLUGIN \*\//#define QT_STATICPLUGIN 1/" src/config/komodo-config.h
 
 make "$@" V=1 NO_GTEST=1 STATIC=1

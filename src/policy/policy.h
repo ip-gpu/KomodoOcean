@@ -10,6 +10,13 @@
 #include <sys/types.h>
 #endif
 
+#if defined(_WINDOWS) || defined(_WIN32)
+#if defined(__MINGW__) || defined(__MINGW32__) || defined(__MINGW64__)
+/** x86_64-w64-mingw32-gcc detect */
+#include <sys/types.h>
+#endif
+#endif
+
 #include "consensus/consensus.h"
 #include "script/interpreter.h"
 #include "script/standard.h"
