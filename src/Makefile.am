@@ -319,7 +319,7 @@ libbitcoin_server_a_SOURCES = \
   rpc/crosschain.cpp \
   rpc/mining.cpp \
   rpc/misc.cpp \
-  rpc/net_rpc.cpp \
+  rpc/net.cpp \
   rpc/rawtransaction.cpp \
   rpc/server.cpp \
   script/serverchecker.cpp \
