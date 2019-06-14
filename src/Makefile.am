@@ -438,7 +438,7 @@ libbitcoin_common_a_SOURCES = \
   crypto/haraka_portable.h \
   crypto/verus_hash.h \
   crypto/verus_hash.cpp \
-  hash_komodo.cpp \
+  hash.cpp \
   importcoin.cpp \
   key.cpp \
   key_io.cpp \
@@ -630,7 +630,7 @@ libzcashconsensus_la_SOURCES = \
   crypto/sha1.cpp \
   crypto/sha256.cpp \
   crypto/sha512.cpp \
-  hash_komodo.cpp \
+  hash.cpp \
   primitives/transaction.cpp \
   primitives/nonce.cpp \
   pubkey.cpp \

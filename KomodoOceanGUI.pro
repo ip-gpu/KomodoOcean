@@ -263,7 +263,7 @@ SOURCES += src\protobuf\google\protobuf\any.cc \
     src\crypto\sha512.cpp \
     src\crypto\verus_hash.cpp \
     src\fs.cpp \
-    src\hash_komodo.cpp \
+    src\hash.cpp \
     src\httprpc.cpp \
     src\httpserver.cpp \
     src\init.cpp \
