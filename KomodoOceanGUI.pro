@@ -346,7 +346,7 @@ SOURCES += src\protobuf\google\protobuf\any.cc \
     src\policy\fees.cpp \
     src\policy\policy.cpp \
     src\pow.cpp \
-    src\primitives\block_komodo.cpp \
+    src\primitives\block.cpp \
     src\primitives\nonce.cpp \
     src\primitives\transaction.cpp \
     src\protocol.cpp \
