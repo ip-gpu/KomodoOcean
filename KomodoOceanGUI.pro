@@ -411,7 +411,7 @@ SOURCES += src\protobuf\google\protobuf\any.cc \
     src\rest.cpp \
     src\rpc\blockchain.cpp \
     src\rpc\client.cpp \
-    src\rpc\crosschain_rpc.cpp \
+    src\rpc\crosschain.cpp \
     src\rpc\mining.cpp \
     src\rpc\misc.cpp \
     src\rpc\net_rpc.cpp \
