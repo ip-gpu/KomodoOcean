@@ -33,7 +33,7 @@
 //
 
 #if defined(HAVE_CONFIG_H)
-#include "config/komodo-config.h"
+#include "config/bitcoin-config.h"
 #endif
 
 #ifdef ENABLE_BIP70

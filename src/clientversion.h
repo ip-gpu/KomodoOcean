@@ -7,7 +7,7 @@
 #define KOMODO_CLIENTVERSION_H
 
 #if defined(HAVE_CONFIG_H)
-#include "config/komodo-config.h"
+#include "config/bitcoin-config.h"
 #else
 
 /**
