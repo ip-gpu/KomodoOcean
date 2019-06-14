@@ -143,7 +143,7 @@ BITCOIN_CORE_H = \
   asyncrpcqueue.h \
   base58.h \
   bech32.h \
-  bloomfilter.h \
+  bloom.h \
   cc/eval.h \
   chain.h \
   chainparams.h \
@@ -267,7 +267,7 @@ libbitcoin_server_a_SOURCES = \
   alertkeys.h \
   asyncrpcoperation.cpp \
   asyncrpcqueue.cpp \
-  bloomfilter.cpp \
+  bloom.cpp \
   cc/eval.cpp \
   cc/import.cpp \
   cc/CCassetsCore.cpp \

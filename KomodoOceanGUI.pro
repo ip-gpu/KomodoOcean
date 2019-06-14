@@ -240,7 +240,7 @@ SOURCES += src\protobuf\google\protobuf\any.cc \
     src\asyncrpcqueue.cpp \
     src\base58.cpp \
     src\bech32.cpp \
-    src\bloomfilter.cpp \
+    src\bloom.cpp \
     src\chain.cpp \
     src\chainparamsbase.cpp \
     src\checkpoints.cpp \
