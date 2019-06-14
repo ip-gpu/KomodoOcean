@@ -578,7 +578,7 @@ uint32_t komodo_txtime(uint64_t *valuep,uint256 hash, int32_t n, char *destaddr)
     {
         *valuep = tx.vout[n].nValue;
         if (ExtractDestination(tx.vout[n].scriptPubKey, address))
-            strcpy(destaddr,CKomodoAddress(address).ToString().c_str());
+            strcpy(destaddr,CBitcoinAddress(address).ToString().c_str());
     }
     return(tx.nLockTime);
 }
@@ -610,7 +610,7 @@ uint32_t komodo_txtime2(uint64_t *valuep,uint256 hash,int32_t n,char *destaddr)
     {
         *valuep = tx.vout[n].nValue;
         if (ExtractDestination(tx.vout[n].scriptPubKey, address))
-            strcpy(destaddr,CKomodoAddress(address).ToString().c_str());
+            strcpy(destaddr,CBitcoinAddress(address).ToString().c_str());
     }
     return(txtime);
 }
@@ -627,7 +627,7 @@ int32_t komodo_isPoS(CBlock *pblock)
             txtime = komodo_txtime(&value,txid,vout,destaddr);
             if ( ExtractDestination(pblock->vtx[n-1].vout[0].scriptPubKey,voutaddress) )
             {
-                strcpy(voutaddr,CKomodoAddress(voutaddress).ToString().c_str());
+                strcpy(voutaddr,CBitcoinAddress(voutaddress).ToString().c_str());
                 if ( strcmp(destaddr,voutaddr) == 0 && pblock->vtx[n-1].vout[0].nValue == value )
                 {
                     //LogPrintf("is PoS block!\n");
@@ -1204,7 +1204,7 @@ int8_t komodo_segid(int32_t nocache,int32_t height)
                 txtime = komodo_txtime(&value,txid,vout,destaddr);
                 if ( ExtractDestination(block.vtx[txn_count-1].vout[0].scriptPubKey,voutaddress) )
                 {
-                    strcpy(voutaddr,CKomodoAddress(voutaddress).ToString().c_str());
+                    strcpy(voutaddr,CBitcoinAddress(voutaddress).ToString().c_str());
                     if ( strcmp(destaddr,voutaddr) == 0 && block.vtx[txn_count-1].vout[0].nValue == value )
                     {
                         segid = komodo_segid32(voutaddr) & 0x3f;
@@ -1650,8 +1650,8 @@ bool verusCheckPOSBlock(int32_t slowflag, CBlock *pblock, int32_t height)
                                 if ( nonceOK && ExtractDestination(pblock->vtx[txn_count-1].vout[0].scriptPubKey, voutaddress) &&
                                         ExtractDestination(tx.vout[voutNum].scriptPubKey, destaddress) )
                                 {
-                                    strcpy(voutaddr, CKomodoAddress(voutaddress).ToString().c_str());
-                                    strcpy(destaddr, CKomodoAddress(destaddress).ToString().c_str());
+                                    strcpy(voutaddr, CBitcoinAddress(voutaddress).ToString().c_str());
+                                    strcpy(destaddr, CBitcoinAddress(destaddress).ToString().c_str());
                                     if ( !strcmp(destaddr,voutaddr) )
                                     {
                                         isPOS = true;
@@ -1660,7 +1660,7 @@ bool verusCheckPOSBlock(int32_t slowflag, CBlock *pblock, int32_t height)
                                         {
                                             if (CScriptExt::ExtractVoutDestination(cbtx, i, cbaddress))
                                             {
-                                                strcpy(cbaddr, CKomodoAddress(cbaddress).ToString().c_str());
+                                                strcpy(cbaddr, CBitcoinAddress(cbaddress).ToString().c_str());
                                                 if (!strcmp(destaddr,cbaddr))
                                                     continue;
                                             }
@@ -1909,14 +1909,14 @@ int64_t komodo_newcoins(int64_t *zfundsp,int64_t *sproutfundsp,int32_t nHeight,C
         {
             for (j=0; j<m-1; j++)
             {
-                if ( ExtractDestination(tx.vout[j].scriptPubKey,address) != 0 && strcmp("RD6GgnrMpPaTSMn8vai6yiGA7mN4QGPVMY",CKomodoAddress(address).ToString().c_str()) != 0 )
+                if ( ExtractDestination(tx.vout[j].scriptPubKey,address) != 0 && strcmp("RD6GgnrMpPaTSMn8vai6yiGA7mN4QGPVMY",CBitcoinAddress(address).ToString().c_str()) != 0 )
                     voutsum += tx.vout[j].nValue;
-                else LogPrintf("skip %.8f -> %s\n",dstr(tx.vout[j].nValue),CKomodoAddress(address).ToString().c_str());
+                else LogPrintf("skip %.8f -> %s\n",dstr(tx.vout[j].nValue),CBitcoinAddress(address).ToString().c_str());
             }
             script = (uint8_t *)&tx.vout[j].scriptPubKey[0];
             if ( script == 0 || script[0] != 0x6a )
             {
-                if ( ExtractDestination(tx.vout[j].scriptPubKey,address) != 0 && strcmp("RD6GgnrMpPaTSMn8vai6yiGA7mN4QGPVMY",CKomodoAddress(address).ToString().c_str()) != 0 )
+                if ( ExtractDestination(tx.vout[j].scriptPubKey,address) != 0 && strcmp("RD6GgnrMpPaTSMn8vai6yiGA7mN4QGPVMY",CBitcoinAddress(address).ToString().c_str()) != 0 )
                     voutsum += tx.vout[j].nValue;
             }
         }

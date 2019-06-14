@@ -200,7 +200,7 @@ bool Getscriptaddress(char *destaddr,const CScript &scriptPubKey)
     CTxDestination address; txnouttype whichType;
     if ( ExtractDestination(scriptPubKey,address) != 0 )
     {
-        strcpy(destaddr,(char *)CKomodoAddress(address).ToString().c_str());
+        strcpy(destaddr,(char *)CBitcoinAddress(address).ToString().c_str());
         return(true);
     }
     //LogPrintf("ExtractDestination failed\n");
@@ -359,7 +359,7 @@ std::vector<uint8_t> Mypubkey()
 
 bool Myprivkey(uint8_t myprivkey[])
 {
-    char coinaddr[64]; std::string strAddress; char *dest; int32_t i,n; CKomodoAddress address; CKeyID keyID; CKey vchSecret;
+    char coinaddr[64]; std::string strAddress; char *dest; int32_t i,n; CBitcoinAddress address; CKeyID keyID; CKey vchSecret;
     if ( Getscriptaddress(coinaddr,CScript() << Mypubkey() << OP_CHECKSIG) != 0 )
     {
         n = (int32_t)strlen(coinaddr);

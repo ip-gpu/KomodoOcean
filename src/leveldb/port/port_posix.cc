@@ -14,7 +14,7 @@ namespace port {
 
 static void PthreadCall(const char* label, int result) {
   if (result != 0) {
-    printf( "pthread %s: %s\n", label, strerror(result));
+    fprintf(stderr, "pthread %s: %s\n", label, strerror(result));
     abort();
   }
 }

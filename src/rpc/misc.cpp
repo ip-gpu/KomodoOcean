@@ -330,7 +330,7 @@ UniValue jumblr_deposit(const UniValue& params, bool fHelp)
     int32_t retval; UniValue result(UniValue::VOBJ);
     if (fHelp || params.size() != 1)
         throw runtime_error("jumblr_deposit \"depositaddress\"\n");
-    CKomodoAddress address(params[0].get_str());
+    CBitcoinAddress address(params[0].get_str());
     bool isValid = address.IsValid();
     if ( isValid != 0 )
     {
@@ -350,7 +350,7 @@ UniValue jumblr_secret(const UniValue& params, bool fHelp)
     int32_t retval; UniValue result(UniValue::VOBJ);
     if (fHelp || params.size() != 1)
         throw runtime_error("jumblr_secret \"secretaddress\"\n");
-    CKomodoAddress address(params[0].get_str());
+    CBitcoinAddress address(params[0].get_str());
     bool isValid = address.IsValid();
     if ( isValid != 0 )
     {
@@ -720,9 +720,9 @@ UniValue setmocktime(const UniValue& params, bool fHelp)
 bool getAddressFromIndex(const int &type, const uint160 &hash, std::string &address)
 {
     if (type == 2) {
-        address = CKomodoAddress(CScriptID(hash)).ToString();
+        address = CBitcoinAddress(CScriptID(hash)).ToString();
     } else if (type == 1) {
-        address = CKomodoAddress(CKeyID(hash)).ToString();
+        address = CBitcoinAddress(CKeyID(hash)).ToString();
     }
     else {
         return false;
@@ -733,7 +733,7 @@ bool getAddressFromIndex(const int &type, const uint160 &hash, std::string &addr
 bool getAddressesFromParams(const UniValue& params, std::vector<std::pair<uint160, int> > &addresses)
 {
     if (params[0].isStr()) {
-        CKomodoAddress address(params[0].get_str());
+        CBitcoinAddress address(params[0].get_str());
         uint160 hashBytes;
         int type = 0;
         if (!address.GetIndexKey(hashBytes, type)) {
@@ -751,7 +751,7 @@ bool getAddressesFromParams(const UniValue& params, std::vector<std::pair<uint16
 
         for (std::vector<UniValue>::iterator it = values.begin(); it != values.end(); ++it) {
 
-            CKomodoAddress address(it->get_str());
+            CBitcoinAddress address(it->get_str());
             uint160 hashBytes;
             int type = 0;
             if (!address.GetIndexKey(hashBytes, type)) {

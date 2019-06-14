@@ -4275,8 +4275,8 @@ bool CWallet::DelZAddressBook(const libzcash::PaymentAddress& address)
     if (!fFileBacked)
         return false;
 //!!!!! we don't delete data for z-addresses for now
-//    CWalletDB(strWalletFile).ErasePurpose(CKomodoAddress(address).ToString());
-//    return CWalletDB(strWalletFile).EraseName(CKomodoAddress(address).ToString());
+//    CWalletDB(strWalletFile).ErasePurpose(CBitcoinAddress(address).ToString());
+//    return CWalletDB(strWalletFile).EraseName(CBitcoinAddress(address).ToString());
     return true;
 }
 

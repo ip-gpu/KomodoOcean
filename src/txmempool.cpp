@@ -145,7 +145,7 @@ void CTxMemPool::addAddressIndex(const CTxMemPoolEntry &entry, const CCoinsViewC
             if (vDest.which())
             {
                 uint160 hashBytes;
-                if (CKomodoAddress(vDest).GetIndexKey(hashBytes, keyType))
+                if (CBitcoinAddress(vDest).GetIndexKey(hashBytes, keyType))
                 {
                     vSols.push_back(vector<unsigned char>(hashBytes.begin(), hashBytes.end()));
                 }
@@ -177,7 +177,7 @@ void CTxMemPool::addAddressIndex(const CTxMemPoolEntry &entry, const CCoinsViewC
             if (vDest.which())
             {
                 uint160 hashBytes;
-                if (CKomodoAddress(vDest).GetIndexKey(hashBytes, keyType))
+                if (CBitcoinAddress(vDest).GetIndexKey(hashBytes, keyType))
                 {
                     vSols.push_back(vector<unsigned char>(hashBytes.begin(), hashBytes.end()));
                 }
@@ -251,7 +251,7 @@ void CTxMemPool::addSpentIndex(const CTxMemPoolEntry &entry, const CCoinsViewCac
             if (vDest.which())
             {
                 CKeyID kid;
-                if (CKomodoAddress(vDest).GetKeyID(kid))
+                if (CBitcoinAddress(vDest).GetKeyID(kid))
                 {
                     vSols.push_back(vector<unsigned char>(kid.begin(), kid.end()));
                 }

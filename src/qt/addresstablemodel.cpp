@@ -215,7 +215,7 @@ QVariant AddressTableModel::data(const QModelIndex &index, int role) const
         {
             {
                 LOCK(wallet->cs_wallet);
-                CKomodoAddress address = DecodeDestination(rec->address.toStdString());
+                CBitcoinAddress address = DecodeDestination(rec->address.toStdString());
 
                 bool isValid = address.IsValid();
 

@@ -648,7 +648,7 @@ CBlockTemplate* CreateNewBlock(const CScript& _scriptPubKeyIn, int32_t gpucount,
  #endif
  {
  CKeyID keyID;
- CKomodoAddress addr;
+ CBitcoinAddress addr;
  if (addr.SetString(GetArg("-mineraddress", ""))) {
  addr.GetKeyID(keyID);
  } else {
