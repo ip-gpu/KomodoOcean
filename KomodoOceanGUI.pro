@@ -190,7 +190,7 @@ HEADERS += src\komodo_globals.h \
      src\qt\receivecoinsdialog.h \
      src\qt\receiverequestdialog.h \
      src\streams.h \
-     src\komodo_komodod.h \
+     src\komodo_bitcoind.h \
      src\komodo_utils.h \
      src\komodo_notary.h \
      src\komodo_gateway.h
