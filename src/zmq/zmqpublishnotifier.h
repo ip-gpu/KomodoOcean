@@ -2,8 +2,8 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#ifndef KOMODO_ZMQ_ZMQPUBLISHNOTIFIER_H
-#define KOMODO_ZMQ_ZMQPUBLISHNOTIFIER_H
+#ifndef BITCOIN_ZMQ_ZMQPUBLISHNOTIFIER_H
+#define BITCOIN_ZMQ_ZMQPUBLISHNOTIFIER_H
 
 #include "zmqabstractnotifier.h"
 
@@ -50,6 +50,12 @@ class CZMQPublishRawTransactionNotifier : public CZMQAbstractPublishNotifier
 {
 public:
     bool NotifyTransaction(const CTransaction &transaction);
+};
+
+class CZMQPublishCheckedBlockNotifier : public CZMQAbstractPublishNotifier
+{
+public:
+    bool NotifyBlock(const CBlock &block);
 };
 
 #endif // BITCOIN_ZMQ_ZMQPUBLISHNOTIFIER_H
