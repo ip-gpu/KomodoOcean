@@ -1,5 +1,5 @@
 /******************************************************************************
- * Copyright © 2014-2018 The SuperNET Developers.                             *
+ * Copyright © 2014-2019 The SuperNET Developers.                             *
  *                                                                            *
  * See the AUTHORS, DEVELOPER-AGREEMENT and LICENSE files at                  *
  * the top-level directory of this distribution for the individual copyright  *
@@ -123,7 +123,6 @@ size_t cc_conditionBinary(const CC *cond, unsigned char *buf) {
         fprintf(stderr, "CONDITION NOT ENCODED\n");
         return 0;
     }
-    
     ASN_STRUCT_FREE(asn_DEF_Condition, asn);
     return rc.encoded;
 }
