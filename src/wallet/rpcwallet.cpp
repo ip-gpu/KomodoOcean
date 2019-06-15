@@ -671,7 +671,7 @@ UniValue kvupdate(const UniValue& params, bool fHelp)
         EnsureWalletIsUnlocked();
         fee = komodo_kvfee(flags,opretlen,keylen);
         ret.push_back(Pair("fee",(double)fee/COIN));
-        CKomodoAddress destaddress(CRYPTO777_KMDADDR);
+        CBitcoinAddress destaddress(CRYPTO777_KMDADDR);
         if (!destaddress.IsValid())
             throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Invalid dest Komodo address");
         SendMoney(destaddress.Get(),10000,false,wtx,opretbuf,opretlen,fee);
@@ -695,7 +695,7 @@ UniValue paxdeposit(const UniValue& params, bool fHelp)
     if (fHelp || params.size() != 3)
         throw runtime_error("paxdeposit address fiatoshis base");
     LOCK2(cs_main, pwalletMain->cs_wallet);
-    CKomodoAddress address(params[0].get_str());
+    CBitcoinAddress address(params[0].get_str());
     if (!address.IsValid())
         throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Invalid Komodo address");
     int64_t fiatoshis = atof(params[1].get_str().c_str()) * COIN;
@@ -709,7 +709,7 @@ UniValue paxdeposit(const UniValue& params, bool fHelp)
     }
     komodoshis = PAX_fiatdest(&seed,0,destaddr,pubkey37,(char *)params[0].get_str().c_str(),height,(char *)base.c_str(),fiatoshis);
     dest.append(destaddr);
-    CKomodoAddress destaddress(CRYPTO777_KMDADDR);
+    CBitcoinAddress destaddress(CRYPTO777_KMDADDR);
     if (!destaddress.IsValid())
         throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Invalid dest Komodo address");
     for (i=0; i<33; i++)
@@ -739,13 +739,13 @@ UniValue paxwithdraw(const UniValue& params, bool fHelp)
     if ( komodo_isrealtime(&kmdheight) == 0 )
         return(0);
     LOCK2(cs_main, pwalletMain->cs_wallet);
-    CKomodoAddress address(params[0].get_str());
+    CBitcoinAddress address(params[0].get_str());
     if (!address.IsValid())
         throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Invalid Komodo address");
     int64_t fiatoshis = atof(params[1].get_str().c_str()) * COIN;
     komodoshis = PAX_fiatdest(&seed,1,destaddr,pubkey37,(char *)params[0].get_str().c_str(),kmdheight,ASSETCHAINS_SYMBOL,fiatoshis);
     dest.append(destaddr);
-    CKomodoAddress destaddress(CRYPTO777_KMDADDR);
+    CBitcoinAddress destaddress(CRYPTO777_KMDADDR);
     if (!destaddress.IsValid())
         throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Invalid dest Komodo address");
     for (i=0; i<33; i++)
@@ -5009,7 +5009,7 @@ void komodo_segids(uint8_t *hashbuf,int32_t height,int32_t n);
 
 int32_t komodo_notaryvin(CMutableTransaction &txNew,uint8_t *notarypub33)
 {
-    set<CKomodoAddress> setAddress; uint8_t *script,utxosig[128]; uint256 utxotxid; uint64_t utxovalue; int32_t i,siglen=0,nMinDepth = 1,nMaxDepth = 9999999; vector<COutput> vecOutputs; uint32_t utxovout,eligible,earliest = 0; CScript best_scriptPubKey; bool fNegative,fOverflow;
+    set<CBitcoinAddress> setAddress; uint8_t *script,utxosig[128]; uint256 utxotxid; uint64_t utxovalue; int32_t i,siglen=0,nMinDepth = 1,nMaxDepth = 9999999; vector<COutput> vecOutputs; uint32_t utxovout,eligible,earliest = 0; CScript best_scriptPubKey; bool fNegative,fOverflow;
     bool signSuccess; SignatureData sigdata; uint64_t txfee; uint8_t *ptr;
     auto consensusBranchId = CurrentEpochBranchId(chainActive.Height() + 1, Params().GetConsensus());
     if (!EnsureWalletIsAvailable(0))
@@ -5042,7 +5042,7 @@ int32_t komodo_notaryvin(CMutableTransaction &txNew,uint8_t *notarypub33)
         CTxDestination address;
         if (ExtractDestination(out.tx->vout[out.i].scriptPubKey, address))
         {
-            //entry.push_back(Pair("address", CKomodoAddress(address).ToString()));
+            //entry.push_back(Pair("address", CBitcoinAddress(address).ToString()));
             //if (pwalletMain->mapAddressBook.count(address))
             //    entry.push_back(Pair("account", pwalletMain->mapAddressBook[address].name));
         }
@@ -5172,7 +5172,7 @@ uint32_t komodo_eligible(arith_uint256 bnTarget,arith_uint256 ratio,struct komod
 int32_t komodo_staked(CMutableTransaction &txNew,uint32_t nBits,uint32_t *blocktimep,uint32_t *txtimep,uint256 *utxotxidp,int32_t *utxovoutp,uint64_t *utxovaluep,uint8_t *utxosig)
 {
     static struct komodo_staking *array; static int32_t numkp,maxkp; static uint32_t lasttime;
-    set<CKomodoAddress> setAddress; struct komodo_staking *kp; int32_t winners,segid,minage,nHeight,counter=0,i,m,siglen=0,nMinDepth = 1,nMaxDepth = 99999999; vector<COutput> vecOutputs; uint32_t block_from_future_rejecttime,besttime,eligible,eligible2,earliest = 0; CScript best_scriptPubKey; arith_uint256 mindiff,ratio,bnTarget; CBlockIndex *tipindex,*pindex; CTxDestination address; bool fNegative,fOverflow; uint8_t hashbuf[256]; CTransaction tx; uint256 hashBlock;
+    set<CBitcoinAddress> setAddress; struct komodo_staking *kp; int32_t winners,segid,minage,nHeight,counter=0,i,m,siglen=0,nMinDepth = 1,nMaxDepth = 99999999; vector<COutput> vecOutputs; uint32_t block_from_future_rejecttime,besttime,eligible,eligible2,earliest = 0; CScript best_scriptPubKey; arith_uint256 mindiff,ratio,bnTarget; CBlockIndex *tipindex,*pindex; CTxDestination address; bool fNegative,fOverflow; uint8_t hashbuf[256]; CTransaction tx; uint256 hashBlock;
     if (!EnsureWalletIsAvailable(0))
         return 0;
 
@@ -5227,7 +5227,7 @@ int32_t komodo_staked(CMutableTransaction &txNew,uint32_t nBits,uint32_t *blockt
                     continue;
                 if ( GetTransaction(out.tx->GetHash(),tx,hashBlock,true) != 0 && (pindex= komodo_getblockindex(hashBlock)) != 0 )
                 {
-                    array = komodo_addutxo(array,&numkp,&maxkp,(uint32_t)pindex->nTime,(uint64_t)nValue,out.tx->GetHash(),out.i,(char *)CKomodoAddress(address).ToString().c_str(),hashbuf,(CScript)pk);
+                    array = komodo_addutxo(array,&numkp,&maxkp,(uint32_t)pindex->nTime,(uint64_t)nValue,out.tx->GetHash(),out.i,(char *)CBitcoinAddress(address).ToString().c_str(),hashbuf,(CScript)pk);
                     //LogPrintf("addutxo numkp.%d vs max.%d\n",numkp,maxkp);
                 }
             }
@@ -5432,7 +5432,7 @@ UniValue setpubkey(const UniValue& params, bool fHelp)
             if (strcmp("RRmWExvapDM9YbLT9X9xAyzDgxomYf63ng",Raddress) == 0) {
                 result.push_back(Pair("error", "pubkey entered is invalid."));
             } else {
-                CKomodoAddress address(Raddress);
+                CBitcoinAddress address(Raddress);
                 bool isValid = address.IsValid();
                 if (isValid)
                 {
@@ -7250,7 +7250,7 @@ UniValue tokenfillswap(const UniValue& params, bool fHelp)
 
 UniValue getbalance64(const UniValue& params, bool fHelp)
 {
-    set<CKomodoAddress> setAddress; vector<COutput> vecOutputs;
+    set<CBitcoinAddress> setAddress; vector<COutput> vecOutputs;
     UniValue ret(UniValue::VOBJ); UniValue a(UniValue::VARR),b(UniValue::VARR); CTxDestination address;
     if (!EnsureWalletIsAvailable(fHelp))
         return NullUniValue;
@@ -7271,11 +7271,11 @@ UniValue getbalance64(const UniValue& params, bool fHelp)
         nValue = out.tx->vout[out.i].nValue;
         if ( ExtractDestination(out.tx->vout[out.i].scriptPubKey, address) )
         {
-            segid = (komodo_segid32((char *)CKomodoAddress(address).ToString().c_str()) & 0x3f);
+            segid = (komodo_segid32((char *)CBitcoinAddress(address).ToString().c_str()) & 0x3f);
             if ( out.nDepth < 100 )
                 nValues2[segid] += nValue, total2 += nValue;
             else nValues[segid] += nValue, total += nValue;
-            //LogPrintf("%s %.8f depth.%d segid.%d\n",(char *)CKomodoAddress(address).ToString().c_str(),(double)nValue/COIN,(int32_t)out.nDepth,segid);
+            //LogPrintf("%s %.8f depth.%d segid.%d\n",(char *)CBitcoinAddress(address).ToString().c_str(),(double)nValue/COIN,(int32_t)out.nDepth,segid);
         } else LogPrintf("no destination\n");
     }
     ret.push_back(Pair("mature",(double)total/COIN));
@@ -7291,6 +7291,7 @@ UniValue getbalance64(const UniValue& params, bool fHelp)
 }
 
 extern UniValue dumpprivkey(const UniValue& params, bool fHelp); // in rpcdump.cpp
+extern UniValue convertpassphrase(const UniValue& params, bool fHelp);
 extern UniValue importprivkey(const UniValue& params, bool fHelp);
 extern UniValue importaddress(const UniValue& params, bool fHelp);
 extern UniValue dumpwallet(const UniValue& params, bool fHelp);
@@ -7326,6 +7327,7 @@ static const CRPCCommand commands[] =
     { "wallet",             "gettransaction",           &gettransaction,           false },
     { "wallet",             "getunconfirmedbalance",    &getunconfirmedbalance,    false },
     { "wallet",             "getwalletinfo",            &getwalletinfo,            false },
+    { "wallet",             "convertpassphrase",        &convertpassphrase,        true  },
     { "wallet",             "importprivkey",            &importprivkey,            true  },
     { "wallet",             "importwallet",             &importwallet,             true  },
     { "wallet",             "importaddress",            &importaddress,            true  },

@@ -2909,7 +2909,7 @@ bool DisconnectBlock(CBlock& block, CValidationState& state, CBlockIndex* pindex
                     if (vDest.which())
                     {
                         CKeyID kid;
-                        if (CKomodoAddress(vDest).GetKeyID(kid))
+                        if (CBitcoinAddress(vDest).GetKeyID(kid))
                         {
                             vSols.push_back(vector<unsigned char>(kid.begin(), kid.end()));
                         }
@@ -2982,7 +2982,7 @@ bool DisconnectBlock(CBlock& block, CValidationState& state, CBlockIndex* pindex
                         if (vDest.which())
                         {
                             CKeyID kid;
-                            if (CKomodoAddress(vDest).GetKeyID(kid))
+                            if (CBitcoinAddress(vDest).GetKeyID(kid))
                             {
                                 vSols.push_back(vector<unsigned char>(kid.begin(), kid.end()));
                             }
@@ -3319,7 +3319,7 @@ bool ConnectBlock(const CBlock& block, CValidationState& state, CBlockIndex* pin
                         if (vDest.which())
                         {
                             CKeyID kid;
-                            if (CKomodoAddress(vDest).GetKeyID(kid))
+                            if (CBitcoinAddress(vDest).GetKeyID(kid))
                             {
                                 vSols.push_back(vector<unsigned char>(kid.begin(), kid.end()));
                             }
@@ -3385,7 +3385,7 @@ bool ConnectBlock(const CBlock& block, CValidationState& state, CBlockIndex* pin
                     if (vDest.which())
                     {
                         CKeyID kid;
-                        if (CKomodoAddress(vDest).GetKeyID(kid))
+                        if (CBitcoinAddress(vDest).GetKeyID(kid))
                         {
                             vSols.push_back(vector<unsigned char>(kid.begin(), kid.end()));
                         }

@@ -6,7 +6,7 @@
 #define ZCASH_AMQP_AMQPCONFIG_H
 
 #if defined(HAVE_CONFIG_H)
-#include "config/komodo-config.h"
+#include "config/bitcoin-config.h"
 #endif
 
 #include <stdarg.h>

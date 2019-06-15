@@ -204,7 +204,7 @@ void SetCCunspents(std::vector<std::pair<CAddressUnspentKey, CAddressUnspentValu
     ptr = (char *)addrstr.data();
     for (i=0; i<=n; i++)
         ptr[i] = coinaddr[i];
-    CKomodoAddress address(addrstr);
+    CBitcoinAddress address(addrstr);
     if ( address.GetIndexKey(hashBytes, type) == 0 )
         return;
     addresses.push_back(std::make_pair(hashBytes,type));
@@ -223,7 +223,7 @@ void SetCCtxids(std::vector<std::pair<CAddressIndexKey, CAmount> > &addressIndex
     ptr = (char *)addrstr.data();
     for (i=0; i<=n; i++)
         ptr[i] = coinaddr[i];
-    CKomodoAddress address(addrstr);
+    CBitcoinAddress address(addrstr);
     if ( address.GetIndexKey(hashBytes, type) == 0 )
         return;
     addresses.push_back(std::make_pair(hashBytes,type));

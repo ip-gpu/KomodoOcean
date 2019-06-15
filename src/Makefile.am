@@ -143,7 +143,7 @@ BITCOIN_CORE_H = \
   asyncrpcqueue.h \
   base58.h \
   bech32.h \
-  bloomfilter.h \
+  bloom.h \
   cc/eval.h \
   chain.h \
   chainparams.h \
@@ -267,7 +267,7 @@ libbitcoin_server_a_SOURCES = \
   alertkeys.h \
   asyncrpcoperation.cpp \
   asyncrpcqueue.cpp \
-  bloomfilter.cpp \
+  bloom.cpp \
   cc/eval.cpp \
   cc/import.cpp \
   cc/CCassetsCore.cpp \
@@ -316,10 +316,10 @@ libbitcoin_server_a_SOURCES = \
   pow.cpp \
   rest.cpp \
   rpc/blockchain.cpp \
-  rpc/crosschain_rpc.cpp \
+  rpc/crosschain.cpp \
   rpc/mining.cpp \
   rpc/misc.cpp \
-  rpc/net_rpc.cpp \
+  rpc/net.cpp \
   rpc/rawtransaction.cpp \
   rpc/server.cpp \
   script/serverchecker.cpp \
@@ -438,14 +438,14 @@ libbitcoin_common_a_SOURCES = \
   crypto/haraka_portable.h \
   crypto/verus_hash.h \
   crypto/verus_hash.cpp \
-  hash_komodo.cpp \
+  hash.cpp \
   importcoin.cpp \
   key.cpp \
   key_io.cpp \
   keystore.cpp \
   netbase.cpp \
   metrics.cpp \
-  primitives/block_komodo.cpp \
+  primitives/block.cpp \
   primitives/transaction.cpp \
   primitives/nonce.cpp \
   protocol.cpp \
@@ -474,7 +474,7 @@ libbitcoin_util_a_SOURCES = \
   compat/glibcxx_sanity.cpp \
   compat/strnlen.cpp \
   random.cpp \
-  rpc/protocol_rpc.cpp \
+  rpc/protocol.cpp \
   support/cleanse.cpp \
   sync.cpp \
   uint256.cpp \
@@ -630,7 +630,7 @@ libzcashconsensus_la_SOURCES = \
   crypto/sha1.cpp \
   crypto/sha256.cpp \
   crypto/sha512.cpp \
-  hash_komodo.cpp \
+  hash.cpp \
   primitives/transaction.cpp \
   primitives/nonce.cpp \
   pubkey.cpp \

@@ -124,7 +124,7 @@ public:
  * Script-hash-addresses have version 5 (or 196 testnet).
  * The data vector contains RIPEMD160(SHA256(cscript)), where cscript is the serialized redemption script.
  */
-class CKomodoAddress : public CBase58Data {
+class CBitcoinAddress : public CBase58Data {
 public:
     bool Set(const CKeyID &id);
     bool Set(const CPubKey &key);
@@ -135,10 +135,10 @@ public:
     bool SetString(const char* pszSecret);
     bool SetString(const std::string& strSecret);
 
-    CKomodoAddress() {}
-    CKomodoAddress(const CTxDestination &dest) { Set(dest); }
-    CKomodoAddress(const std::string& strAddress) { SetString(strAddress); }
-    CKomodoAddress(const char* pszAddress) { SetString(pszAddress); }
+    CBitcoinAddress() {}
+    CBitcoinAddress(const CTxDestination &dest) { Set(dest); }
+    CBitcoinAddress(const std::string& strAddress) { SetString(strAddress); }
+    CBitcoinAddress(const char* pszAddress) { SetString(pszAddress); }
 
     CTxDestination Get() const;
     bool GetKeyID(CKeyID &keyID) const;
@@ -150,7 +150,7 @@ public:
 /**
  * A base58-encoded secret key
  */
-class CKomodoSecret : public CBase58Data
+class CBitcoinSecret : public CBase58Data
 {
 public:
     void SetKey(const CKey& vchSecret);
@@ -159,11 +159,11 @@ public:
     bool SetString(const char* pszSecret);
     bool SetString(const std::string& strSecret);
 
-    CKomodoSecret(const CKey& vchSecret) { SetKey(vchSecret); }
-    CKomodoSecret() {}
+    CBitcoinSecret(const CKey& vchSecret) { SetKey(vchSecret); }
+    CBitcoinSecret() {}
 };
 
-template<typename K, int Size, CChainParams::Base58Type Type> class CKomodoExtKeyBase : public CBase58Data
+template<typename K, int Size, CChainParams::Base58Type Type> class CBitcoinExtKeyBase : public CBase58Data
 {
 public:
     void SetKey(const K &key) {
@@ -181,18 +181,18 @@ public:
         return ret;
     }
 
-    CKomodoExtKeyBase(const K &key) {
+    CBitcoinExtKeyBase(const K &key) {
         SetKey(key);
     }
 
-    CKomodoExtKeyBase(const std::string& strBase58c) {
+    CBitcoinExtKeyBase(const std::string& strBase58c) {
         SetString(strBase58c.c_str(), Params().Base58Prefix(Type).size());
     }
 
-    CKomodoExtKeyBase() {}
+    CBitcoinExtKeyBase() {}
 };
 
-typedef CKomodoExtKeyBase<CExtKey, 74, CChainParams::EXT_SECRET_KEY> CKomodoExtKey;
-typedef CKomodoExtKeyBase<CExtPubKey, 74, CChainParams::EXT_PUBLIC_KEY> CKomodoExtPubKey;
+typedef CBitcoinExtKeyBase<CExtKey, 74, CChainParams::EXT_SECRET_KEY> CBitcoinExtKey;
+typedef CBitcoinExtKeyBase<CExtPubKey, 74, CChainParams::EXT_PUBLIC_KEY> CBitcoinExtPubKey;
 
 #endif // BITCOIN_BASE58_H

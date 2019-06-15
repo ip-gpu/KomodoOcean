@@ -40,7 +40,7 @@ void komodo_connectblock(CBlockIndex *pindex,CBlock& block);
 #include "komodo_curve25519.h"
 
 #include "komodo_cJSON.c"
-#include "komodo_komodod.h"
+#include "komodo_bitcoind.h"
 #include "komodo_interest.h"
 #include "komodo_pax.h"
 #include "komodo_notary.h"

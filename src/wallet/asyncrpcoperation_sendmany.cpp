@@ -632,7 +632,7 @@ bool AsyncRPCOperation_sendmany::main_impl() {
                     "allow any change as there is currently no way to specify a change address "
                     "in z_sendmany.", FormatMoney(change)));
             } else {
-                CKomodoAddress ba = CKomodoAddress(fromtaddr_);
+                CBitcoinAddress ba = CBitcoinAddress(fromtaddr_);
                 add_taddr_change_output_to_tx(&ba,change);
                 LogPrint("zrpc", "%s: transparent change in transaction output (amount=%s)\n",
                         getId(),
@@ -1339,7 +1339,7 @@ void AsyncRPCOperation_sendmany::add_taddr_outputs_to_tx() {
     tx_ = CTransaction(rawTx);
 }
 
-void AsyncRPCOperation_sendmany::add_taddr_change_output_to_tx(CKomodoAddress *fromaddress,CAmount amount) {
+void AsyncRPCOperation_sendmany::add_taddr_change_output_to_tx(CBitcoinAddress *fromaddress,CAmount amount) {
 
     LOCK2(cs_main, pwalletMain->cs_wallet);
 

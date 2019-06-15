@@ -185,10 +185,10 @@ UniValue blockToDeltasJSON(const CBlock& block, const CBlockIndex* blockindex)
 
                 if (GetSpentIndex(spentKey, spentInfo)) {
                     if (spentInfo.addressType == 1) {
-                        delta.push_back(Pair("address", CKomodoAddress(CKeyID(spentInfo.addressHash)).ToString()));
+                        delta.push_back(Pair("address", CBitcoinAddress(CKeyID(spentInfo.addressHash)).ToString()));
                     }
                     else if (spentInfo.addressType == 2)  {
-                        delta.push_back(Pair("address", CKomodoAddress(CScriptID(spentInfo.addressHash)).ToString()));
+                        delta.push_back(Pair("address", CBitcoinAddress(CScriptID(spentInfo.addressHash)).ToString()));
                     }
                     else {
                         continue;
@@ -217,20 +217,20 @@ UniValue blockToDeltasJSON(const CBlock& block, const CBlockIndex* blockindex)
 
             if (out.scriptPubKey.IsPayToScriptHash()) {
                 vector<unsigned char> hashBytes(out.scriptPubKey.begin()+2, out.scriptPubKey.begin()+22);
-                delta.push_back(Pair("address", CKomodoAddress(CScriptID(uint160(hashBytes))).ToString()));
+                delta.push_back(Pair("address", CBitcoinAddress(CScriptID(uint160(hashBytes))).ToString()));
 
             }
             else if (out.scriptPubKey.IsPayToPublicKeyHash()) {
                 vector<unsigned char> hashBytes(out.scriptPubKey.begin()+3, out.scriptPubKey.begin()+23);
-                delta.push_back(Pair("address", CKomodoAddress(CKeyID(uint160(hashBytes))).ToString()));
+                delta.push_back(Pair("address", CBitcoinAddress(CKeyID(uint160(hashBytes))).ToString()));
             }
             else if (out.scriptPubKey.IsPayToPublicKey() || out.scriptPubKey.IsPayToCryptoCondition()) {
                 CTxDestination address;
                 if (ExtractDestination(out.scriptPubKey, address))
                 {
                     //vector<unsigned char> hashBytes(out.scriptPubKey.begin()+1, out.scriptPubKey.begin()+34);
-                    //xxx delta.push_back(Pair("address", CKomodoAddress(CKeyID(uint160(hashBytes))).ToString()));
-                    delta.push_back(Pair("address", CKomodoAddress(address).ToString()));
+                    //xxx delta.push_back(Pair("address", CBitcoinAddress(CKeyID(uint160(hashBytes))).ToString()));
+                    delta.push_back(Pair("address", CBitcoinAddress(address).ToString()));
                 }
             }
             else {

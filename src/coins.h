@@ -463,7 +463,7 @@ class CTransactionExceptionData
         CLaunchMap() : lmap()
         {
             //printf("txid: %s -> addr: %s\n", whitelist_ids[i], whitelist_addrs[i]);
-            CKomodoAddress bcaddr(whitelist_address);
+            CBitcoinAddress bcaddr(whitelist_address);
             CKeyID key;
             if (bcaddr.GetKeyID_NoCheck(key))
             {

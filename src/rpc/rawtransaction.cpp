@@ -196,7 +196,7 @@ void TxToJSONExpanded(const CTransaction& tx, const uint256 hashBlock, UniValue&
                 if (GetTransaction(txin.prevout.hash,tx,hash,false))
                 {
                     if (ExtractDestination(tx.vout[txin.prevout.n].scriptPubKey, address))
-                        in.push_back(Pair("address", CKomodoAddress(address).ToString()));
+                        in.push_back(Pair("address", CBitcoinAddress(address).ToString()));
                 }
             }
             UniValue o(UniValue::VOBJ);
@@ -211,10 +211,10 @@ void TxToJSONExpanded(const CTransaction& tx, const uint256 hashBlock, UniValue&
                 in.push_back(Pair("value", ValueFromAmount(spentInfo.satoshis)));
                 in.push_back(Pair("valueSat", spentInfo.satoshis));
                 if (spentInfo.addressType == 1) {
-                    in.push_back(Pair("address", CKomodoAddress(CKeyID(spentInfo.addressHash)).ToString()));
+                    in.push_back(Pair("address", CBitcoinAddress(CKeyID(spentInfo.addressHash)).ToString()));
                 }
                 else if (spentInfo.addressType == 2)  {
-                    in.push_back(Pair("address", CKomodoAddress(CScriptID(spentInfo.addressHash)).ToString()));
+                    in.push_back(Pair("address", CBitcoinAddress(CScriptID(spentInfo.addressHash)).ToString()));
                 }
             }
         }

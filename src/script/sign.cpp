@@ -163,7 +163,7 @@ bool _Getscriptaddress(char *destaddr, const CScript &scriptPubKey)
     if (Solver(scriptPubKey, whichType, vvch) && vvch[0].size() == 20)
     {
         address = CKeyID(uint160(vvch[0]));
-        strcpy(destaddr,(char *)CKomodoAddress(address).ToString().c_str());
+        strcpy(destaddr,(char *)CBitcoinAddress(address).ToString().c_str());
         return(true);
     }
     LogPrintf("Solver for scriptPubKey failed\n%s\n", scriptPubKey.ToString().c_str());

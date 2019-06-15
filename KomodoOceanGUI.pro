@@ -190,7 +190,7 @@ HEADERS += src\komodo_globals.h \
      src\qt\receivecoinsdialog.h \
      src\qt\receiverequestdialog.h \
      src\streams.h \
-     src\komodo_komodod.h \
+     src\komodo_bitcoind.h \
      src\komodo_utils.h \
      src\komodo_notary.h \
      src\komodo_gateway.h
@@ -240,7 +240,7 @@ SOURCES += src\protobuf\google\protobuf\any.cc \
     src\asyncrpcqueue.cpp \
     src\base58.cpp \
     src\bech32.cpp \
-    src\bloomfilter.cpp \
+    src\bloom.cpp \
     src\chain.cpp \
     src\chainparamsbase.cpp \
     src\checkpoints.cpp \
@@ -263,7 +263,7 @@ SOURCES += src\protobuf\google\protobuf\any.cc \
     src\crypto\sha512.cpp \
     src\crypto\verus_hash.cpp \
     src\fs.cpp \
-    src\hash_komodo.cpp \
+    src\hash.cpp \
     src\httprpc.cpp \
     src\httpserver.cpp \
     src\init.cpp \
@@ -346,7 +346,7 @@ SOURCES += src\protobuf\google\protobuf\any.cc \
     src\policy\fees.cpp \
     src\policy\policy.cpp \
     src\pow.cpp \
-    src\primitives\block_komodo.cpp \
+    src\primitives\block.cpp \
     src\primitives\nonce.cpp \
     src\primitives\transaction.cpp \
     src\protocol.cpp \
@@ -411,10 +411,10 @@ SOURCES += src\protobuf\google\protobuf\any.cc \
     src\rest.cpp \
     src\rpc\blockchain.cpp \
     src\rpc\client.cpp \
-    src\rpc\crosschain_rpc.cpp \
+    src\rpc\crosschain.cpp \
     src\rpc\mining.cpp \
     src\rpc\misc.cpp \
-    src\rpc\net_rpc.cpp \
+    src\rpc\net.cpp \
     src\rpc\protocol_rpc.cpp \
     src\rpc\rawtransaction.cpp \
     src\rpc\server.cpp \

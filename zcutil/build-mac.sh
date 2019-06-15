@@ -55,7 +55,7 @@ CXXFLAGS='-arch x86_64 -I/usr/local/Cellar/gcc@6/6.5.0_2/include/c++/6.5.0 '"-I$
 # here we need a small hacks, bcz QT_QPA_PLATFORM_COCOA and QT_STATICPLUGIN still have
 # incorect values after configure (TODO: fix it)
 
-# sed -i -e "s/\/\* #undef QT_QPA_PLATFORM_COCOA \*\//#define QT_QPA_PLATFORM_COCOA 1/" src/config/komodo-config.h
-# sed -i -e "s/\/\* #undef QT_STATICPLUGIN \*\//#define QT_STATICPLUGIN 1/" src/config/komodo-config.h
+# sed -i -e "s/\/\* #undef QT_QPA_PLATFORM_COCOA \*\//#define QT_QPA_PLATFORM_COCOA 1/" src/config/bitcoin-config.h
+# sed -i -e "s/\/\* #undef QT_STATICPLUGIN \*\//#define QT_STATICPLUGIN 1/" src/config/bitcoin-config.h
 
 make "$@" V=1 NO_GTEST=1 STATIC=1
