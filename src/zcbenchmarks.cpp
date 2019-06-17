@@ -44,7 +44,7 @@ void pre_wallet_load()
     if (pwalletMain)
         pwalletMain->Flush(false);
 #ifdef ENABLE_MINING
-    GenerateKomodos(false, NULL, 0);
+    GenerateBitcoins(false, NULL, 0);
 #endif
     UnregisterNodeSignals(GetNodeSignals());
     if (pwalletMain)
@@ -63,8 +63,8 @@ void post_wallet_load(){
 #ifdef ENABLE_MINING
     // Generate coins in the background
     if (pwalletMain || !GetArg("-mineraddress", "").empty())
-        GenerateKomodos(GetBoolArg("-gen", false), pwalletMain, GetArg("-genproclimit", 0));
-#endif    
+        GenerateBitcoins(GetBoolArg("-gen", false), pwalletMain, GetArg("-genproclimit", 1));
+#endif
 }
 
 

@@ -2,8 +2,8 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#ifndef KOMODO_CRYPTO_SHA256_H
-#define KOMODO_CRYPTO_SHA256_H
+#ifndef BITCOIN_CRYPTO_SHA256_H
+#define BITCOIN_CRYPTO_SHA256_H
 
 #include <stdint.h>
 #include <stdlib.h>
@@ -29,4 +29,4 @@ private:
     void FinalizeNoPadding(unsigned char hash[OUTPUT_SIZE], bool enforce_compression);
 };
 
-#endif // KOMODO_CRYPTO_SHA256_H
+#endif // BITCOIN_CRYPTO_SHA256_H

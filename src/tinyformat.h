@@ -32,7 +32,7 @@
 // header file.  Design goals include:
 //
 // * Type safety and extensibility for user defined types.
-// * C99 LogPrintf() compatibility, to the extent possible using std::ostream
+// * C99 printf() compatibility, to the extent possible using std::ostream
 // * Simplicity and minimalism.  A single header file to include and distribute
 //   with your projects.
 // * Augment rather than replace the standard stream formatting mechanism
@@ -69,7 +69,7 @@
 //
 // These are the three primary interface functions.  There is also a
 // convenience function printfln() which appends a newline to the usual result
-// of LogPrintf() for super simple logging.
+// of printf() for super simple logging.
 //
 //
 // User defined format functions
@@ -86,7 +86,7 @@
 // n between 1 and 16.  We can use these to define a macro which generates the
 // desired user defined function with n arguments.  To generate all 16 user
 // defined function bodies, use the macro TINYFORMAT_FOREACH_ARGNUM.  For an
-// example, see the implementation of LogPrintf() at the end of the source file.
+// example, see the implementation of printf() at the end of the source file.
 //
 // Sometimes it's useful to be able to pass a list of format arguments through
 // to a non-template function.  The FormatList class is provided as a way to do
@@ -804,7 +804,7 @@ inline void formatImpl(std::ostream& out, const char* fmt,
         else
         {
             // The following is a special case with no direct correspondence
-            // between stream formatting and the LogPrintf() behaviour.  Simulate
+            // between stream formatting and the printf() behaviour.  Simulate
             // it crudely by formatting into a temporary string stream and
             // munging the resulting string.
             std::ostringstream tmpStream;

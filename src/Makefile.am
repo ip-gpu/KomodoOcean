@@ -23,6 +23,7 @@ BITCOIN_CONFIG_INCLUDES=-I$(builddir)/config
 BITCOIN_INCLUDES=-I$(builddir) -I$(builddir)/obj $(BOOST_CPPFLAGS) $(LEVELDB_CPPFLAGS) $(CRYPTO_CFLAGS) $(SSL_CFLAGS)
 
 BITCOIN_INCLUDES += -I$(srcdir)/secp256k1/include
+BITCOIN_INCLUDES += -I$(srcdir)/cc/includes
 BITCOIN_INCLUDES += -I$(srcdir)/cryptoconditions/include
 BITCOIN_INCLUDES += -I$(srcdir)/cryptoconditions/src
 BITCOIN_INCLUDES += -I$(srcdir)/cryptoconditions/src/asn
@@ -129,6 +130,8 @@ LIBZCASH_H = \
 .PHONY: FORCE check-symbols check-security
 # bitcoin core #
 BITCOIN_CORE_H = \
+  addressindex.h \
+  spentindex.h \
   addrman.h \
   addrdb.h \
   alert.h \
@@ -187,6 +190,7 @@ BITCOIN_CORE_H = \
   mruset.h \
   net.h \
   netbase.h \
+  notaries_staked.h \
   noui.h \
   paymentdisclosure.h \
   paymentdisclosuredb.h \
@@ -270,10 +274,12 @@ libbitcoin_server_a_SOURCES = \
   bloom.cpp \
   cc/eval.cpp \
   cc/import.cpp \
+  cc/importgateway.cpp \
   cc/CCassetsCore.cpp \
   cc/CCcustom.cpp \
   cc/CCtx.cpp \
   cc/CCutils.cpp \
+  cc/CCtokens.cpp \
   cc/assets.cpp \
   cc/faucet.cpp \
   cc/rewards.cpp \
@@ -284,7 +290,7 @@ libbitcoin_server_a_SOURCES = \
   cc/oracles.cpp \
   cc/prices.cpp \
   cc/pegs.cpp \
-  cc/triggers.cpp \
+  cc/marmara.cpp \
   cc/payments.cpp \
   cc/gateways.cpp \
   cc/channels.cpp \
@@ -294,6 +300,7 @@ libbitcoin_server_a_SOURCES = \
   checkpoints.cpp \
   fs.cpp \
   crosschain.cpp \
+  crosschain_authority.cpp \
   crypto/haraka.h \
   crypto/haraka_portable.h \
   crypto/verus_hash.h \
@@ -308,6 +315,7 @@ libbitcoin_server_a_SOURCES = \
   metrics.cpp \
   miner.cpp \
   net.cpp \
+  notaries_staked.cpp \
   noui.cpp \
   notarisationdb.cpp \
   paymentdisclosure.cpp \
@@ -329,6 +337,7 @@ libbitcoin_server_a_SOURCES = \
   txdb.cpp \
   txmempool.cpp \
   validationinterface.cpp \
+  cc/cclib.cpp \
   $(BITCOIN_CORE_H) \
   $(LIBZCASH_H)
 
@@ -360,6 +369,8 @@ libbitcoin_wallet_a_SOURCES = \
   transaction_builder.cpp \
   wallet/rpcdisclosure.cpp \
   wallet/rpcdump.cpp \
+  cc/CCtokens.cpp \
+  cc/CCassetsCore.cpp \
   cc/CCassetstx.cpp \
   cc/CCtx.cpp \
   wallet/rpcwallet.cpp \
@@ -412,14 +423,14 @@ crypto_libverus_crypto_a_CPPFLAGS = -O3 -march=x86-64 -msse4 -msse4.1 -msse4.2 -
 crypto_libverus_crypto_a_CXXFLAGS = -O3 -march=x86-64 -msse4 -msse4.1 -msse4.2 -mssse3 -mavx -maes -g -funroll-loops -fomit-frame-pointer -fPIC $(AM_CXXFLAGS)
 crypto_libverus_crypto_a_SOURCES = \
   crypto/haraka.h \
-  crypto/haraka.cpp
+  crypto/haraka.c
 
 # Verus hash specific library - portable
 crypto_libverus_portable_crypto_a_CPPFLAGS = -O3 -march=x86-64 -g -funroll-loops -fomit-frame-pointer -fPIC $(AM_CPPFLAGS)
 crypto_libverus_portable_crypto_a_CXXFLAGS = -O3 -march=x86-64 -g -funroll-loops -fomit-frame-pointer -fPIC $(AM_CXXFLAGS)
 crypto_libverus_portable_crypto_a_SOURCES = \
   crypto/haraka_portable.h \
-  crypto/haraka_portable.cpp
+  crypto/haraka_portable.c
 
 # common: shared between zcashd and non-server tools
 libbitcoin_common_a_CPPFLAGS = $(BITCOIN_INCLUDES)
@@ -459,6 +470,8 @@ libbitcoin_common_a_SOURCES = \
   script/sign.cpp \
   script/standard.cpp \
   transaction_builder.cpp \
+  cc/CCtokenutils.cpp \
+  cc/CCutilbits.cpp \
   $(BITCOIN_CORE_H) \
   $(LIBZCASH_H)
 
@@ -545,6 +558,8 @@ komodod_LDADD += \
   $(LIBVERUS_PORTABLE_CRYPTO) \
   $(LIBZCASH_LIBS)
 
+komodod_LDADD += libcc.a $(LIBSECP256K1)
+
 # bitcoin-cli binary #
 komodo_cli_SOURCES = bitcoin-cli.cpp
 komodo_cli_CPPFLAGS = $(BITCOIN_INCLUDES) $(EVENT_CFLAGS)
@@ -564,6 +579,8 @@ komodo_cli_LDADD = \
   $(EVENT_LIBS) \
   $(LIBZCASH) \
   $(LIBSNARK) \
+  $(LIBVERUS_CRYPTO) \
+  $(LIBVERUS_PORTABLE_CRYPTO) \
   $(LIBBITCOIN_CRYPTO) \
   $(LIBZCASH_LIBS)
 #

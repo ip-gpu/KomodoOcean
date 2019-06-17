@@ -47,11 +47,11 @@ public:
   const uint32_t &EDX() const {return regs[3];}
 };
 
-//extern "C" 
-//{
+extern "C" 
+{
 #include "crypto/haraka.h"
 #include "crypto/haraka_portable.h"
-//}
+}
 
 class CVerusHash
 {

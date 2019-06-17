@@ -18,7 +18,7 @@
 namespace libsnark {
 
 template<mp_size_t n>
-bigint<n>::bigint(const uint64_t x) /// Initalize from a small integer
+bigint<n>::bigint(const uint64_t x) /// Initialize from a small integer
 {
     static_assert(UINT64_MAX <= GMP_NUMB_MAX, "uint64_t does not fit in a GMP limb");
     this->data[0] = x;

@@ -9,8 +9,8 @@
 //
 // For more information, see BIP 173.
 
-#ifndef KOMODO_BECH32_H
-#define KOMODO_BECH32_H
+#ifndef BITCOIN_BECH32_H
+#define BITCOIN_BECH32_H
 
 #include <stdint.h>
 #include <string>

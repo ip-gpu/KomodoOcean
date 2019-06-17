@@ -5,8 +5,8 @@
 /**
  * Functionality for communicating with Tor.
  */
-#ifndef KOMODO_TORCONTROL_H
-#define KOMODO_TORCONTROL_H
+#ifndef BITCOIN_TORCONTROL_H
+#define BITCOIN_TORCONTROL_H
 
 #include "scheduler.h"
 
@@ -17,4 +17,4 @@ void StartTorControl(boost::thread_group& threadGroup, CScheduler& scheduler);
 void InterruptTorControl();
 void StopTorControl();
 
-#endif /* KOMODO_TORCONTROL_H */
+#endif /* BITCOIN_TORCONTROL_H */

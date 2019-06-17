@@ -2,8 +2,24 @@
 // Copyright (c) 2009-2015 The Bitcoin developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
-#ifndef KOMODO_POLICYESTIMATOR_H
-#define KOMODO_POLICYESTIMATOR_H
+
+/******************************************************************************
+ * Copyright © 2014-2019 The SuperNET Developers.                             *
+ *                                                                            *
+ * See the AUTHORS, DEVELOPER-AGREEMENT and LICENSE files at                  *
+ * the top-level directory of this distribution for the individual copyright  *
+ * holder information and the developer policies on copyright and licensing.  *
+ *                                                                            *
+ * Unless otherwise agreed in a custom licensing agreement, no part of the    *
+ * SuperNET software, including this file may be copied, modified, propagated *
+ * or distributed except according to the terms contained in the LICENSE file *
+ *                                                                            *
+ * Removal or modification of this copyright notice is prohibited.            *
+ *                                                                            *
+ ******************************************************************************/
+
+#ifndef BITCOIN_POLICYESTIMATOR_H
+#define BITCOIN_POLICYESTIMATOR_H
 
 #include "amount.h"
 #include "uint256.h"
@@ -28,7 +44,7 @@ class CTxMemPoolEntry;
  * included in blocks before transactions of lower fee/priority.   So for
  * example if you wanted to know what fee you should put on a transaction to
  * be included in a block within the next 5 blocks, you would start by looking
- * at the bucket with with the highest fee transactions and verifying that a
+ * at the bucket with the highest fee transactions and verifying that a
  * sufficiently high percentage of them were confirmed within 5 blocks and
  * then you would look at the next highest fee bucket, and so on, stopping at
  * the last bucket to pass the test.   The average fee of transactions in this
@@ -71,7 +87,7 @@ static const double DEFAULT_DECAY = .998;
 
 /**
  * We will instantiate two instances of this class, one to track transactions
- * that were included in a block due to fee, and one for tx's included due to
+ * that were included in a block due to fee, and one for txs included due to
  * priority.  We will lump transactions into a bucket according to their approximate
  * fee or priority and then track how long it took for those txs to be included
  * in a block. There is always a bucket into which any given double value
@@ -100,7 +116,7 @@ private:
     // and calcuate the totals for the current block to update the moving averages
     std::vector<std::vector<int> > curBlockConf; // curBlockConf[Y][X]
 
-    // Sum the total priority/fee of all tx's in each bucket
+    // Sum the total priority/fee of all txs in each bucket
     // Track the historical moving average of this total over blocks
     std::vector<double> avg;
     // and calculate the total for the current block to update the moving average
@@ -214,7 +230,7 @@ static const double FEE_SPACING = 1.1;
 static const double PRI_SPACING = 2;
 
 /**
- *  We want to be able to estimate fees or priorities that are needed on tx's to be included in
+ *  We want to be able to estimate fees or priorities that are needed on txs to be included in
  * a certain number of blocks.  Every time a block is added to the best chain, this class records
  * stats on the transactions included in that block
  */
@@ -281,4 +297,4 @@ private:
     CFeeRate feeLikely, feeUnlikely;
     double priLikely, priUnlikely;
 };
-#endif /*KOMODO_POLICYESTIMATOR_H */
+#endif /*BITCOIN_POLICYESTIMATOR_H */

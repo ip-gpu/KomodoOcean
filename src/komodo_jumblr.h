@@ -1,5 +1,5 @@
 /******************************************************************************
- * Copyright © 2014-2018 The SuperNET Developers.                             *
+ * Copyright © 2014-2019 The SuperNET Developers.                             *
  *                                                                            *
  * See the AUTHORS, DEVELOPER-AGREEMENT and LICENSE files at                  *
  * the top-level directory of this distribution for the individual copyright  *
@@ -337,7 +337,7 @@ int32_t jumblr_numvins(bits256 txid)
             if ( jobj(retjson,(char *)"vin") != 0 && ((vins= jarray(&n,retjson,(char *)"vin")) == 0 || n == 0) )
             {
                 numvins = n;
-                //printf("numvins.%d\n",n);
+                //LogPrintf("numvins.%d\n",n);
             } //else LogPrintf("no vin.(%s)\n",retstr);
             free_json(retjson);
         }
@@ -364,7 +364,7 @@ int64_t jumblr_balance(char *addr)
     {
         if ( (retstr= jumblr_listunspent(addr)) != 0 )
         {
-            //printf("jumblr.[%s].(%s)\n","KMD",retstr);
+            //LogPrintf("jumblr.[%s].(%s)\n","KMD",retstr);
             if ( (retjson= cJSON_Parse(retstr)) != 0 )
             {
                 if ( (n= cJSON_GetArraySize(retjson)) > 0 && cJSON_IsArray(retjson) != 0 )
@@ -400,7 +400,7 @@ int32_t jumblr_itemset(struct jumblr_item *ptr,cJSON *item,char *status)
      }*/
     if ( (params= jobj(item,(char *)"params")) != 0 )
     {
-        //printf("params.(%s)\n",jprint(params,0));
+        //LogPrintf("params.(%s)\n",jprint(params,0));
         if ( (from= jstr(params,(char *)"fromaddress")) != 0 )
         {
             safecopy(ptr->src,from,sizeof(ptr->src));
@@ -410,7 +410,7 @@ int32_t jumblr_itemset(struct jumblr_item *ptr,cJSON *item,char *status)
             for (i=0; i<n; i++)
             {
                 dest = jitem(amounts,i);
-                //printf("%s ",jprint(dest,0));
+                //LogPrintf("%s ",jprint(dest,0));
                 if ( (addr= jstr(dest,(char *)"address")) != 0 && (amount= jdouble(dest,(char *)"amount")*SATOSHIDEN) > 0 )
                 {
                     if ( strcmp(addr,JUMBLR_ADDR) == 0 )
@@ -440,7 +440,7 @@ void jumblr_opidupdate(struct jumblr_item *ptr)
                 if ( cJSON_GetArraySize(retjson) == 1 && cJSON_IsArray(retjson) != 0 )
                 {
                     item = jitem(retjson,0);
-                    //printf("%s\n",jprint(item,0));
+                    //LogPrintf("%s\n",jprint(item,0));
                     if ( (status= jstr(item,(char *)"status")) != 0 )
                     {
                         if ( strcmp(status,(char *)"success") == 0 )
@@ -566,14 +566,14 @@ void jumblr_opidsupdate()
         {
             if ( (n= cJSON_GetArraySize(array)) > 0 && cJSON_IsArray(array) != 0 )
             {
-                //printf("%s -> n%d\n",retstr,n);
+                //LogPrintf("%s -> n%d\n",retstr,n);
                 for (i=0; i<n; i++)
                 {
                     if ( (ptr= jumblr_opidadd(jstri(array,i))) != 0 )
                     {
                         if ( ptr->status == 0 )
                             jumblr_opidupdate(ptr);
-                        //printf("%d: %s -> %s %.8f\n",ptr->status,ptr->src,ptr->dest,dstr(ptr->amount));
+                        //LogPrintf("%d: %s -> %s %.8f\n",ptr->status,ptr->src,ptr->dest,dstr(ptr->amount));
                         if ( jumblr_addresstype(ptr->src) == 'z' && jumblr_addresstype(ptr->dest) == 't' )
                             jumblr_prune(ptr);
                     }
@@ -629,7 +629,7 @@ uint64_t jumblr_increment(uint8_t r,int32_t height,uint64_t total,uint64_t bigge
 void jumblr_iteration()
 {
     static int32_t lastheight; static uint32_t lasttime;
-    char *zaddr,*addr,*retstr,secretaddr[64]; cJSON *array; int32_t i,iter,height,acpublic,counter,chosen_one,n; uint64_t smallest,medium,biggest,amount=0,total=0; double fee; struct jumblr_item *ptr,*tmp; uint16_t r,s;
+    char *zaddr,*addr,*retstr=0,secretaddr[64]; cJSON *array; int32_t i,iter,height,acpublic,counter,chosen_one,n; uint64_t smallest,medium,biggest,amount=0,total=0; double fee; struct jumblr_item *ptr,*tmp; uint16_t r,s;
     acpublic = ASSETCHAINS_PUBLIC;
     if ( ASSETCHAINS_SYMBOL[0] == 0 && GetTime() >= KOMODO_SAPLING_DEADLINE )
         acpublic = 1;
@@ -648,7 +648,7 @@ void jumblr_iteration()
                 }
                 free_json(array);
             }
-            free(retstr);
+            free(retstr), retstr = 0;
         }
     }
     height = (int32_t)chainActive.LastTip()->GetHeight();
@@ -666,7 +666,7 @@ void jumblr_iteration()
     biggest = SATOSHIDEN * ((JUMBLR_INCR + 3*fee)*777 + 3*JUMBLR_TXFEE);
     OS_randombytes((uint8_t *)&r,sizeof(r));
     s = (r % 3);
-    //printf("jumblr_iteration r.%u s.%u\n",r,s);
+    //LogPrintf("jumblr_iteration r.%u s.%u\n",r,s);
     switch ( s )
     {
         case 0: // t -> z
@@ -691,7 +691,7 @@ void jumblr_iteration()
                     if ( amount > 0 && (retstr= jumblr_sendt_to_z(Jumblr_deposit,addr,dstr(amount))) != 0 )
                     {
                         LogPrintf("sendt_to_z.(%s)\n",retstr);
-                        free(retstr);
+                        free(retstr), retstr = 0;
                     }
                     free(zaddr);
                 } else LogPrintf("no zaddr from jumblr_zgetnewaddress\n");
@@ -723,7 +723,7 @@ void jumblr_iteration()
                                     if ( (retstr= jumblr_sendz_to_z(ptr->dest,addr,dstr(total))) != 0 )
                                     {
                                         LogPrintf("n.%d counter.%d chosen_one.%d send z_to_z.(%s)\n",n,counter,chosen_one,retstr);
-                                        free(retstr);
+                                        free(retstr), retstr = 0;
                                     }
                                     ptr->spent = (uint32_t)time(NULL);
                                     free(zaddr);
@@ -757,7 +757,7 @@ void jumblr_iteration()
                     counter = n = 0;
                     HASH_ITER(hh,Jumblrs,ptr,tmp)
                     {
-                        //printf("status.%d %c %c %.8f\n",ptr->status,jumblr_addresstype(ptr->src),jumblr_addresstype(ptr->dest),dstr(ptr->amount));
+                        //LogPrintf("status.%d %c %c %.8f\n",ptr->status,jumblr_addresstype(ptr->src),jumblr_addresstype(ptr->dest),dstr(ptr->amount));
                         if ( ptr->spent == 0 && ptr->status > 0 && jumblr_addresstype(ptr->src) == 'z' && jumblr_addresstype(ptr->dest) == 'z' )
                         {
                             if ( (total= jumblr_balance(ptr->dest)) >= (fee + JUMBLR_FEE)*SATOSHIDEN )
@@ -768,7 +768,7 @@ void jumblr_iteration()
                                     if ( (retstr= jumblr_sendz_to_t(ptr->dest,secretaddr,dstr(total))) != 0 )
                                     {
                                         LogPrintf("%s send z_to_t.(%s)\n",secretaddr,retstr);
-                                        free(retstr);
+                                        free(retstr), retstr = 0;
                                     } else LogPrintf("null return from jumblr_sendz_to_t\n");
                                     ptr->spent = (uint32_t)time(NULL);
                                     break;

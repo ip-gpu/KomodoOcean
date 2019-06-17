@@ -41,6 +41,15 @@ TRIPLET=`./depends/config.guess`
 PREFIX="$(pwd)/depends/$TRIPLET"
 
 make "$@" -C ./depends/ V=1 # NO_PROTON=1
+
+#BUILD CCLIB
+
+WD=$PWD
+cd src/cc
+echo $PWD
+./makecustom
+cd $WD
+
 ./autogen.sh
 
 LDFLAGS="-static-libgcc -static-libstdc++"

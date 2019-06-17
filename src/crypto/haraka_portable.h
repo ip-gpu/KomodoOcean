@@ -5,12 +5,12 @@
 void load_constants_port();
 
 /* Tweak constants with seed */
-//void tweak_constants(const unsigned char *pk_seed, const unsigned char *sk_seed, 
-//	                 unsigned long long seed_length);
+void tweak_constants(const unsigned char *pk_seed, const unsigned char *sk_seed, 
+	                 unsigned long long seed_length);
 
 /* Haraka Sponge */
-//void haraka_S(unsigned char *out, unsigned long long outlen,
-//              const unsigned char *in, unsigned long long inlen);
+void haraka_S(unsigned char *out, unsigned long long outlen,
+              const unsigned char *in, unsigned long long inlen);
 
 /* Applies the 512-bit Haraka permutation to in. */
 void haraka512_perm(unsigned char *out, const unsigned char *in);

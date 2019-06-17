@@ -2,9 +2,25 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
+/******************************************************************************
+ * Copyright © 2014-2019 The SuperNET Developers.                             *
+ *                                                                            *
+ * See the AUTHORS, DEVELOPER-AGREEMENT and LICENSE files at                  *
+ * the top-level directory of this distribution for the individual copyright  *
+ * holder information and the developer policies on copyright and licensing.  *
+ *                                                                            *
+ * Unless otherwise agreed in a custom licensing agreement, no part of the    *
+ * SuperNET software, including this file may be copied, modified, propagated *
+ * or distributed except according to the terms contained in the LICENSE file *
+ *                                                                            *
+ * Removal or modification of this copyright notice is prohibited.            *
+ *                                                                            *
+ ******************************************************************************/
+
 #include "clientversion.h"
 
 #include "tinyformat.h"
+#include "util.h"
 
 #include <string>
 
@@ -19,7 +35,7 @@
  * for both komodod and komodo-core, to make it harder for attackers to
  * target servers or GUI users specifically.
  */
-const std::string CLIENT_NAME("MagicBean");
+const std::string CLIENT_NAME = GetArg("-clientname", "MagicBean");
 
 /**
  * Client version number
@@ -51,8 +67,8 @@ const std::string CLIENT_NAME("MagicBean");
 //! git will put "#define GIT_ARCHIVE 1" on the next line inside archives. 
 #define GIT_ARCHIVE 1
 #ifdef GIT_ARCHIVE
-#define GIT_COMMIT_ID "27"
-#define GIT_COMMIT_DATE "Fri, 07 Dec 2018 00:00:00 +0500"
+#define GIT_COMMIT_ID "28"
+#define GIT_COMMIT_DATE "Sun, 16 Jun 2019 00:00:00 +0500"
 #endif
 
 #define RENDER_BETA_STRING(num) "-beta" DO_STRINGIZE(num)

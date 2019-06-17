@@ -1,5 +1,5 @@
 /******************************************************************************
- * Copyright © 2014-2018 The SuperNET Developers.                             *
+ * Copyright © 2014-2019 The SuperNET Developers.                             *
  *                                                                            *
  * See the AUTHORS, DEVELOPER-AGREEMENT and LICENSE files at                  *
  * the top-level directory of this distribution for the individual copyright  *
@@ -22,7 +22,7 @@
 #include "include/cJSON.h"
 #include "include/sha256.h"
 #include "asn/asn_application.h"
-#include "cryptoconditions.h"
+//#include "cryptoconditions.h"
 #include "internal.h"
 
 
