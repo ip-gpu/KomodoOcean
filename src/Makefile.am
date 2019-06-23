@@ -263,6 +263,9 @@ libbitcoin_util_a-clientversion.$(OBJEXT): obj/build.h
 
 # server: shared between komodod and komodo-qt
 libbitcoin_server_a_CPPFLAGS = $(BITCOIN_INCLUDES) $(MINIUPNPC_CPPFLAGS) $(EVENT_CFLAGS) $(EVENT_PTHREADS_CFLAGS)
+# server: built-in cclib with custom cclib
+libbitcoin_server_a_CPPFLAGS += -DBUILD_CUSTOMCC
+
 libbitcoin_server_a_SOURCES = \
   sendalert.cpp \
   addrman.cpp \

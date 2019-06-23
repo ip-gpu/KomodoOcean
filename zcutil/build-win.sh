@@ -10,6 +10,8 @@ set -x
 cd "$(dirname "$(readlink -f "$0")")/.."
 
 cd depends/ && make HOST=$HOST V=1 -j$(nproc) && cd ../
+
+### don't used here, bcz we have cclib static built-in in libbitcoin_server_a
 #WD=$PWD
 #cd src/cc
 #echo $PWD

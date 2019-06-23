@@ -42,13 +42,13 @@ PREFIX="$(pwd)/depends/$TRIPLET"
 
 make "$@" -C ./depends/ V=1 # NO_PROTON=1
 
+### don't used here, bcz we have cclib static built-in in libbitcoin_server_a
 #BUILD CCLIB
-
-WD=$PWD
-cd src/cc
-echo $PWD
-./makecustom
-cd $WD
+#WD=$PWD
+#cd src/cc
+#echo $PWD
+#./makecustom
+#cd $WD
 
 ./autogen.sh
 
