@@ -71,7 +71,7 @@ SplashScreen::SplashScreen(Qt::WindowFlags f, const NetworkStyle *networkStyle) 
     // draw the komodo icon, expected size of PNG: 1024x1024
     // QRect rectIcon(QPoint(-150,-122), QSize(430,430));
     // QRect rectIcon(QPoint(-50,-10), QSize(350,350));
-    QRect rectIcon(QPoint(0,20), QSize(280,280));
+    QRect rectIcon(QPoint(5,15), QSize(280,280));
 
     const QSize requiredSize(1024,1024);
     QPixmap icon(networkStyle->getAppIcon().pixmap(requiredSize));
