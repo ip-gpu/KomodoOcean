@@ -4,7 +4,7 @@
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 /******************************************************************************
- * Copyright © 2014-2019 The SuperNET Developers.                             *
+ * Copyright Â© 2014-2019 The SuperNET Developers.                             *
  *                                                                            *
  * See the AUTHORS, DEVELOPER-AGREEMENT and LICENSE files at                  *
  * the top-level directory of this distribution for the individual copyright  *
@@ -189,7 +189,7 @@ inline bool IsSwitchChar(char c)
  *      else if the string has fewer than _MAX_ERAS entries, then the last 
  *      entry fills remaining entries
  */
-void Split(const std::string& strVal, uint64_t *outVals, uint64_t nDefault);
+void Split(const std::string& strVal, int32_t outsize, uint64_t *outVals, uint64_t nDefault);
 
 /**
  * Return string argument or default value
