@@ -1694,7 +1694,7 @@ int8_t equihash_params_possible(uint64_t n, uint64_t k)
 
 void komodo_args(char *argv0)
 {
-    std::string name,addn,hexstr,symbol; char *dirname,fname[512],arg0str[64],magicstr[9]; uint8_t magic[4],extrabuf[32756],disablebits[32],*extraptr=0; FILE *fp; uint64_t val; uint16_t port; int32_t i,nonz=0,baseid,len,n,extralen = 0; uint64_t ccenables[256], ccEnablesHeight[512];
+    std::string name,addn,hexstr,symbol; char *dirname,fname[512],arg0str[64],magicstr[9]; uint8_t magic[4],extrabuf[32756],disablebits[32],*extraptr=0; FILE *fp; uint64_t val; uint16_t port; int32_t i,nonz=0,baseid,len,n,extralen = 0; uint64_t ccenables[256], ccEnablesHeight[512] = {0};
     IS_KOMODO_NOTARY = GetBoolArg("-notary", false);
     IS_STAKED_NOTARY = GetArg("-stakednotary", -1);
     memset(ccenables,0,sizeof(ccenables));
@@ -1769,7 +1769,9 @@ void komodo_args(char *argv0)
     {
         int32_t ecode = ccEnablesHeight[i];
         int32_t ht = ccEnablesHeight[i+1];
-        if ( ecode > 256 )
+        if ( i > 1 && ccEnablesHeight[i-2] == ecode )
+            break;
+        if ( ecode > 255 || ecode < 0 )
             LogPrintf( "ac_ccactivateht: invalid evalcode.%i must be between 0 and 256.\n", ecode);
         else if ( ht > 0 )
         {
@@ -1904,13 +1906,15 @@ void komodo_args(char *argv0)
         }
         if ( ASSETCHAINS_CC != 0 )
         {
+            uint8_t prevCCi = 0;
             ASSETCHAINS_CCLIB = GetArg("-ac_cclib","");
             Split(GetArg("-ac_ccenable",""), sizeof(ccenables)/sizeof(*ccenables),  ccenables, 0);
             for (i=nonz=0; i<0x100; i++)
             {
-                if ( ccenables[i] != 0 )
+                if ( ccenables[i] != prevCCi && ccenables[i] != 0 )
                 {
                     nonz++;
+                    prevCCi = ccenables[i];
                     LogPrintf("%d ",(uint8_t)(ccenables[i] & 0xff));
                 }
             }
@@ -1922,11 +1926,12 @@ void komodo_args(char *argv0)
                     ASSETCHAINS_CCDISABLES[i] = 1;
                     SETBIT(disablebits,i);
                 }
-                for (i=0; i<256; i++)
+                for (i=0; i<nonz; i++)
                 {
                     CLEARBIT(disablebits,(ccenables[i] & 0xff));
                     ASSETCHAINS_CCDISABLES[ccenables[i] & 0xff] = 0;
                 }
+                CLEARBIT(disablebits,0);
             }
             /*if ( ASSETCHAINS_CCLIB.size() > 0 )
             {
@@ -2438,4 +2443,3 @@ void komodo_prefetch(FILE *fp)
     }
     fseek(fp,fpos,SEEK_SET);
 }
-
