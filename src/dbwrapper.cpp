@@ -54,6 +54,12 @@ CDBWrapper::CDBWrapper(const boost::filesystem::path& path, size_t nCacheSize, b
     leveldb::Status status = leveldb::DB::Open(options, path.string(), &pdb);
     dbwrapper_private::HandleError(status);
     LogPrintf("Opened LevelDB successfully\n");
+
+    if (GetBoolArg("-forcecompactdb", false)) {
+        LogPrintf("Starting database compaction of %s\n", path.string());
+        pdb->CompactRange(nullptr, nullptr);
+        LogPrintf("Finished database compaction of %s\n", path.string());
+    }
 }
 
 CDBWrapper::~CDBWrapper()
