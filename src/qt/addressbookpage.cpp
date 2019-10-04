@@ -137,9 +137,10 @@ void AddressBookPage::setModel(AddressTableModel *_model)
     ui->tableView->setSortingEnabled(true);
     ui->tableView->sortByColumn(3, Qt::AscendingOrder);
 
+    /*
     ui->tableView->setColumnWidth(AddressTableModel::isMine, 75);
     ui->tableView->setColumnWidth(AddressTableModel::isWatchOnly, 75);
-    ui->tableView->setColumnWidth(AddressTableModel::Balance, 80);
+    */
     ui->tableView->setColumnWidth(AddressTableModel::Label, 200);
 
     // Set column widths
