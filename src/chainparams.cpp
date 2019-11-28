@@ -4,7 +4,7 @@
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 /******************************************************************************
- * Copyright © 2014-2019 The SuperNET Developers.                             *
+ * Copyright Â© 2014-2019 The SuperNET Developers.                             *
  *                                                                            *
  * See the AUTHORS, DEVELOPER-AGREEMENT and LICENSE files at                  *
  * the top-level directory of this distribution for the individual copyright  *
@@ -372,6 +372,7 @@ void *chainparams_commandline(void *ptr)
     }
     else
     {
+            /*
             checkpointData = //(Checkpoints::CCheckpointData)
             {
                 boost::assign::map_list_of
@@ -518,6 +519,52 @@ void *chainparams_commandline(void *ptr)
                 (int64_t)1253783,         // * total number of transactions between genesis and last checkpoint
                                 //   (the tx=... number in the SetBestChain debug.log lines)
                 (double)2777            // * estimated number of transactions per day after checkpoint
+                                //   total number of tx / (checkpoint block height / (24 * 24))
+            };
+            */
+
+            checkpointData = // (Checkpoints::CCheckpointData)
+            {
+                boost::assign::map_list_of
+
+                (0, mainParams.consensus.hashGenesisBlock)
+                (	50000,	uint256S("0x00076e16d3fa5194da559c17cf9cf285e21d1f13154ae4f7c7b87919549345aa"))
+                (	100000,	uint256S("0x0f02eb1f3a4b89df9909fec81a4bd7d023e32e24e1f5262d9fc2cc36a715be6f"))
+                (	150000,	uint256S("0x0a817f15b9da636f453a7a01835cfc534ed1a55ce7f08c566471d167678bedce"))
+                (	200000,	uint256S("0x000001763a9337328651ca57ac487cc0507087be5838fb74ca4165ff19f0e84f"))
+                (	250000,	uint256S("0x0dd54ef5f816c7fde9d2b1c8c1a26412b3c761cc5dd3901fa5c4cd1900892fba"))
+                (	300000,	uint256S("0x000000fa5efd1998959926047727519ed7de06dcf9f2cd92a4f71e907e1312dc"))
+                (	350000,	uint256S("0x0000000228ef321323f81dae00c98d7960fc7486fb2d881007fee60d1e34653f"))
+                (	400000,	uint256S("0x036d294c5be96f4c0efb28e652eb3968231e87204a823991a85c5fdab3c43ae6"))
+                (	450000,	uint256S("0x0906ef1e8dc194f1f03bd4ce1ac8c6992fd721ef2c5ccbf4871ec8cdbb456c18"))
+                (	500000,	uint256S("0x0bebdb417f7a51fe0c36fcf94e2ed29895a9a862eaa61601272866a7ecd6391b"))
+                (	550000,	uint256S("0x06df52fc5f9ba03ccc3a7673b01ab47990bd5c4947f6e1bc0ba14d21cd5bcccd"))
+                (	600000,	uint256S("0x00000005080d5689c3b4466e551cd1986e5d2024a62a79b1335afe12c42779e4"))
+                (	650000,	uint256S("0x039a3cb760cc6e564974caf69e8ae621c14567f3a36e4991f77fd869294b1d52"))
+                (	700000,	uint256S("0x00002285be912b2b887a5bb42d2f1aa011428c565b0ffc908129c47b5ce87585"))
+                (	750000,	uint256S("0x04cff4c26d185d591bed3613ce15e1d15d9c91dd8b98a6729f89c58ce4bd1fd6"))
+                (	800000,	uint256S("0x0000000617574d402fca8e6570f0845bd5fe449398b318b4e1f65bc69cdd6606"))
+                (	850000,	uint256S("0x044199301f37194f20ba7b498fc72ed742f6c0ba6e476f28d6c81d225e58d5ce"))
+                (	900000,	uint256S("0x08bdbe4de2a65ac89fd2913192d05362c900e3af476a0c99d9f311875067451e"))
+                (	950000,	uint256S("0x0000000aa9a44b593e6138f247bfae75bd43b9396ef9ff0a6a3ebd852f131806"))
+                (	1000000,	uint256S("0x0cb1d2457eaa58af5028e86e27ac54578fa09558206e7b868ebd35e7005ed8bb"))
+                (	1050000,	uint256S("0x044d49bbc3bd9d32b6288b768d4f7e0afe3cbeda606f3ac3579a076e4bddf6ae"))
+                (	1100000,	uint256S("0x000000050cad04887e170059dd2556d85bbd20390b04afb9b07fb62cafd647b4"))
+                (	1150000,	uint256S("0x0c85501c759d957dd1ccc5f7fdfcc415c89c7f2a26471fffc75b75f79e63c16a"))
+                (	1200000,	uint256S("0x0763cbf43ed7227988081c29d9e9fc7ab2450216e6d0354cc4596c86689702d4"))
+                (	1250000,	uint256S("0x0489640207f8c343a56a10e45d987516059ea82a3c6859a771b3a9cf94f5c3bb"))
+                (	1300000,	uint256S("0x000000012a01709b254b4f75e2b9ed772d8fe558655c8c859892ca8c9d625e87"))
+                (	1350000,	uint256S("0x075a1a5c66a68b47d9848ca6986687ed2665b1852457051bf142208e62f98a60"))
+                (	1400000,	uint256S("0x055f73dd9b20650c3d6e6dbb606af8d9479e4c81d89430867abff5329f167bb2"))
+                (	1450000,	uint256S("0x014c2926e07e9712211c5e82f05df1b802c59cc8bc24e3cc9b09942017080f2d"))
+                (	1500000,	uint256S("0x0791f892210ce3c513ab607d689cd1e8907a27f3dfeb58dec21ae299b7981cb7"))
+                (	1550000,	uint256S("0x08fcbaffb7164b161a25efc6dd5c70b679498ee637d663fe201a55c7decc37a3"))
+                (	1600000,	uint256S("0x0e577dcd49319a67fe2acbb39ae6d46afccd3009d3ba9d1bcf6c624708e12bac"))
+                (	1615921,	uint256S("0x049140623cc54a4a3d5868f720611e180ba0cafa21eab1edd0bc9ec2e6b7c374")),
+                1573604104,     // * UNIX timestamp of last checkpoint block
+                7371665,         // * total number of transactions between genesis and last checkpoint
+                                //   (the tx=... number in the SetBestChain debug.log lines)
+                2777            // * estimated number of transactions per day after checkpoint
                                 //   total number of tx / (checkpoint block height / (24 * 24))
             };
     }

@@ -1802,7 +1802,7 @@ bool AcceptToMemoryPool(CTxMemPool& pool, CValidationState &state, const CTransa
     }
     // DoS level set to 10 to be more forgiving.
     // Check transaction contextually against the set of consensus rules which apply in the next block to be mined.
-    if (!fSkipExpiry && !ContextualCheckTransaction(0,0,tx, state, nextBlockHeight, (dosLevel == -1) ? 10 : dosLevel,0))
+    if (!fSkipExpiry && !ContextualCheckTransaction(0,0,tx, state, nextBlockHeight, (dosLevel == -1) ? 10 : dosLevel))
     {
         return error("AcceptToMemoryPool: ContextualCheckTransaction failed");
     }
@@ -3996,6 +3996,9 @@ void static UpdateTip(CBlockIndex *pindexNew) {
 
     cvBlockChange.notify_all();
 
+    /*
+    // https://github.com/zcash/zcash/issues/3992 -> https://github.com/zcash/zcash/commit/346d11d3eb2f8162df0cb00b1d1f49d542495198
+
     // Check the version of the last 100 blocks to see if we need to upgrade:
     static bool fWarned = false;
     if (!IsInitialBlockDownload() && !fWarned)
@@ -4018,6 +4021,7 @@ void static UpdateTip(CBlockIndex *pindexNew) {
             fWarned = true;
         }
     }
+    */
 }
 
 /**
