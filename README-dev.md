@@ -73,3 +73,29 @@ To avoid dynamic linking from `/usr/local/lib/gcc/6/` need to add `-static-libgc
 https://stackoverflow.com/questions/50920999/why-dont-exceptions-work-with-gcc7-and-static-libgcc-on-osx
 
 So, the solution is build with gcc6, but link with gcc8, like `../libtool  --tag CXX  --mode=link g++-8 -g -O2 <...> -static-libgcc` .
+
+### part 3 (optimisations)
+
+since we have [Add SSE4 optimized SHA256](https://github.com/DeckerSU/KomodoOcean/commit/9c22593e70b7ee493767e8a469173c2c85b09620) and `--enable-experimental-asm` build flag, probably we need to change SHA256 implementation in other places, like:
+
+`komodo_utils.h`
+```
+void vcalc_sha256(char deprecated[(256 >> 3) * 2 + 1],uint8_t hash[256 >> 3],uint8_t *src,int32_t len)
+{
+    /*
+    struct sha256_vstate md;
+    sha256_vinit(&md);
+    sha256_vprocess(&md,src,len);
+    sha256_vdone(&md,hash);
+    */
+
+    /*
+    uint256 sha256;
+    CSHA256().Write((const unsigned char *)src, len).Finalize(sha256.begin());
+    for (int i = 0; i < 32; i++) hash[i] = ((uint8_t *)&sha256)[i];
+    */
+
+    CSHA256().Write((const unsigned char *)src, len).Finalize(hash);
+}
+```
+bcz few procedures uses `vcalc_sha256` even to check incoming block, so it needs to use fast sha256 implementation in case if we have experimental asm enabled.
