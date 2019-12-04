@@ -1283,7 +1283,7 @@ bool AppInit2(boost::thread_group& threadGroup, CScheduler& scheduler)
 #endif
     if (GetBoolArg("-shrinkdebugfile", !fDebug))
         ShrinkDebugFile();
-    LogPrintf("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n");
+    //LogPrintf("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n");
     LogPrintf("Komodo version %s (%s)\n", FormatFullVersion(), CLIENT_DATE);
 
     if (fPrintToDebugLog)
@@ -1292,6 +1292,13 @@ bool AppInit2(boost::thread_group& threadGroup, CScheduler& scheduler)
 #ifdef ENABLE_WALLET
     LogPrintf("Using BerkeleyDB version %s\n", DbEnv::version(0, 0, 0));
 #endif
+    std::stringstream boost_version_ss("");
+    boost_version_ss << BOOST_VERSION / 100000 << "." // major version
+          << BOOST_VERSION / 100 % 1000 << "."        // minor version
+          << BOOST_VERSION % 100;                     // patch level
+    LogPrintf("Using Boost version %s\n",  boost_version_ss.str() /*BOOST_LIB_VERSION*/ );
+    LogPrintf("Using Sodium version %s\n", sodium_version_string());
+
     if (!fLogTimestamps)
         LogPrintf("Startup time: %s\n", DateTimeStrFormat("%Y-%m-%d %H:%M:%S", GetTime()));
     LogPrintf("Default data directory %s\n", GetDefaultDataDir().string());
