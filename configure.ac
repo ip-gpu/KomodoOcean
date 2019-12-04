@@ -877,13 +877,15 @@ AX_CHECK_COMPILE_FLAG([-fwrapv],[CXXFLAGS="$CXXFLAGS -fwrapv"])
 AX_CHECK_COMPILE_FLAG([-fno-strict-aliasing],[CXXFLAGS="$CXXFLAGS -fno-strict-aliasing"])
 AX_CHECK_COMPILE_FLAG([-Wno-builtin-declaration-mismatch],[CXXFLAGS="$CXXFLAGS -Wno-builtin-declaration-mismatch"],,[[$CXXFLAG_WERROR]])
 
-if test x$TARGET_OS = xdarwin; then
-  LIBZCASH_LIBS="-lgmp -lgmpxx -lboost_system-mt -lcrypto -lsodium $RUST_LIBS"
-elif test x$TARGET_OS != xwindows; then
-  LIBZCASH_LIBS="-lgmp -lgmpxx -lboost_system -lcrypto -lsodium $RUST_LIBS"
-else
-  LIBZCASH_LIBS="-lgmp -lgmpxx -lboost_system-mt-s -lcrypto -lsodium $RUST_LIBS"
-fi
+# if test x$TARGET_OS = xdarwin; then
+#  LIBZCASH_LIBS="-lgmp -lgmpxx -lboost_system-mt -lcrypto -lsodium $RUST_LIBS"
+# elif test x$TARGET_OS != xwindows; then
+#  LIBZCASH_LIBS="-lgmp -lgmpxx -lboost_system -lcrypto -lsodium $RUST_LIBS"
+# else
+#  LIBZCASH_LIBS="-lgmp -lgmpxx -lboost_system-mt-s -lcrypto -lsodium $RUST_LIBS"
+# fi
+
+LIBZCASH_LIBS="-lgmp -lgmpxx $BOOST_SYSTEM_LIB -lcrypto -lsodium $RUST_LIBS"
 
 CXXFLAGS_TEMP="$CXXFLAGS"
 LIBS_TEMP="$LIBS"
