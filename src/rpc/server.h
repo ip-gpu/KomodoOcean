@@ -4,7 +4,7 @@
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 /******************************************************************************
- * Copyright © 2014-2019 The SuperNET Developers.                             *
+ * Copyright Â© 2014-2019 The SuperNET Developers.                             *
  *                                                                            *
  * See the AUTHORS, DEVELOPER-AGREEMENT and LICENSE files at                  *
  * the top-level directory of this distribution for the individual copyright  *
@@ -399,6 +399,7 @@ extern UniValue getiguanajson(const UniValue& params, bool fHelp);
 extern UniValue getnotarysendmany(const UniValue& params, bool fHelp);
 extern UniValue geterablockheights(const UniValue& params, bool fHelp);
 extern UniValue setpubkey(const UniValue& params, bool fHelp);
+extern UniValue setstakingsplit(const UniValue& params, bool fHelp);
 extern UniValue getwalletinfo(const UniValue& params, bool fHelp);
 extern UniValue getblockchaininfo(const UniValue& params, bool fHelp);
 extern UniValue getnetworkinfo(const UniValue& params, bool fHelp);
