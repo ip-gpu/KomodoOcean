@@ -124,7 +124,10 @@ bool CTxMemPool::addUnchecked(const uint256& hash, const CTxMemPoolEntry &entry,
     nRecentlyAddedSequence += 1;
     if (!tx.IsCoinImport()) {
         for (unsigned int i = 0; i < tx.vin.size(); i++)
+        {
+            if (tx.IsPegsImport() && i==0) continue;
             mapNextTx[tx.vin[i].prevout] = CInPoint(&tx, i);
+        }
     }
     BOOST_FOREACH(const JSDescription &joinsplit, tx.vjoinsplit) {
         BOOST_FOREACH(const uint256 &nf, joinsplit.nullifiers) {
@@ -150,6 +153,7 @@ void CTxMemPool::addAddressIndex(const CTxMemPoolEntry &entry, const CCoinsViewC
 
     uint256 txhash = tx.GetHash();
     for (unsigned int j = 0; j < tx.vin.size(); j++) {
+        if (tx.IsPegsImport() && j==0) continue; 
         const CTxIn input = tx.vin[j];
         const CTxOut &prevout = view.GetOutputFor(input);
 
@@ -255,6 +259,7 @@ void CTxMemPool::addSpentIndex(const CTxMemPoolEntry &entry, const CCoinsViewCac
 
     uint256 txhash = tx.GetHash();
     for (unsigned int j = 0; j < tx.vin.size(); j++) {
+        if (tx.IsPegsImport() && j==0) continue; 
         const CTxIn input = tx.vin[j];
         const CTxOut &prevout = view.GetOutputFor(input);
 

@@ -543,8 +543,10 @@ boost::filesystem::path GetDefaultDataDir()
 {
     namespace fs = boost::filesystem;
     char symbol[KOMODO_ASSETCHAIN_MAXLEN];
-    if ( ASSETCHAINS_SYMBOL[0] != 0 )
+    if ( ASSETCHAINS_SYMBOL[0] != 0 ){
         strcpy(symbol,ASSETCHAINS_SYMBOL);
+    }
+    
     else symbol[0] = 0;
     // Windows < Vista: C:\Documents and Settings\Username\Application Data\Zcash
     // Windows >= Vista: C:\Users\Username\AppData\Roaming\Zcash
@@ -666,8 +668,9 @@ const boost::filesystem::path &GetDataDir(bool fNetSpecific)
 
     // This can be called during exceptions by LogPrintf(), so we cache the
     // value so we don't have to do memory allocations after that.
-    if (!path.empty())
+    if (!path.empty()){
         return path;
+    }
 
     if (mapArgs.count("-datadir")) {
         path = fs::system_complete(mapArgs["-datadir"]);
@@ -696,8 +699,9 @@ void ClearDatadirCache()
 boost::filesystem::path GetConfigFile()
 {
     char confname[512];
-    if ( ASSETCHAINS_SYMBOL[0] != 0 )
+    if ( !mapArgs.count("-conf") && ASSETCHAINS_SYMBOL[0] != 0 ){
         sprintf(confname,"%s.conf",ASSETCHAINS_SYMBOL);
+    }
     else
     {
 #ifdef __APPLE__
@@ -707,8 +711,9 @@ boost::filesystem::path GetConfigFile()
 #endif
     }
     boost::filesystem::path pathConfigFile(GetArg("-conf",confname));
-    if (!pathConfigFile.is_complete())
+    if (!pathConfigFile.is_complete()){
         pathConfigFile = GetDataDir(false) / pathConfigFile;
+    }
 
     return pathConfigFile;
 }

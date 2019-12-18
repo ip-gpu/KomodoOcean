@@ -306,6 +306,7 @@ public:
     int64_t nLastRecv;
     int64_t nTimeConnected;
     int64_t nTimeOffset;
+    uint32_t prevtimes[16];
     CAddress addr;
     std::string addrName;
     CService addrLocal;

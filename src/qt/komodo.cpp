@@ -14,6 +14,8 @@ extern char ASSETCHAINS_SYMBOL[KOMODO_ASSETCHAIN_MAXLEN];
 extern uint32_t ASSETCHAIN_INIT;
 extern std::string NOTARY_PUBKEY;
 void komodo_passport_iteration();
+void komodo_cbopretupdate(int32_t forceflag);
+CBlockIndex *komodo_chainactive(int32_t height);
 
 //#include "chainparams.h"
 #include "clientmodel.h"
@@ -337,14 +339,49 @@ void KomodoCore::shutdown()
     try
     {
         qDebug() << __func__ << ": Running Shutdown in thread";
-        if ( ASSETCHAINS_SYMBOL[0] == 0 )
-        {
-            if (!ShutdownRequested()) komodo_passport_iteration();
-            MilliSleep(1000);
-        } else MilliSleep(1000);
 
-        Interrupt(threadGroup);
-        threadGroup.join_all();
+        int32_t i,height; CBlockIndex *pindex; bool fShutdown = ShutdownRequested(); const uint256 zeroid;
+
+        if (komodo_currentheight()>KOMODO_EARLYTXID_HEIGHT && KOMODO_EARLYTXID!=zeroid && ((height=tx_height(KOMODO_EARLYTXID))==0 || height>KOMODO_EARLYTXID_HEIGHT))
+        {
+            LogPrintf("error: earlytx must be before block height %d or tx does not exist\n",KOMODO_EARLYTXID_HEIGHT);
+            StartShutdown();
+        }
+
+        if ( ASSETCHAINS_CBOPRET != 0 )
+            komodo_pricesinit();
+
+        while (!fShutdown)
+        {
+            if ( ASSETCHAINS_SYMBOL[0] == 0 )
+            {
+                //if (!ShutdownRequested()) komodo_passport_iteration();
+                if ( KOMODO_NSPV_FULLNODE )
+                    komodo_passport_iteration();
+                MilliSleep(1000);
+            } 
+            else
+            {
+                //komodo_interestsum();
+                //komodo_longestchain();
+                if ( ASSETCHAINS_CBOPRET != 0 )
+                    komodo_cbopretupdate(0);
+                for (i=0; i<=ASSETCHAINS_BLOCKTIME/5; i++)
+                {
+                    fShutdown = ShutdownRequested();
+                    if ( fShutdown != 0 )
+                        break;
+                    MilliSleep(1000);
+                }
+            }
+            fShutdown = ShutdownRequested();
+        }
+        if (&threadGroup)
+        {
+            Interrupt(threadGroup);
+            threadGroup.join_all();
+        }
+
         Shutdown();
 
         qDebug() << __func__ << ": Shutdown finished";
@@ -656,21 +693,19 @@ int main(int argc, char *argv[])
         return EXIT_SUCCESS;
     }
 
+        // Check for -testnet or -regtest parameter (Params() calls are only valid after this clause)
+        if (!SelectParamsFromCommandLine()) {
+            LogPrintf("Error: Invalid combination of -regtest and -testnet.\n");
+            return EXIT_FAILURE;
+        }
+
         void komodo_args(char *argv0);
         komodo_args(argv[0]);
-        LogPrintf("call komodo_args.(%s) NOTARY_PUBKEY.(%s)\n",argv[0],NOTARY_PUBKEY.c_str());
-        while ( ASSETCHAIN_INIT == 0 )
-        {
-            //if ( komodo_is_issuer() != 0 )
-            //    komodo_passport_iteration();
-#ifdef WIN32
-            boost::this_thread::sleep_for(boost::chrono::seconds(1));
-#else
-            sleep(1);
-#endif
-        }
-        LogPrintf("initialized %s\n",ASSETCHAINS_SYMBOL);
+        void chainparams_commandline();
+        chainparams_commandline();
 
+        LogPrintf("call komodo_args.(%s) NOTARY_PUBKEY.(%s)\n",argv[0],NOTARY_PUBKEY.c_str());
+        LogPrintf("initialized %s\n",ASSETCHAINS_SYMBOL);
 
 
     /// 5. Now that settings and translations are available, ask user for data directory

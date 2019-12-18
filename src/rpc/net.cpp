@@ -36,7 +36,7 @@
 
 using namespace std;
 
-UniValue getconnectioncount(const UniValue& params, bool fHelp)
+UniValue getconnectioncount(const UniValue& params, bool fHelp, const CPubKey& mypk)
 {
     if (fHelp || params.size() != 0)
         throw runtime_error(
@@ -54,7 +54,7 @@ UniValue getconnectioncount(const UniValue& params, bool fHelp)
     return (int)vNodes.size();
 }
 
-UniValue ping(const UniValue& params, bool fHelp)
+UniValue ping(const UniValue& params, bool fHelp, const CPubKey& mypk)
 {
     if (fHelp || params.size() != 0)
         throw runtime_error(
@@ -77,7 +77,7 @@ UniValue ping(const UniValue& params, bool fHelp)
     return NullUniValue;
 }
 
-UniValue getpeerinfo(const UniValue& params, bool fHelp)
+UniValue getpeerinfo(const UniValue& params, bool fHelp, const CPubKey& mypk)
 {
     if (fHelp || params.size() != 0)
         throw runtime_error(
@@ -216,7 +216,7 @@ int32_t komodo_longestchain()
     return(KOMODO_LONGESTCHAIN);
 }
 
-UniValue addnode(const UniValue& params, bool fHelp)
+UniValue addnode(const UniValue& params, bool fHelp, const CPubKey& mypk)
 {
     string strCommand;
     if (params.size() == 2)
@@ -266,7 +266,7 @@ UniValue addnode(const UniValue& params, bool fHelp)
     return NullUniValue;
 }
 
-UniValue disconnectnode(const UniValue& params, bool fHelp)
+UniValue disconnectnode(const UniValue& params, bool fHelp, const CPubKey& mypk)
 {
     if (fHelp || params.size() != 1)
         throw runtime_error(
@@ -288,7 +288,7 @@ UniValue disconnectnode(const UniValue& params, bool fHelp)
     return NullUniValue;
 }
 
-UniValue getaddednodeinfo(const UniValue& params, bool fHelp)
+UniValue getaddednodeinfo(const UniValue& params, bool fHelp, const CPubKey& mypk)
 {
     if (fHelp || params.size() < 1 || params.size() > 2)
         throw runtime_error(
@@ -404,7 +404,7 @@ UniValue getaddednodeinfo(const UniValue& params, bool fHelp)
     return ret;
 }
 
-UniValue getnettotals(const UniValue& params, bool fHelp)
+UniValue getnettotals(const UniValue& params, bool fHelp, const CPubKey& mypk)
 {
     if (fHelp || params.size() > 0)
         throw runtime_error(
@@ -450,7 +450,7 @@ static UniValue GetNetworksInfo()
     return networks;
 }
 
-UniValue getdeprecationinfo(const UniValue& params, bool fHelp)
+UniValue getdeprecationinfo(const UniValue& params, bool fHelp, const CPubKey& mypk)
 {
     const CChainParams& chainparams = Params();
     if (fHelp || params.size() != 0 || chainparams.NetworkIDString() != "main")
@@ -477,7 +477,7 @@ UniValue getdeprecationinfo(const UniValue& params, bool fHelp)
     return obj;
 }
 
-UniValue getnetworkinfo(const UniValue& params, bool fHelp)
+UniValue getnetworkinfo(const UniValue& params, bool fHelp, const CPubKey& mypk)
 {
     if (fHelp || params.size() != 0)
         throw runtime_error(
@@ -544,7 +544,7 @@ UniValue getnetworkinfo(const UniValue& params, bool fHelp)
     return obj;
 }
 
-UniValue setban(const UniValue& params, bool fHelp)
+UniValue setban(const UniValue& params, bool fHelp, const CPubKey& mypk)
 {
     string strCommand;
     if (params.size() >= 2)
@@ -608,7 +608,7 @@ UniValue setban(const UniValue& params, bool fHelp)
     return NullUniValue;
 }
 
-UniValue listbanned(const UniValue& params, bool fHelp)
+UniValue listbanned(const UniValue& params, bool fHelp, const CPubKey& mypk)
 {
     if (fHelp || params.size() != 0)
         throw runtime_error(
@@ -637,7 +637,7 @@ UniValue listbanned(const UniValue& params, bool fHelp)
     return bannedAddresses;
 }
 
-UniValue clearbanned(const UniValue& params, bool fHelp)
+UniValue clearbanned(const UniValue& params, bool fHelp, const CPubKey& mypk)
 {
     if (fHelp || params.size() != 0)
         throw runtime_error(
