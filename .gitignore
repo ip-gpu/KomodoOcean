@@ -43,7 +43,6 @@ share/setup.nsi
 
 cache/
 venv-mnf/
-src/univalue/gen
 
 .deps
 .dirstamp
