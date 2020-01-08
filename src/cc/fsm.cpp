@@ -42,7 +42,7 @@ bool FSMExactAmounts(struct CCcontract_info *cp,Eval* eval,const CTransaction &t
     numvouts = tx.vout.size();
     for (i=0; i<numvins; i++)
     {
-        //LogPrintf("vini.%d\n",i);
+        //fprintf(stderr,"vini.%d\n",i);
         if ( (*cp->ismyvin)(tx.vin[i].scriptSig) != 0 )
         {
             //LogPrintf("vini.%d check mempool\n",i);
@@ -133,7 +133,7 @@ int64_t AddFSMInputs(struct CCcontract_info *cp,CMutableTransaction &mtx,CPubKey
         // prevent dup
         if ( it->second.satoshis < 1000000 )
             continue;
-        if ( GetTransaction(txid,vintx,hashBlock,false) != 0 )
+        if ( myGetTransaction(txid,vintx,hashBlock) != 0 )
         {
             if ( (nValue= IsFSMvout(cp,vintx,(int32_t)it->first.index)) > 0 )
             {

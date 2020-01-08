@@ -48,6 +48,7 @@
 static const int SERIALIZE_TRANSACTION_NO_WITNESS = 0x40000000;
 
 extern uint32_t ASSETCHAINS_MAGIC;
+extern std::string ASSETCHAINS_SELFIMPORT;
 
 // Overwinter transaction version
 static const int32_t OVERWINTER_TX_VERSION = 3;
@@ -718,6 +719,11 @@ public:
     bool IsCoinImport() const
     {
         return (vin.size() == 1 && vin[0].prevout.n == 10e8);
+    }
+
+    bool IsPegsImport() const
+    {
+        return (ASSETCHAINS_SELFIMPORT=="PEGSCC" && vin[0].prevout.n == 10e8);
     }
 
     friend bool operator==(const CTransaction& a, const CTransaction& b)

@@ -188,7 +188,8 @@ int cc_signTreeSecp256k1Msg32(CC *cond, const unsigned char *privateKey, const u
     }
 
     // serialize pubkey
-    unsigned char *publicKey = calloc(1, SECP256K1_PK_SIZE);
+    //unsigned char *publicKey = calloc(1, SECP256K1_PK_SIZE);
+    unsigned char publicKey[SECP256K1_PK_SIZE];
     size_t ol = SECP256K1_PK_SIZE;
     secp256k1_ec_pubkey_serialize(ec_ctx_verify, publicKey, &ol, &spk, SECP256K1_EC_COMPRESSED);
 
@@ -197,7 +198,7 @@ int cc_signTreeSecp256k1Msg32(CC *cond, const unsigned char *privateKey, const u
     CCVisitor visitor = {&secp256k1Sign, msg32, 32, &signing};
     cc_visit(cond, visitor);
 
-    free(publicKey);
+    //free(publicKey);
     return signing.nSigned;
 }
 

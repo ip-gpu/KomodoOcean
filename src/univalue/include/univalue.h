@@ -3,10 +3,11 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#ifndef UNIVALUE_H__
-#define UNIVALUE_H__
+#ifndef __UNIVALUE_H__
+#define __UNIVALUE_H__
 
 #include <stdint.h>
+#include <string.h>
 
 #include <string>
 #include <vector>
@@ -73,7 +74,8 @@ public:
     size_t size() const { return values.size(); }
 
     bool getBool() const { return isTrue(); }
-    bool checkObject(const std::map<std::string,UniValue::VType>& memberTypes);
+    void getObjMap(std::map<std::string,UniValue>& kv) const;
+    bool checkObject(const std::map<std::string,UniValue::VType>& memberTypes) const;
     const UniValue& operator[](const std::string& key) const;
     const UniValue& operator[](size_t index) const;
     bool exists(const std::string& key) const { size_t i; return findKey(key, i); }
@@ -108,8 +110,13 @@ public:
         UniValue tmpVal(val_);
         return push_back(tmpVal);
     }
+    bool push_back(double val_) {
+        UniValue tmpVal(val_);
+        return push_back(tmpVal);
+    }
     bool push_backV(const std::vector<UniValue>& vec);
 
+    void __pushKV(const std::string& key, const UniValue& val);
     bool pushKV(const std::string& key, const UniValue& val);
     bool pushKV(const std::string& key, const std::string& val_) {
         UniValue tmpVal(VSTR, val_);
@@ -127,6 +134,10 @@ public:
         UniValue tmpVal(val_);
         return pushKV(key, tmpVal);
     }
+    bool pushKV(const std::string& key, bool val_) {
+        UniValue tmpVal((bool)val_);
+        return pushKV(key, tmpVal);
+    }
     bool pushKV(const std::string& key, int val_) {
         UniValue tmpVal((int64_t)val_);
         return pushKV(key, tmpVal);
@@ -141,7 +152,7 @@ public:
                       unsigned int indentLevel = 0) const;
 
     bool read(const char *raw, size_t len);
-    bool read(const char *raw);
+    bool read(const char *raw) { return read(raw, strlen(raw)); }
     bool read(const std::string& rawStr) {
         return read(rawStr.data(), rawStr.size());
     }
@@ -152,7 +163,7 @@ private:
     std::vector<std::string> keys;
     std::vector<UniValue> values;
 
-    bool findKey(const std::string& key, size_t& ret) const;
+    bool findKey(const std::string& key, size_t& retIdx) const;
     void writeArray(unsigned int prettyIndent, unsigned int indentLevel, std::string& s) const;
     void writeObject(unsigned int prettyIndent, unsigned int indentLevel, std::string& s) const;
 
@@ -304,4 +315,4 @@ extern const UniValue NullUniValue;
 
 const UniValue& find_value( const UniValue& obj, const std::string& name);
 
-#endif // UNIVALUE_H__
+#endif // __UNIVALUE_H__

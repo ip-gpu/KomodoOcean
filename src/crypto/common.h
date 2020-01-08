@@ -2,8 +2,8 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#ifndef KOMODO_CRYPTO_COMMON_H
-#define KOMODO_CRYPTO_COMMON_H
+#ifndef BITCOIN_CRYPTO_COMMON_H
+#define BITCOIN_CRYPTO_COMMON_H
 
 #if defined(HAVE_CONFIG_H)
 #include "config/bitcoin-config.h"
@@ -123,4 +123,4 @@ int inline init_and_check_sodium()
     return 0;
 }
 
-#endif // KOMODO_CRYPTO_COMMON_H
+#endif // BITCOIN_CRYPTO_COMMON_H
