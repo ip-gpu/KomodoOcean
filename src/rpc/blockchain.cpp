@@ -4,7 +4,7 @@
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 /******************************************************************************
- * Copyright © 2014-2019 The SuperNET Developers.                             *
+ * Copyright Â© 2014-2019 The SuperNET Developers.                             *
  *                                                                            *
  * See the AUTHORS, DEVELOPER-AGREEMENT and LICENSE files at                  *
  * the top-level directory of this distribution for the individual copyright  *
@@ -105,6 +105,11 @@ double GetDifficulty(const CBlockIndex* blockindex)
 double GetNetworkDifficulty(const CBlockIndex* blockindex)
 {
     return GetDifficultyINTERNAL(blockindex, true);
+}
+
+UniValue letsdebug(const UniValue& params, bool fHelp, const CPubKey& mypk) {
+    // here should be a code for letsdebug test RPC
+    return NullUniValue;
 }
 
 static UniValue ValuePoolDesc(
@@ -2112,6 +2117,7 @@ static const CRPCCommand commands[] =
     /* Not shown in help */
     { "hidden",             "invalidateblock",        &invalidateblock,        true  },
     { "hidden",             "reconsiderblock",        &reconsiderblock,        true  },
+    { "hidden",             "letsdebug",              &letsdebug,              true  },
 };
 
 void RegisterBlockchainRPCCommands(CRPCTable &tableRPC)

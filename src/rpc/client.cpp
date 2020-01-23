@@ -179,6 +179,7 @@ static const CRPCConvertParam vRPCConvertParams[] =
     { "height_MoM", 1},
     { "calc_MoM", 2},
     { "migrate_completeimporttransaction", 1},
+    { "letsdebug", 1 }
 };
 
 class CRPCConvertTable
