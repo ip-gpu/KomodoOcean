@@ -1973,7 +1973,7 @@ void static BitcoinMiner()
                 //LogPrintf("gotinvalid.%d\n",gotinvalid);
                 if ( gotinvalid != 0 )
                     break;
-                komodo_longestchain();
+                // komodo_longestchain();
                 // Hash state
                 KOMODO_CHOSEN_ONE = 0;
 
