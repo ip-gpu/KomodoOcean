@@ -4,7 +4,7 @@
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 /******************************************************************************
- * Copyright © 2014-2019 The SuperNET Developers.                             *
+ * Copyright Â© 2014-2019 The SuperNET Developers.                             *
  *                                                                            *
  * See the AUTHORS, DEVELOPER-AGREEMENT and LICENSE files at                  *
  * the top-level directory of this distribution for the individual copyright  *
@@ -1781,51 +1781,9 @@ bool CWallet::AddToWalletIfInvolvingMe(const CTransaction& tx, const CBlock* pbl
                 return false;
             }
         }
-        static std::string NotaryAddress; static bool didinit;
-        if ( !didinit && NotaryAddress.empty() && NOTARY_PUBKEY33[0] != 0 )
-        {
-            didinit = true;
-            char Raddress[64]; 
-            pubkey2addr((char *)Raddress,(uint8_t *)NOTARY_PUBKEY33);
-            NotaryAddress.assign(Raddress);
-            vWhiteListAddress = mapMultiArgs["-whitelistaddress"];
-            if ( !vWhiteListAddress.empty() )
-            {
-                LogPrintf( "Activated Wallet Filter \n  Notary Address: %s \n  Adding whitelist address's:\n", NotaryAddress.c_str());
-                for ( auto wladdr : vWhiteListAddress )
-                    LogPrintf( "    %s\n", wladdr.c_str());
-            }
-        }
+
         if (fExisted || IsMine(tx) || IsFromMe(tx) || sproutNoteData.size() > 0 || saplingNoteData.size() > 0)
         {
-            // wallet filter for notary nodes. Enables by setting -whitelistaddress= as startup param or in conf file (works same as -addnode byut with R-address's)
-            if ( !tx.IsCoinBase() && !vWhiteListAddress.empty() && !NotaryAddress.empty() ) 
-            {
-                int numvinIsOurs = 0, numvinIsWhiteList = 0;  
-                for (size_t i = 0; i < tx.vin.size(); i++)
-                {
-                    uint256 hash; CTransaction txin; CTxDestination address;
-                    if ( myGetTransaction(tx.vin[i].prevout.hash,txin,hash) && ExtractDestination(txin.vout[tx.vin[i].prevout.n].scriptPubKey, address) )
-                    {
-                        if ( CBitcoinAddress(address).ToString() == NotaryAddress )
-                            numvinIsOurs++;
-                        for ( auto wladdr : vWhiteListAddress )
-                        {
-                            if ( CBitcoinAddress(address).ToString() == wladdr )
-                            {
-                                //LogPrintf( "We received from whitelisted address.%s\n", wladdr.c_str());
-                                numvinIsWhiteList++;
-                            }
-                        }
-                    }
-                }
-                // Now we know if it was a tx sent to us, by either a whitelisted address, or ourself.
-                if ( numvinIsOurs != 0 )
-                    LogPrintf( "We sent from address: %s vins: %d\n",NotaryAddress.c_str(),numvinIsOurs);
-                if ( numvinIsOurs == 0 && numvinIsWhiteList == 0 )
-                    return false;
-            }
-
             CWalletTx wtx(this,tx);
 
             if (sproutNoteData.size() > 0) {
