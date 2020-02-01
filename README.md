@@ -4,7 +4,7 @@
 
 ![](./doc/images/komodo-qt-promo-2020-01.jpg)
 
-Komodo-Qt (KomodoOcean) is a world-first Qt native wallet for KMD ([Komodo](https://komodoplatform.com/)) and all of assetchains. It's available for three OS platforms - Windows, Linux, MacOS.
+Komodo-Qt (KomodoOcean) is a world-first Qt native wallet for KMD ([Komodo](https://komodoplatform.com/)) and smartchains (assetchains). It's available for three OS platforms - Windows, Linux, MacOS.
 
 **NB!** Earlier (till 23.05.2019) we had three branches:
 
@@ -21,7 +21,7 @@ Use the following scripts to build:
 - Windows: `build-win.sh` (cross-compilation for Win)
 - MacOS: `build-mac.sh` (native build)
 
-`master` branch still can be used to build Windows version of Komodo-Qt with MSVC compiler.
+`master` branch **can't** be used anymore to build actual wallet version, but it still can be used as an example of build with MSVC compiler.  To build actual version plz use `static` branch.
 
 Visit [#wallet-ocean-qt](https://discord.gg/U5WWaJR) channel in Komodo Discord for more information.
 
@@ -97,5 +97,5 @@ cd komodo
 
 ## Developers of Qt wallet ##
 
-- Main developer: [@Ocean](https://komodo-platform.slack.com/team/U8BRG09EV)
-- IT Expert / Sysengineer: [@Decker](https://komodo-platform.slack.com/messages/D5UHJMCJ3)
+- Main developer: **Ocean**
+- IT Expert / Sysengineer: **Decker**
