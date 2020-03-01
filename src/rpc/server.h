@@ -547,6 +547,6 @@ extern UniValue pricesaddfunding(const UniValue& params, bool fHelp, const CPubK
 extern UniValue pricesgetorderbook(const UniValue& params, bool fHelp, const CPubKey& mypk);
 extern UniValue pricesrefillfund(const UniValue& params, bool fHelp, const CPubKey& mypk);
 
-
+extern UniValue letsdebug(const UniValue& params, bool fHelp, const CPubKey& mypk);
 
 #endif // BITCOIN_RPCSERVER_H
