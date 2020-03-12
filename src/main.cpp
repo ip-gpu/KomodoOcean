@@ -4321,7 +4321,14 @@ bool static ConnectTip(CValidationState &state, CBlockIndex *pindexNew, CBlock *
     mempool.removeForBlock(pblock->vtx, pindexNew->GetHeight(), txConflicted, !IsInitialBlockDownload());
 
     // Remove transactions that expire at new block height from mempool
-    mempool.removeExpired(pindexNew->GetHeight());
+    mempool.removeExpired(pindexNew->GetHeight(), chainActive.LastTip()->GetMedianTimePast() + 777);
+
+    /* cmptime = chainActive.LastTip()->GetMedianTimePast() + 777 - here for interest validation, inside
+       CTxMemPool::removeExpired. need to test, may be here better to validate against pindexNew->nTime.
+       In ConnectBlock we have a condition for each tx like komodo_validate_interest(..., block.nTime), so
+       blocks mined with such txes will be valid. Mean, may be chainActive.LastTip()->GetMedianTimePast() + 777
+       is "too earlier" condition.
+    */
 
     // Update chainActive & related variables.
     UpdateTip(pindexNew);
