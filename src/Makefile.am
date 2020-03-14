@@ -112,8 +112,8 @@ if BUILD_KOMODOD
 endif
 
 if BUILD_KOMODO_UTILS
-#  bin_PROGRAMS += komodo-cli komodo-tx
-
+  bin_PROGRAMS += komodo-cli
+# bin_PROGRAMS += komodo-cli komodo-tx
 endif
 
 LIBZCASH_H = \
