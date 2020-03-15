@@ -1,0 +1,393 @@
+diff --git a/src/rpc/blockchain.cpp b/src/rpc/blockchain.cpp
+index 3492624..8861111 100644
+--- a/src/rpc/blockchain.cpp
++++ b/src/rpc/blockchain.cpp
+@@ -107,9 +107,373 @@ double GetNetworkDifficulty(const CBlockIndex* blockindex)
+     return GetDifficultyINTERNAL(blockindex, true);
+ }
+ 
++std::string EncodeDestination(const CTxDestination& dest);
++
++#include <chrono>
++#include "asyncrpcoperation.h"
++#include "asyncrpcqueue.h"
++#include "utilmoneystr.h"
++#include "notarisationdb.h"
++
++class AsyncRPCOperation_getstats : public AsyncRPCOperation {
++public:
++    AsyncRPCOperation_getstats(int32_t _nSeason);
++    virtual ~AsyncRPCOperation_getstats();
++
++    // We don't want to be copied or moved around
++    AsyncRPCOperation_getstats(AsyncRPCOperation_getstats const&) = delete;             // Copy construct
++    AsyncRPCOperation_getstats(AsyncRPCOperation_getstats&&) = delete;                  // Move construct
++    AsyncRPCOperation_getstats& operator=(AsyncRPCOperation_getstats const&) = delete;  // Copy assign
++    AsyncRPCOperation_getstats& operator=(AsyncRPCOperation_getstats &&) = delete;      // Move assign
++
++    virtual void main();
++    virtual UniValue getStatus() const;
++
++private:
++    int32_t nSeason_;
++    int32_t currentBlock_;
++    int32_t begin_height;
++    int32_t end_height;
++    bool main_impl();
++};
++
++AsyncRPCOperation_getstats::AsyncRPCOperation_getstats(int32_t nSeason) :
++    nSeason_(nSeason), currentBlock_(0), begin_height(0), end_height(0)
++{
++    if (nSeason_ > 1) {
++        begin_height = KMD_SEASON_HEIGHTS[ nSeason_- 2 ];
++        // begin_height = 1724000;
++        end_height = std::min(chainActive.Height(), KMD_SEASON_HEIGHTS[ nSeason_ -1 ]); 
++    }
++    else 
++    {
++        begin_height = 1;
++        end_height = KMD_SEASON_HEIGHTS[0];
++    }
++
++    // begin_height = 1724193 - 10;
++    // end_height = 1724193 + 10;
++
++    currentBlock_ = end_height;
++}
++
++AsyncRPCOperation_getstats::~AsyncRPCOperation_getstats() {
++}
++
++/**
++ * Override getStatus() to append the operation's input parameters to the default status object.
++ */
++UniValue AsyncRPCOperation_getstats::getStatus() const
++{
++    UniValue v = AsyncRPCOperation::getStatus();
++    UniValue obj = v.get_obj();
++    obj.push_back(Pair("currentblock", currentBlock_));
++    obj.push_back(Pair("begin_height", begin_height));
++    obj.push_back(Pair("end_height", end_height));
++    return obj;
++}
++
++
++void AsyncRPCOperation_getstats::main() {
++    if (isCancelled())
++        return;
++
++    set_state(OperationStatus::EXECUTING);
++    start_execution_clock();
++    bool success = false;
++
++    try {
++        success = main_impl();
++    } catch (const UniValue& objError) {
++        int code = find_value(objError, "code").get_int();
++        std::string message = find_value(objError, "message").get_str();
++        set_error_code(code);
++        set_error_message(message);
++    } catch (const runtime_error& e) {
++        set_error_code(-1);
++        set_error_message("runtime error: " + string(e.what()));
++    } catch (const logic_error& e) {
++        set_error_code(-1);
++        set_error_message("logic error: " + string(e.what()));
++    } catch (const exception& e) {
++        set_error_code(-1);
++        set_error_message("general exception: " + string(e.what()));
++    } catch (...) {
++        set_error_code(-2);
++        set_error_message("unknown error");
++    }
++
++    stop_execution_clock();
++
++    if (success) {
++        set_state(OperationStatus::SUCCESS);
++    } else {
++        set_state(OperationStatus::FAILED);
++    }
++}
++
++// #pragma GCC push_options
++// #pragma GCC optimize ("O0")
++bool AsyncRPCOperation_getstats::main_impl() {
++    
++    UniValue result(UniValue::VOBJ);
++    auto start = std::chrono::high_resolution_clock::now();
++
++    CBlockIndex* pindexWalk = chainActive[end_height];
++    CBlock block;
++
++    int32_t blocksProcessed = 0;
++    int32_t txesProcessed = 0;
++
++    int32_t blocksMinedNN = 0;
++    int32_t blocksMinedOther = 0;
++    
++    CAmount totalCoinBase = 0;
++    CAmount totalCoinBaseNN = 0;
++    CAmount totalCoinBaseOther = 0;
++
++    int32_t notarizationsTotal = 0;
++    int32_t strangeTxes = 0;
++
++    std::map <std::string, int64_t> coinsNotarizations;
++    coinsNotarizations.clear();
++    // std::map <std::string, std::map <std::string, int64_t>> nodeCoinsNotarizations;
++    std::map <std::string, double> nodeNotarizationsPoints;
++    nodeNotarizationsPoints.clear();
++
++    // TODO: we should think about operation cancel or thread interruption ...
++
++    uint8_t pubkeys[66][33];
++    int32_t n = komodo_notaries(pubkeys,pindexWalk->GetHeight(),pindexWalk->GetBlockTime());
++    int32_t id;
++    
++    // fill NN scripts vector
++    std::vector<CScript> scriptsNN;
++    std::vector<std::string> destNN;
++    scriptsNN.resize(n); destNN.resize(n);
++
++    for (int i=0; i<n; i++) {
++        std::vector<uint8_t> vnnPublicKey(std::begin(pubkeys[i]), std::end(pubkeys[i]));
++        scriptsNN[i] = CScript() << ToByteVector(vnnPublicKey) << OP_CHECKSIG;
++        CTxDestination dest;
++        if (ExtractDestination(scriptsNN[i], dest)) {
++            destNN[i] = EncodeDestination(dest);
++        }
++    }
++
++    // TODO: we also need to fill 3rd party coins vector here (!!!)
++
++    while ( pindexWalk->GetHeight() > begin_height && pindexWalk != 0 ) {
++
++        // TODO: if shutdown requested we should correcly exit from this loop (!)
++
++        currentBlock_ = pindexWalk->GetHeight();
++        ReadBlockFromDisk(block, pindexWalk, false);
++        
++        const CAmount value = block.vtx[0].GetValueOut();
++        const CScript &script = block.vtx[0].vout[0].scriptPubKey;
++        const CScript scriptCrypto = CScript() << ParseHex(CRYPTO777_PUBSECPSTR) << OP_CHECKSIG;
++
++        id = -1; 
++        if (script.IsPayToPublicKey()) {
++            std::vector<CScript>::iterator it = std::find(scriptsNN.begin(), scriptsNN.end(), script);
++            if (it != scriptsNN.end()) id = std::distance(scriptsNN.begin(), it);
++        }
++
++        /* std::string notary_name(notaries_elected[nSeason_ - 1][id][0]);
++        std::ofstream outfile;
++        outfile.open("blocks-cg.txt", std::ios_base::app); // append instead of overwrite
++        outfile << currentBlock_ << ". " << block.GetHash().ToString() << " - " << ((id == -1) ? "GPU" : "NN (" + notary_name + ")") << std::endl;
++        outfile.close(); */
++
++        /*
++        else 
++        {
++            // it's not P2PK coinbase, but let's check if it's notary address,
++            // may be somebody mined this tx as P2PKH without easy diff
++            CTxDestination dest; std::string address;
++            if (ExtractDestination(script, dest)) {
++                address = EncodeDestination(dest);
++                std::vector<std::string>::iterator it = std::find(destNN.begin(), destNN.end(), address);
++                if ( it != destNN.end()) {
++                    ++strangeTxes;
++                    std::cerr << strangeTxes << ". strange TX found: " << block.vtx[0].GetHash().ToString() << " - coinbase belongs to NN, but it's not P2PK!" << std::endl;
++                }
++            }
++        }
++        */
++
++        if (id != -1) 
++            { totalCoinBaseNN += value; blocksMinedNN++; }
++        else 
++            { totalCoinBaseOther += value; blocksMinedOther++; }
++
++        totalCoinBase += value;
++
++        // let's try to get notarisations for this block from notarisations DB
++
++        // uint256 blockHash = pindexWalk->GetBlockHash();
++        // NotarisationsInBlock nibs;
++        // GetBlockNotarisations(blockHash, nibs);
++        // std::vector<uint256> notaTxHashes;
++        // BOOST_FOREACH(const Notarisation& n, nibs) {
++        //     notaTxHashes.push_back(n.first);
++        // }
++
++        const int32_t nCountNNInNota = 13;
++        // https://stackoverflow.com/questions/2219829/how-to-prevent-gcc-optimizing-some-statements-in-c
++        // bool __attribute__((optimize("O0"))) fStopInDebugger = false; 
++
++        bool fProcessTxEs = false;
++        if (fProcessTxEs)
++        {
++            BOOST_FOREACH(const CTransaction &tx, block.vtx) {
++
++                // // 5951a9734a8ced29cb1ad584b51294706d1d14eba9ce23aa1d9ea470b439cfe5 - GAME nota tx
++                // if (tx.GetHash().ToString() == "5951a9734a8ced29cb1ad584b51294706d1d14eba9ce23aa1d9ea470b439cfe5") {
++                //     std::cerr << "3rd party nota" << std::endl;
++                //     fStopInDebugger = true;
++                //     std::cerr << "3rd party nota" << std::endl;
++                // }
++
++                if (tx.vout.size() == 2 && tx.vin.size() == nCountNNInNota
++                    && tx.vout[0].scriptPubKey == scriptCrypto && tx.vout[1].scriptPubKey.IsOpReturn())
++                {
++                    
++                    // fast way is search in nota DB
++                    // bool fFoundInNotaDB = false;
++                    // std::vector<uint256>::iterator it = std::find(notaTxHashes.begin(), notaTxHashes.end(), tx.GetHash());
++                    // if (it != notaTxHashes.end()) fFoundInNotaDB = true;
++            
++                    std::vector<int8_t> NotarisationNotaries;
++                    NotarisationNotaries.reserve(nCountNNInNota);
++
++                    bool fAllVinsAreNotaries = true;
++                    // slow way
++                    BOOST_FOREACH(const CTxIn& txin, tx.vin) {
++                        uint256 hashBlock; CTransaction prevTx; CTxDestination dest;
++                        if (GetTransaction(txin.prevout.hash, prevTx, hashBlock, false))
++                        {
++                            std::vector<CScript>::iterator it = std::find(scriptsNN.begin(), scriptsNN.end(), prevTx.vout[txin.prevout.n].scriptPubKey);
++                            if (it != scriptsNN.end()) 
++                            {
++                                NotarisationNotaries.push_back(std::distance(scriptsNN.begin(), it));
++                            }
++                            else 
++                            {
++                                NotarisationNotaries.clear();
++                                fAllVinsAreNotaries = false; 
++                                break;
++                            }
++                        }
++                    }
++
++                    if (fAllVinsAreNotaries) {
++                        // NotarisationNotaries already contains ids of notaries participated in this notarisation
++                        
++                        NotarisationData data;
++                        bool parsed = ParseNotarisationOpReturn(tx, data);
++                        if (parsed) {
++                            std::string symbol(data.symbol);
++                            // std::cerr << tx.GetHash().ToString() << " - " << HexStr(NotarisationNotaries, true) << "- \"" << symbol << "\" (" << data.IsBackNotarisation << ")" << std::endl;
++                            coinsNotarizations[symbol]++;
++                            for (auto nodeIndex : NotarisationNotaries) {
++                                std::string notary_name(notaries_elected[nSeason_ - 1][nodeIndex][0]);
++                                if (symbol == "KMD")
++                                    nodeNotarizationsPoints[notary_name] += 1.0;
++                                else
++                                    nodeNotarizationsPoints[notary_name] += 1.0 / 10;
++                            }
++                        } 
++                        else
++                        {
++                            std::cerr << tx.GetHash().ToString() << " - " << HexStr(NotarisationNotaries, true) << " - parse OP_RETURN failed!" << std::endl;
++                        }
++                        
++                        notarizationsTotal++;
++                    }
++                }
++
++                txesProcessed++;
++            }
++        }
++
++
++        blocksProcessed++;
++        pindexWalk = pindexWalk->pprev;
++    }
++
++    auto finish = std::chrono::high_resolution_clock::now();
++    std::chrono::duration<double, std::milli> elapsed = finish - start;
++
++    result.push_back(Pair("elapsed_ms", elapsed.count()));
++    result.push_back(Pair("season", nSeason_));
++    result.push_back(Pair("begin_height", begin_height));
++    result.push_back(Pair("end_height", end_height));
++    result.push_back(Pair("blocks_processed", blocksProcessed));
++    result.push_back(Pair("blocks_mined_by_nn", blocksMinedNN));
++    result.push_back(Pair("blocks_mined_by_others", blocksMinedOther));
++
++    result.push_back(Pair("coins_mined_total", FormatMoney(totalCoinBase)));
++    result.push_back(Pair("coins_mined_by_nn", FormatMoney(totalCoinBaseNN)));
++    result.push_back(Pair("coins_mined_by_others", FormatMoney(totalCoinBaseOther)));
++
++    result.push_back(Pair("txses_processed", txesProcessed));
++    result.push_back(Pair("notarizations_count", notarizationsTotal));
++
++    // UniValue cnArr(UniValue::VARR);
++    UniValue cnObj(UniValue::VOBJ);
++    BOOST_FOREACH(const PAIRTYPE(std::string, int64_t)& item, coinsNotarizations) {
++        // UniValue cnElem(UniValue::VOBJ);
++        // cnElem.push_back(Pair(item.first, item.second));
++        // cnArr.push_back(cnElem);
++        cnObj.push_back(Pair(item.first, item.second));
++    }
++    result.push_back(Pair("notarizations_per_coin", cnObj));
++
++    UniValue pnObj(UniValue::VOBJ);
++    BOOST_FOREACH(const PAIRTYPE(std::string, double)& item, nodeNotarizationsPoints) {
++        pnObj.push_back(Pair(item.first, item.second));
++    }
++    result.push_back(Pair("points_per_node", pnObj));
++
++
++    set_result(result);
++    return true;
++}
++// #pragma GCC pop_options
++
+ UniValue letsdebug(const UniValue& params, bool fHelp, const CPubKey& mypk) {
+-    // here should be a code for letsdebug test RPC
+-    return NullUniValue;
++
++    int32_t current_season = getkmdseason(chainActive.Height());
++    int nSeason = current_season;
++
++    if (ASSETCHAINS_SYMBOL[0] != 0) {
++        throw JSONRPCError(RPC_INVALID_PARAMETER, "This RPC can be used only in KMD chain itself");
++    }
++
++    if (params.size() > 0) 
++    {
++        if (params[0].getType() == UniValue::VNUM)
++            nSeason = params[0].get_int();
++        else
++        {
++            // workaround for old komodo-cli, which probably pushes any unknown param as UniValue::VSTR
++            if (!ParseInt32(params[0].get_str(), &nSeason))
++                throw JSONRPCError(RPC_INVALID_PARAMETER, "Invalid season (should be in [1.." + std::to_string(current_season) + "])");
++        }
++    }
++ 
++    if (nSeason < 1 || nSeason > current_season) {
++        throw JSONRPCError(RPC_INVALID_PARAMETER, "Invalid season (should be in [1.." + std::to_string(current_season) + "])");
++    }
++
++    // Create operation and add to global queue
++    std::shared_ptr<AsyncRPCQueue> q = getAsyncRPCQueue();
++    std::shared_ptr<AsyncRPCOperation> operation( new AsyncRPCOperation_getstats(nSeason) );
++    q->addOperation(operation);
++    AsyncRPCOperationId operationId = operation->getId();
++    return operationId;
+ }
+ 
+ static UniValue ValuePoolDesc(
+diff --git a/src/rpc/client.cpp b/src/rpc/client.cpp
+index 81accc7..00a4a09 100644
+--- a/src/rpc/client.cpp
++++ b/src/rpc/client.cpp
+@@ -179,7 +179,7 @@ static const CRPCConvertParam vRPCConvertParams[] =
+     { "height_MoM", 1},
+     { "calc_MoM", 2},
+     { "migrate_completeimporttransaction", 1},
+-    { "letsdebug", 1 }
++    { "letsdebug", 0 },
+ };
+ 
+ class CRPCConvertTable
