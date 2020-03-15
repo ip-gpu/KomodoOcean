@@ -89,7 +89,7 @@ EXTRA_LIBRARIES = \
   libzcash.a
 if ENABLE_WALLET
 BITCOIN_INCLUDES += $(BDB_CPPFLAGS)
-EXTRA_LIBRARIES += libbitcoin_wallet.a
+EXTRA_LIBRARIES += $(LIBBITCOIN_WALLET)
 endif
 if ENABLE_ZMQ
 EXTRA_LIBRARIES += libbitcoin_zmq.a
@@ -549,7 +549,7 @@ komodod_LDADD += $(LIBBITCOIN_ZMQ) $(ZMQ_LIBS)
 endif
 
 if ENABLE_WALLET
-komodod_LDADD += libbitcoin_wallet.a
+komodod_LDADD += $(LIBBITCOIN_WALLET)
 endif
 
 komodod_LDADD += \
@@ -564,9 +564,10 @@ komodod_LDADD += \
   $(LIBBITCOIN_CRYPTO) \
   $(LIBVERUS_CRYPTO) \
   $(LIBVERUS_PORTABLE_CRYPTO) \
+  $(LIBSNARK) \
   $(LIBZCASH_LIBS)
 
-komodod_LDADD += libcc.a $(LIBSECP256K1)
+komodod_LDADD += $(LIBSECP256K1)
 
 # bitcoin-cli binary #
 komodo_cli_SOURCES = bitcoin-cli.cpp
@@ -716,10 +717,11 @@ if ENABLE_BIP70
 	$(AM_V_GEN) $(PROTOC) --cpp_out=$(@D) --proto_path=$(abspath $(<D) $<)
 endif
 
-#if ENABLE_TESTS
+if ENABLE_TESTS
+include Makefile.ktest.include
 #include Makefile.test.include
 #include Makefile.gtest.include
-#endif
+endif
 
 #include Makefile.zcash.include
 
