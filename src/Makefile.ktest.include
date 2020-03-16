@@ -3,13 +3,14 @@ bin_PROGRAMS += komodo-test
 
 # tool for generating our public parameters
 komodo_test_SOURCES = \
-	test-komodo/main.cpp \
-	test-komodo/testutils.cpp \
-	test-komodo/test_cryptoconditions.cpp \
-	test-komodo/test_coinimport.cpp \
-	test-komodo/test_eval_bet.cpp \
-	test-komodo/test_eval_notarisation.cpp \
-	test-komodo/test_parse_notarisation.cpp
+    test-komodo/main.cpp \
+    test-komodo/testutils.cpp \
+    test-komodo/test_cryptoconditions.cpp \
+    test-komodo/test_coinimport.cpp \
+    test-komodo/test_eval_bet.cpp \
+    test-komodo/test_eval_notarisation.cpp \
+    test-komodo/test_parse_notarisation.cpp \
+    test-komodo/test_buffered_file.cpp
 
 komodo_test_CPPFLAGS = $(komodod_CPPFLAGS)
 
