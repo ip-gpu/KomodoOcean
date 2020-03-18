@@ -467,13 +467,31 @@ bool SelfTest(TransformType tr) {
 TransformType Transform = sha256::Transform;
 TransformD64Type TransformD64 = sha256::TransformD64;
 
+#if defined(__x86_64__) || defined(__amd64__) || defined(__i386__)
+#define HAVE_GETCPUID
+
+#include <cpuid.h>
+
+// We can't use cpuid.h's __get_cpuid as it does not support subleafs.
+void static inline GetCPUID(uint32_t leaf, uint32_t subleaf, uint32_t& a, uint32_t& b, uint32_t& c, uint32_t& d)
+{
+#ifdef __GNUC__
+    __cpuid_count(leaf, subleaf, a, b, c, d);
+#else
+  __asm__ ("cpuid" : "=a"(a), "=b"(b), "=c"(c), "=d"(d) : "0"(leaf), "2"(subleaf));
+#endif
+}
+
+#endif // defined(__x86_64__) || defined(__amd64__) || defined(__i386__)
+
 } // namespace
 
 std::string SHA256AutoDetect()
 {
 #if defined(USE_ASM) && (defined(__x86_64__) || defined(__amd64__))
     uint32_t eax, ebx, ecx, edx;
-    if (__get_cpuid(1, &eax, &ebx, &ecx, &edx) && (ecx >> 19) & 1) {
+    GetCPUID(1, 0, eax, ebx, ecx, edx);
+    if ((ecx >> 19) & 1) {
         Transform = sha256_sse4::Transform;
         TransformD64 = TransformD64Wrapper<sha256_sse4::Transform>;
         assert(SelfTest(Transform));
