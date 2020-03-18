@@ -511,23 +511,33 @@ void CTxMemPool::removeConflicts(const CTransaction &tx, std::list<CTransaction>
 int32_t komodo_validate_interest(const CTransaction &tx,int32_t txheight,uint32_t nTime,int32_t dispflag);
 extern char ASSETCHAINS_SYMBOL[];
 
-void CTxMemPool::removeExpired(unsigned int nBlockHeight, unsigned int cmpTime)
+void CTxMemPool::removeExpired(unsigned int nBlockHeight)
 {
+    CBlockIndex *tipindex;
     // Remove expired txs from the mempool
     LOCK(cs);
     list<CTransaction> transactionsToRemove;
     for (indexed_transaction_set::const_iterator it = mapTx.begin(); it != mapTx.end(); it++)
     {
         const CTransaction& tx = it->GetTx();
-        bool fInterestNotValidated = ASSETCHAINS_SYMBOL[0] == 0 && komodo_validate_interest(tx,nBlockHeight,cmpTime,0) < 0;
+        tipindex = chainActive.LastTip();
+
+        /* cmptime = chainActive.LastTip()->GetMedianTimePast() + 777 - here for interest validation, inside
+        CTxMemPool::removeExpired. need to test, may be here better to validate against pindexNew->nTime.
+        In ConnectBlock we have a condition for each tx like komodo_validate_interest(..., block.nTime), so
+        blocks mined with such txes will be valid. Mean, may be chainActive.LastTip()->GetMedianTimePast() + 777
+        is "too earlier" condition. [nBlockHeight should be equal tipindex->GetHeight()+1 here]
+        */
+
+        // if (IsExpiredTx(tx, nBlockHeight) || (ASSETCHAINS_SYMBOL[0] == 0 && tipindex != 0 && komodo_validate_interest(tx,tipindex->GetHeight()+1,tipindex->GetMedianTimePast() + 777,0)) < 0)
+        bool fInterestNotValidated = ASSETCHAINS_SYMBOL[0] == 0 && tipindex != 0 && komodo_validate_interest(tx,tipindex->GetHeight()+1,tipindex->GetMedianTimePast() + 777,0) < 0;
         if (IsExpiredTx(tx, nBlockHeight) || fInterestNotValidated)
         {
-            if (fInterestNotValidated)
-                LogPrint("mempool","Removing interest violate txid.%s nHeight.%d nTime.%u vs locktime.%u\n",tx.GetHash().ToString(),nBlockHeight,cmpTime,tx.nLockTime);
+            if (fInterestNotValidated && tipindex != 0)
+                LogPrintf("Removing interest violate txid.%s nHeight.%d nTime.%u vs locktime.%u\n",tx.GetHash().ToString(),tipindex->GetHeight()+1,tipindex->GetMedianTimePast() + 777,tx.nLockTime);
             transactionsToRemove.push_back(tx);
         }
     }
-
     for (const CTransaction& tx : transactionsToRemove) {
         list<CTransaction> removed;
         remove(tx, removed, true);
