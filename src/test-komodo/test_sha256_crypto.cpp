@@ -4,6 +4,7 @@
 #include <stdexcept>
 #include "random.h"
 #include "utilstrencodings.h"
+#include "hash.h"
 
 namespace TestSHA256Crypto {
 
@@ -153,6 +154,22 @@ namespace TestSHA256Crypto {
         TestSHA256(test1, "a316d55510b49662420f49d145d42fb83f31ef8dc016aa4e32df049991a91e26");
         TestSHA256("The quick brown fox jumps over the lazy dog",
             "d7a8fbb307d7809469ca9abcb0082e4f8d5651e46d3cdb762d02d0bf37c9e592");
+    }
+
+    TEST(TestSHA256Crypto, sha256d64)
+    {
+        for (int i = 0; i <= 32; ++i) {
+            unsigned char in[64 * 32];
+            unsigned char out1[32 * 32], out2[32 * 32];
+            for (int j = 0; j < 64 * i; ++j) {
+                in[j] = (unsigned char) insecure_rand(); // InsecureRandBits(8);
+            }
+            for (int j = 0; j < i; ++j) {
+                CHash256().Write(in + 64 * j, 64).Finalize(out1 + 32 * j); // hasher class for Bitcoin's 256-bit hash (double SHA-256)
+            }
+            SHA256D64(out2, in, i);
+            ASSERT_TRUE(memcmp(out1, out2, 32 * i) == 0);
+        }
     }
 
 }
