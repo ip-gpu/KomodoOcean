@@ -26,6 +26,7 @@
 #include "chain.h"
 #include "core_io.h"
 #include "crosschain.h"
+#include "consensus/merkle.h"
 
 bool CClib_Dispatch(const CC *cond,Eval *eval,std::vector<uint8_t> paramsNull,const CTransaction &txTo,unsigned int nIn);
 char *CClib_name();
@@ -256,6 +257,7 @@ uint256 SafeCheckMerkleBranch(uint256 hash, const std::vector<uint256>& vMerkleB
 uint256 GetMerkleRoot(const std::vector<uint256>& vLeaves)
 {
     bool fMutated;
-    std::vector<uint256> vMerkleTree;
-    return BuildMerkleTree(&fMutated, vLeaves, vMerkleTree);
+    /* std::vector<uint256> vMerkleTree;
+    return BuildMerkleTree(&fMutated, vLeaves, vMerkleTree); */
+    return ComputeMerkleRoot(vLeaves, &fMutated);
 }
