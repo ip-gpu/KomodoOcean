@@ -91,20 +91,20 @@ $(LIBCRYPTOCONDITIONS): $(wildcard cryptoconditions/src/*) $(wildcard cryptocond
 # Make is not made aware of per-object dependencies to avoid limiting building parallelization
 # But to build the less dependent modules first, we manually select their order here:
 EXTRA_LIBRARIES = \
-  crypto/libbitcoin_crypto.a \
+  $(LIBBITCOIN_CRYPTO) \
   $(LIBVERUS_CRYPTO) \
   $(LIBVERUS_PORTABLE_CRYPTO) \
-  libbitcoin_util.a \
-  libbitcoin_common.a \
-  libbitcoin_server.a \
-  libbitcoin_cli.a \
-  libzcash.a
+  $(LIBBITCOIN_UTIL) \
+  $(LIBBITCOIN_COMMON) \
+  $(LIBBITCOIN_SERVER) \
+  $(LIBBITCOIN_CLI) \
+  $(LIBZCASH)
 if ENABLE_WALLET
 BITCOIN_INCLUDES += $(BDB_CPPFLAGS)
 EXTRA_LIBRARIES += $(LIBBITCOIN_WALLET)
 endif
 if ENABLE_ZMQ
-EXTRA_LIBRARIES += libbitcoin_zmq.a
+EXTRA_LIBRARIES += $(LIBBITCOIN_ZMQ)
 endif
 
 if BUILD_KOMODO_LIBS
