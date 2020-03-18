@@ -285,7 +285,7 @@ void vcalc_sha256(char deprecated[(256 >> 3) * 2 + 1],uint8_t hash[256 >> 3],uin
     sha256_vdone(&md,hash); */
 
     // we will use CSHA256 class instead of above implementation,
-    // in case if daemon compiled with EXPERIMENTAL_ASM enabled it will use
+    // in case if daemon compiled with USE_ASM enabled it will use
     // hardware (SSE4) implementation, otherwise standart
 
     CSHA256().Write((const unsigned char *)src, len).Finalize(hash);
