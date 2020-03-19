@@ -2495,7 +2495,9 @@ void komodo_prefetch(FILE *fp)
         {
             rewind(fp);
             while ( fread(ignore,1,incr,fp) == incr ) // prefetch
-                LogPrintf(".");
+                {
+                    // LogPrintf(".");
+                }
             free(ignore);
         }
     }

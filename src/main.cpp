@@ -6233,13 +6233,26 @@ bool static LoadBlockIndexDB()
         }
     }
     //LogPrintf("load blockindexDB %u\n",(uint32_t)time(NULL));
+
+    int64_t count = 0; int reportDone = 0;
+    uiInterface.ShowProgress(_("Checking all blk files are present..."), 0, false);
     for (std::set<int>::iterator it = setBlkDataFiles.begin(); it != setBlkDataFiles.end(); it++)
     {
         CDiskBlockPos pos(*it, 0);
         if (CAutoFile(OpenBlockFile(pos, true), SER_DISK, CLIENT_VERSION).IsNull()) {
             return false;
         }
+        count++;
+        int percentageDone = (int)(count * 100.0 / setBlkDataFiles.size() + 0.5);
+        if (reportDone < percentageDone/10) {
+            // report max. every 10% step
+            LogPrintf("[%d%%]...", percentageDone); /* Continued */
+            uiInterface.ShowProgress(_("Checking all blk files are present..."), percentageDone, false);
+            reportDone = percentageDone/10;
+        }
     }
+    LogPrintf("[%s].\n", "DONE");
+    uiInterface.ShowProgress("", 100, false);
 
     // Check whether we have ever pruned block & undo files
     pblocktree->ReadFlag("prunedblockfiles", fHavePruned);
