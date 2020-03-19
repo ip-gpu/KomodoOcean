@@ -697,7 +697,7 @@ bool CBlockTreeDB::LoadBlockIndexGuts()
 
     pcursor->Seek(make_pair(DB_BLOCK_INDEX, uint256()));
     int64_t count = 0; int reportDone = 0;
-    uiInterface.ShowProgress(_("Loading guts"), 0, false);
+    uiInterface.ShowProgress(_("Loading guts..."), 0, false);
 
     // Load mapBlockIndex
     while (pcursor->Valid()) {
@@ -711,9 +711,10 @@ bool CBlockTreeDB::LoadBlockIndexGuts()
             if (count++ % 256 == 0) {
                 uint32_t high = 0x100 * *key.second.begin() + *(key.second.begin() + 1);
                 int percentageDone = (int)(high * 100.0 / 65536.0 + 0.5);
-                uiInterface.ShowProgress(_("Loading guts"), percentageDone, false);
+                uiInterface.ShowProgress(_("Loading guts..."), percentageDone, false);
                 if (reportDone < percentageDone/10) {
                     // report max. every 10% step
+                    LogPrintf("[%d%%]...", percentageDone); /* Continued */
                     reportDone = percentageDone/10;
                 }
             }
@@ -763,6 +764,9 @@ bool CBlockTreeDB::LoadBlockIndexGuts()
             break;
         }
     }
+
+    uiInterface.ShowProgress("", 100, false);
+    LogPrintf("[%s].\n", ShutdownRequested() ? "CANCELLED" : "DONE");
 
     return true;
 }
