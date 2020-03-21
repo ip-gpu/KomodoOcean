@@ -2482,6 +2482,7 @@ struct komodo_state *komodo_stateptr(char *symbol,char *dest)
     return(komodo_stateptrget(symbol));
 }
 
+/*
 void komodo_prefetch(FILE *fp)
 {
     long fsize,fpos; int32_t incr = 16*1024*1024;
@@ -2503,3 +2504,4 @@ void komodo_prefetch(FILE *fp)
     }
     fseek(fp,fpos,SEEK_SET);
 }
+*/
