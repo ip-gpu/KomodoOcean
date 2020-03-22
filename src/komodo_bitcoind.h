@@ -906,20 +906,6 @@ int32_t komodo_blockload(CBlock& block,CBlockIndex *pindex)
     return(0);
 }
 
-int32_t komodo_blockload(CBlock& block,CBlockIndex *pindex,CBufferedFile *buffered_file)
-{
-    block.SetNull();
-
-    if (pindex->GetBlockPos().IsNull()) return(-1);
-
-    buffered_file->SetAnyPos(pindex->GetBlockPos().nPos);
-
-    // Read block
-    *buffered_file >> block;
-
-    return(0);
-}
-
 uint32_t komodo_chainactive_timestamp()
 {
     if ( chainActive.LastTip() != 0 )
@@ -996,17 +982,6 @@ void komodo_index2pubkey33(uint8_t *pubkey33,CBlockIndex *pindex,int32_t height)
     if ( pindex != 0 )
     {
         if ( komodo_blockload(block,pindex) == 0 )
-            komodo_block2pubkey33(pubkey33,&block);
-    }
-}
-
-void komodo_index2pubkey33(uint8_t *pubkey33,CBlockIndex *pindex,int32_t height,CBufferedFile *buffered_file)
-{
-    int32_t num,i; CBlock block;
-    memset(pubkey33,0,33);
-    if ( pindex != 0 )
-    {
-        if ( komodo_blockload(block,pindex,buffered_file) == 0 )
             komodo_block2pubkey33(pubkey33,&block);
     }
 }

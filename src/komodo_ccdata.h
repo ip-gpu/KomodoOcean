@@ -20,6 +20,7 @@ struct komodo_ccdata *CC_data;
 int32_t CC_firstheight;
 
 uint256 BuildMerkleTree(bool* fMutated, const std::vector<uint256> leaves, std::vector<uint256> &vMerkleTree);
+uint256 ComputeMerkleRoot(std::vector<uint256> hashes, bool* mutated );
 
 uint256 komodo_calcMoM(int32_t height,int32_t MoMdepth)
 {
@@ -35,7 +36,8 @@ uint256 komodo_calcMoM(int32_t height,int32_t MoMdepth)
         else
             return(zero);
     }
-    return BuildMerkleTree(&fMutated, leaves, tree);
+    // return BuildMerkleTree(&fMutated, leaves, tree);
+    return ComputeMerkleRoot(leaves, &fMutated);
 }
 
 struct komodo_ccdata_entry *komodo_allMoMs(int32_t *nump,uint256 *MoMoMp,int32_t kmdstarti,int32_t kmdendi)
@@ -68,7 +70,8 @@ struct komodo_ccdata_entry *komodo_allMoMs(int32_t *nump,uint256 *MoMoMp,int32_t
     {
         for (i=0; i<num; i++)
             leaves.push_back(allMoMs[i].MoM);
-        *MoMoMp = BuildMerkleTree(&fMutated, leaves, tree);
+        // *MoMoMp = BuildMerkleTree(&fMutated, leaves, tree);
+        *MoMoMp = ComputeMerkleRoot(leaves, &fMutated);
     }
     else
     {
