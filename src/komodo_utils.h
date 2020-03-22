@@ -279,10 +279,16 @@ static inline int32_t sha256_vdone(struct sha256_vstate *md,uint8_t *out)
 
 void vcalc_sha256(char deprecated[(256 >> 3) * 2 + 1],uint8_t hash[256 >> 3],uint8_t *src,int32_t len)
 {
-    struct sha256_vstate md;
+    /* struct sha256_vstate md;
     sha256_vinit(&md);
     sha256_vprocess(&md,src,len);
-    sha256_vdone(&md,hash);
+    sha256_vdone(&md,hash); */
+
+    // we will use CSHA256 class instead of above implementation,
+    // in case if daemon compiled with USE_ASM enabled it will use
+    // hardware (SSE4) implementation, otherwise standart
+
+    CSHA256().Write((const unsigned char *)src, len).Finalize(hash);
 }
 
 bits256 bits256_doublesha256(char *deprecated,uint8_t *data,int32_t datalen)
@@ -2476,6 +2482,7 @@ struct komodo_state *komodo_stateptr(char *symbol,char *dest)
     return(komodo_stateptrget(symbol));
 }
 
+/*
 void komodo_prefetch(FILE *fp)
 {
     long fsize,fpos; int32_t incr = 16*1024*1024;
@@ -2489,9 +2496,12 @@ void komodo_prefetch(FILE *fp)
         {
             rewind(fp);
             while ( fread(ignore,1,incr,fp) == incr ) // prefetch
-                LogPrintf(".");
+                {
+                    // LogPrintf(".");
+                }
             free(ignore);
         }
     }
     fseek(fp,fpos,SEEK_SET);
 }
+*/

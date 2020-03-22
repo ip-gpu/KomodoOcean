@@ -1,0 +1,240 @@
+From a63563bdef8205f88648e4358a7a7f9c6411273f Mon Sep 17 00:00:00 2001
+From: DeckerSU <support@decker.su>
+Date: Sun, 15 Mar 2020 13:59:40 +0300
+Subject: [PATCH] [incomplete] attempt to remove watch-only addresses
+
+---
+ src/qt/addressbookpage.cpp   | 31 +++++++++++++---
+ src/qt/addresstablemodel.cpp | 32 +++++++++++++++-
+ src/rpc/server.cpp           |  1 +
+ src/rpc/server.h             |  1 +
+ src/wallet/rpcdump.cpp       | 72 ++++++++++++++++++++++++++++++++++++
+ src/wallet/rpcwallet.cpp     |  2 +
+ 6 files changed, 131 insertions(+), 8 deletions(-)
+
+diff --git a/src/qt/addressbookpage.cpp b/src/qt/addressbookpage.cpp
+index 4ee923a..2f046c9 100644
+--- a/src/qt/addressbookpage.cpp
++++ b/src/qt/addressbookpage.cpp
+@@ -87,8 +87,8 @@ AddressBookPage::AddressBookPage(const PlatformStyle *platformStyle, Mode _mode,
+     contextMenu->addAction(copyAddressAction);
+     contextMenu->addAction(copyLabelAction);
+     contextMenu->addAction(editAction);
+-    if(tab == SendingTab)
+-        contextMenu->addAction(deleteAction);
++    //if(tab == SendingTab)
++    contextMenu->addAction(deleteAction);
+     contextMenu->addSeparator();
+ 
+     // Connect signals for context menu actions
+@@ -239,10 +239,29 @@ void AddressBookPage::selectionChanged()
+             deleteAction->setEnabled(true);
+             break;
+         case ReceivingTab:
+-            // Deleting receiving addresses, however, is not allowed
+-            ui->deleteAddress->setEnabled(false);
+-            ui->deleteAddress->setVisible(false);
+-            deleteAction->setEnabled(false);
++
++            bool fIsWatchOnly = false;
++
++            QModelIndexList indexes = table->selectionModel()->selectedRows(AddressTableModel::isWatchOnly);
++
++            if(!indexes.isEmpty())
++            {
++                QModelIndex index = indexes.at(0);
++                QVariant isWatchOnlyVariant = table->model()->data(index, Qt::EditRole);
++                if (!isWatchOnlyVariant.isNull()) {
++                    fIsWatchOnly = isWatchOnlyVariant.toBool();
++                }
++            }
++
++            // Deleting receiving addresses, however, is not allowed, except watch-only
++            if (contextMenu->actions().contains(deleteAction)) {
++                int idxdeleteAction = contextMenu->actions().indexOf(deleteAction);
++                contextMenu->actions().at(idxdeleteAction)->setEnabled(fIsWatchOnly);
++            }
++
++            ui->deleteAddress->setEnabled(fIsWatchOnly);
++            ui->deleteAddress->setVisible(fIsWatchOnly);
++            deleteAction->setEnabled(fIsWatchOnly);
+             break;
+         }
+         ui->copyAddress->setEnabled(true);
+diff --git a/src/qt/addresstablemodel.cpp b/src/qt/addresstablemodel.cpp
+index 77e3f0b..caaac8c 100644
+--- a/src/qt/addresstablemodel.cpp
++++ b/src/qt/addresstablemodel.cpp
+@@ -465,12 +465,40 @@ bool AddressTableModel::removeRows(int row, int count, const QModelIndex &parent
+ {
+     Q_UNUSED(parent);
+     AddressTableEntry *rec = priv->index(row);
+-    if(count != 1 || !rec || rec->type == AddressTableEntry::Receiving)
++    if(count != 1 || !rec)
+     {
+         // Can only remove one row at a time, and cannot remove rows not in model.
+-        // Also refuse to remove receiving addresses.
++        // Also refuse to remove receiving addresses, but allow remove watch-only
+         return false;
+     }
++
++    if (rec->type == AddressTableEntry::Receiving) {
++
++        // better to double-check, if rec->address is watch-only
++        bool fIsWatchOnly = false;
++
++        {
++            LOCK(wallet->cs_wallet);
++            isminetype mine = ISMINE_NO;
++            CBitcoinAddress address = DecodeDestination(rec->address.toStdString());
++            bool isValid = address.IsValid();
++            if (isValid)
++            {
++                CTxDestination dest = address.Get();
++                mine = IsMine(*wallet, dest);
++            }
++            fIsWatchOnly = mine & ISMINE_WATCH_ONLY ? 1 : 0;
++        }
++
++        if (!fIsWatchOnly)
++            return false;
++
++        // (!) incomplete, bcz next step will be removed only addressbook entry,
++        // but wallet and related transactions still will be untouched. so, we need
++        // more "clever" code here, to remove this address from wallet and to remove
++        // related transactions
++    }
++
+     {
+         LOCK(wallet->cs_wallet);
+         wallet->DelAddressBook(DecodeDestination(rec->address.toStdString()));
+diff --git a/src/rpc/server.cpp b/src/rpc/server.cpp
+index 19b7a7d..2e21223 100644
+--- a/src/rpc/server.cpp
++++ b/src/rpc/server.cpp
+@@ -635,6 +635,7 @@ static const CRPCCommand vRPCCommands[] =
+     { "wallet",             "importprivkey",          &importprivkey,          true  },
+     { "wallet",             "importwallet",           &importwallet,           true  },
+     { "wallet",             "importaddress",          &importaddress,          true  },
++    { "wallet",             "removeaddress",          &removeaddress,          true  },
+     { "wallet",             "keypoolrefill",          &keypoolrefill,          true  },
+     { "wallet",             "listaccounts",           &listaccounts,           false },
+     { "wallet",             "listaddressgroupings",   &listaddressgroupings,   false },
+diff --git a/src/rpc/server.h b/src/rpc/server.h
+index 19d0a5d..573c11e 100644
+--- a/src/rpc/server.h
++++ b/src/rpc/server.h
+@@ -232,6 +232,7 @@ extern UniValue clearbanned(const UniValue& params, bool fHelp, const CPubKey& m
+ extern UniValue dumpprivkey(const UniValue& params, bool fHelp, const CPubKey& mypk); // in rpcdump.cpp
+ extern UniValue importprivkey(const UniValue& params, bool fHelp, const CPubKey& mypk);
+ extern UniValue importaddress(const UniValue& params, bool fHelp, const CPubKey& mypk);
++extern UniValue removeaddress(const UniValue& params, bool fHelp, const CPubKey& mypk); // in rpcdump.cpp
+ extern UniValue dumpwallet(const UniValue& params, bool fHelp, const CPubKey& mypk);
+ extern UniValue importwallet(const UniValue& params, bool fHelp, const CPubKey& mypk);
+ 
+diff --git a/src/wallet/rpcdump.cpp b/src/wallet/rpcdump.cpp
+index 3f72df1..c4f43fb 100644
+--- a/src/wallet/rpcdump.cpp
++++ b/src/wallet/rpcdump.cpp
+@@ -317,6 +317,78 @@ UniValue importaddress(const UniValue& params, bool fHelp, const CPubKey& mypk)
+     return NullUniValue;
+ }
+ 
++UniValue removeaddress(const UniValue& params, bool fHelp, const CPubKey& mypk)
++{
++    // based on https://github.com/bitcoin/bitcoin/pull/15129 , but without possibility
++    // of deleting scripts and redeem scripts, it's just allow to delete arbitrary watch-only
++    // address
++
++    if (!EnsureWalletIsAvailable(fHelp))
++        return NullUniValue;
++
++    if (fHelp || params.size() != 1)
++        throw runtime_error(
++            "removeaddress \"watch-only address\" \n"
++            "\nRemoves an address that was being watched as if it were in your wallet but was not being used to spend. Requires a new wallet backup.\n"
++            "\nArguments:\n"
++            "1. \"watch-only address\"          (string, required) The watch-only address\n"
++            "\nExamples:\n"
++            "\nRemove a watch-only address\n"
++            + HelpExampleCli("removeaddress", "\"watch-only address\"") +
++            "\nImport using a label without rescan\n"
++            + HelpExampleCli("removeaddress", "\"watch-only address\"") +
++            "\nAs a JSON-RPC call\n"
++            + HelpExampleRpc("removeaddress", "\"watch-only address\"")
++        );
++
++    {
++        LOCK2(cs_main, pwalletMain->cs_wallet);
++        CTxDestination dest = DecodeDestination(params[0].get_str());
++        if (IsValidDestination(dest)) {
++
++            CScript script = GetScriptForDestination(dest);
++
++            // remove script
++            isminetype ismine = ::IsMine(*pwalletMain, script);
++            if (ismine == ISMINE_SPENDABLE) {
++                throw JSONRPCError(RPC_WALLET_ERROR, "The wallet contains the private key for this address");
++            } else if (ismine == ISMINE_NO) {
++                throw JSONRPCError(RPC_WALLET_ERROR, "The wallet does not contain this address");
++            }
++
++            // assert(ismine == ISMINE_WATCH_ONLY);
++            bool fIsWatchOnly = ismine & ISMINE_WATCH_ONLY ? 1 : 0;
++
++            if (!fIsWatchOnly)
++                throw JSONRPCError(RPC_WALLET_ERROR, "Address is not watch-only");
++            if (pwalletMain->HaveWatchOnly(script) && !pwalletMain->RemoveWatchOnly(script)) {
++                throw JSONRPCError(RPC_WALLET_ERROR, "Error removing address/script from wallet");
++            }
++
++            // pwalletMain->RemoveOldTransactions();
++
++            // (!) incomplete, bcz wallet transactions still here
++
++            // remove from address book
++            CTxDestination destination;
++            if (ExtractDestination(script, destination)) {
++                pwalletMain->DelAddressBook(destination);
++            }
++
++        } else if (IsHex(params[0].get_str())) {
++            std::vector<unsigned char> data(ParseHex(params[0].get_str()));
++            CScript script(data.begin(), data.end());
++            // remove script
++
++            throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Scripts are not yet supported");
++        } else {
++            throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Invalid Komodo address");
++        }
++    }
++
++    return NullUniValue;
++}
++
+ UniValue z_importwallet(const UniValue& params, bool fHelp, const CPubKey& mypk)
+ {
+     if (!EnsureWalletIsAvailable(fHelp))
+diff --git a/src/wallet/rpcwallet.cpp b/src/wallet/rpcwallet.cpp
+index 61effb8..9b23203 100644
+--- a/src/wallet/rpcwallet.cpp
++++ b/src/wallet/rpcwallet.cpp
+@@ -8429,6 +8429,7 @@ extern UniValue dumpprivkey(const UniValue& params, bool fHelp, const CPubKey& m
+ extern UniValue convertpassphrase(const UniValue& params, bool fHelp, const CPubKey& mypk);
+ extern UniValue importprivkey(const UniValue& params, bool fHelp, const CPubKey& mypk);
+ extern UniValue importaddress(const UniValue& params, bool fHelp, const CPubKey& mypk);
++extern UniValue removeaddress(const UniValue& params, bool fHelp, const CPubKey& mypk);
+ extern UniValue dumpwallet(const UniValue& params, bool fHelp, const CPubKey& mypk);
+ extern UniValue importwallet(const UniValue& params, bool fHelp, const CPubKey& mypk);
+ extern UniValue z_exportkey(const UniValue& params, bool fHelp, const CPubKey& mypk);
+@@ -8466,6 +8467,7 @@ static const CRPCCommand commands[] =
+     { "wallet",             "importprivkey",            &importprivkey,            true  },
+     { "wallet",             "importwallet",             &importwallet,             true  },
+     { "wallet",             "importaddress",            &importaddress,            true  },
++    { "wallet",             "removeaddress",            &removeaddress,            true  },
+     { "wallet",             "keypoolrefill",            &keypoolrefill,            true  },
+     { "wallet",             "listaccounts",             &listaccounts,             false },
+     { "wallet",             "listaddressgroupings",     &listaddressgroupings,     false },
+-- 
+2.25.0
+

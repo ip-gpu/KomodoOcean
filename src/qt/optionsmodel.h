@@ -10,7 +10,9 @@
 #include <QAbstractListModel>
 
 QT_BEGIN_NAMESPACE
+#ifdef ENABLE_BIP70
 class QNetworkProxy;
+#endif
 QT_END_NAMESPACE
 
 /** Interface from Qt to configuration data structure for Komodo client.
@@ -64,7 +66,9 @@ public:
     bool getMinimizeOnClose() const { return fMinimizeOnClose; }
     int getDisplayUnit() const { return nDisplayUnit; }
     QString getThirdPartyTxUrls() const { return strThirdPartyTxUrls; }
+    #ifdef ENABLE_BIP70
     bool getProxySettings(QNetworkProxy& proxy) const;
+    #endif
     bool getCoinControlFeatures() const { return fCoinControlFeatures; }
     const QString& getOverriddenByCommandLine() { return strOverriddenByCommandLine; }
 
