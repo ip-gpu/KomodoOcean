@@ -24,7 +24,10 @@
 #include "wallet/walletdb.h"
 #endif
 
+#ifdef ENABLE_BIP70
 #include <QNetworkProxy>
+#endif
+#include <QDebug>
 #include <QSettings>
 #include <QStringList>
 
@@ -430,6 +433,7 @@ void OptionsModel::setDisplayUnit(const QVariant &value)
     }
 }
 
+#ifdef ENABLE_BIP70
 bool OptionsModel::getProxySettings(QNetworkProxy& proxy) const
 {
     // Directly query current base proxy, because
@@ -447,6 +451,7 @@ bool OptionsModel::getProxySettings(QNetworkProxy& proxy) const
 
     return false;
 }
+#endif
 
 void OptionsModel::setRestartRequired(bool fRequired)
 {

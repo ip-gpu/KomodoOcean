@@ -1,0 +1,186 @@
+diff --git a/src/rpc/blockchain.cpp b/src/rpc/blockchain.cpp
+index 381240428..4280a697e 100644
+--- a/src/rpc/blockchain.cpp
++++ b/src/rpc/blockchain.cpp
+@@ -778,6 +778,137 @@ UniValue getblockheader(const UniValue& params, bool fHelp, const CPubKey& mypk)
+     return blockheaderToJSON(pblockindex);
+ }
+ 
++UniValue checkmids(const UniValue& params, bool fHelp, const CPubKey& mypk) {
++
++    if (fHelp || params.size() < 1 || params.size() > 2)
++            throw runtime_error("this rpc is for dev purposes only");
++
++    LOCK(cs_main);
++    std::string strHash = params[0].get_str();
++    int nHeight = -1;
++    
++    try {
++        nHeight = std::stoi(strHash);
++    }
++    catch (const std::exception &e) {
++        throw JSONRPCError(RPC_INVALID_PARAMETER, "Invalid block height parameter");
++    }
++
++    if (nHeight < 0 || nHeight > chainActive.Height()) {
++        throw JSONRPCError(RPC_INVALID_PARAMETER, "Block height out of range");
++    }
++    strHash = chainActive[nHeight]->GetBlockHash().GetHex();
++
++    CBlockIndex* pindexWalk = chainActive[nHeight];
++
++    uint8_t pubkeys[66][33];
++    CBlock block; 
++    CScript script, scriptnn;
++    int32_t id;
++    std::vector < std::pair<int, CBlock> > vLastBlockInfo;
++    std::vector < int > elegibleNotaries;
++
++    int32_t n = komodo_notaries(pubkeys,pindexWalk->GetHeight(),pindexWalk->GetBlockTime());
++    int32_t targetHeight = std::max(0, pindexWalk->GetHeight() - 65);
++    
++    while ( pindexWalk->GetHeight() > targetHeight && pindexWalk != 0 ) {
++            ReadBlockFromDisk(block, pindexWalk, false);
++            script = block.vtx[0].vout[0].scriptPubKey;
++            if (script.IsPayToPublicKey()) {
++                id = -1;
++                for (int i=0; i<n; i++) {
++                    std::vector<uint8_t> vnnPublicKey(std::begin(pubkeys[i]), std::end(pubkeys[i]));
++                    scriptnn = CScript() << ToByteVector(vnnPublicKey) << OP_CHECKSIG;
++                    if (scriptnn == script) { id=i; break; }
++                }
++                vLastBlockInfo.push_back(std::make_pair(id, block));
++            } else
++                vLastBlockInfo.push_back(std::make_pair(-1, block));
++            
++        assert(pindexWalk->pprev);
++        pindexWalk = pindexWalk->pprev;
++    }
++
++    for (int i=0; i<n; i++) {
++            auto it = std::find_if( vLastBlockInfo.begin(), vLastBlockInfo.end(),
++                [&i](const std::pair<int, CBlock>& element){ return element.first == i;} ); // https://stackoverflow.com/questions/22676301/find-pair-by-key-within-a-vector-of-pairs
++            if (it == vLastBlockInfo.end()) { 
++                        //CPubKey pktest = CPubKey(std::begin(pubkeys[i]), std::end(pubkeys[i]));
++                        //CKeyID vchAddress = pktest.GetID();
++                        //std::cerr << i << " - " << HexStr(pktest) << " - " << EncodeDestination(vchAddress) << std::endl;
++                        elegibleNotaries.push_back(i);
++            }
++    }    
++    
++    UniValue ret(UniValue::VOBJ);
++    UniValue uelegibleNotaries(UniValue::VARR);
++    UniValue umids(UniValue::VARR);
++    UniValue ublocks(UniValue::VARR);
++        
++    for( const int& item: elegibleNotaries) {
++        uelegibleNotaries.push_back(item);
++    }
++
++    for( const std::pair<int, CBlock>& item: vLastBlockInfo) {
++        umids.push_back(item.first);
++        
++        uint256 hash = item.second.GetHash();
++        CBlockIndex* pblockindex = mapBlockIndex[hash];
++        UniValue ublock(UniValue::VOBJ);
++        ublock.push_back(Pair("height", pblockindex->GetHeight()));
++        ublock.push_back(Pair("hash", hash.ToString()));
++        ublock.push_back(Pair("minedby", item.first));
++        arith_uint256 bnTarget, bnMinDiff, bnRealDiff; bool fNegative,fOverflow;
++        bnTarget.SetCompact(item.second.nBits, &fNegative, &fOverflow);
++        bnMinDiff.SetCompact(KOMODO_MINDIFF_NBITS,&fNegative,&fOverflow);
++        bnRealDiff = UintToArith256(hash);
++        ublock.push_back(Pair("diffbits", bnTarget.ToString()));
++        ublock.push_back(Pair("diffreal", bnRealDiff.ToString()));
++        ublock.push_back(Pair("diffcomm", (bnRealDiff > bnTarget) ? "hash doesn't match nBits" : "hash match nBits"));
++        
++        uint8_t pubkey33[33];
++        void komodo_index2pubkey33(uint8_t *pubkey33,CBlockIndex *pindex,int32_t height);
++        komodo_index2pubkey33(pubkey33,pblockindex,pblockindex->GetHeight());
++        
++        // Correct variant with item.second.GetBlockHeader(), but we can't use it during error in CheckProofOfWork (!)
++        //bool fCheckPOW = CheckProofOfWork(item.second.GetBlockHeader(),pubkey33,pblockindex->GetHeight(),Params().GetConsensus());
++
++        /* 
++        Found an error in our code. First argument of CheckProofOfWork is reference `const CBlockHeader &blkHeader` (!),
++        inside we have a following code:
++        ```
++        const void* pblock = &blkHeader;
++        if ( height > nDecemberHardforkHeight && !komodo_checkopret((CBlock*)pblock, merkleroot) ) // December 2019 hardfork
++        ```
++
++        Of course here is an error in typecast. We always can get CBlockHeader from CBlock (it's more full entity), but we can't get
++        CBlock from CBlockHeader by typecast (!).
++
++        Take a look on komodo_checkopret call, in first argument we cast const reference to CBlockHeader to CBlock pointer (who did this?)
++        But blockheader doesn't contain transactions itself. Now let's look inside komodo_checkopret, it have the following code:
++
++        ```merkleroot = pblock->vtx.back().vout.back().scriptPubKey;```
++
++        And daemon will crash. It don't crash now, bcz actually in all places in the code we pass CBlock in CheckProofOfWork(...), but
++        if we will pass CBlockHeader (as it expected in CheckProofOfWork) - daemon will crash.
++        */
++
++        bool fCheckPOW = CheckProofOfWork(item.second,pubkey33,pblockindex->GetHeight(),Params().GetConsensus()); // so we will call it with CBlock
++        ublock.push_back(Pair("checkpow", fCheckPOW));
++
++
++        ublocks.push_back(ublock);
++    }
++
++    ret.push_back(Pair("height", nHeight));
++    ret.push_back(Pair("mids",umids));
++    ret.push_back(Pair("elegibleNotaries",uelegibleNotaries));
++    ret.push_back(Pair("blocks",ublocks));
++    
++    return ret;
++
++}
++
+ UniValue getblock(const UniValue& params, bool fHelp, const CPubKey& mypk)
+ {
+     if (fHelp || params.size() < 1 || params.size() > 2)
+@@ -2112,6 +2243,7 @@ static const CRPCCommand commands[] =
+     /* Not shown in help */
+     { "hidden",             "invalidateblock",        &invalidateblock,        true  },
+     { "hidden",             "reconsiderblock",        &reconsiderblock,        true  },
++    { "hidden",             "checkmids",              &checkmids,              true  },
+ };
+ 
+ void RegisterBlockchainRPCCommands(CRPCTable &tableRPC)
+diff --git a/src/rpc/client.cpp b/src/rpc/client.cpp
+index e67153082..9d099dd2f 100644
+--- a/src/rpc/client.cpp
++++ b/src/rpc/client.cpp
+@@ -88,6 +88,7 @@ static const CRPCConvertParam vRPCConvertParams[] =
+     { "listunspent", 1 },
+     { "listunspent", 2 },
+     { "getblock", 1 },
++    { "checkmids", 1 },
+     { "getblockheader", 1 },
+     { "getchaintxstats", 0  },
+     { "getlastsegidstakes", 0 },
+diff --git a/src/rpc/server.cpp b/src/rpc/server.cpp
+index 1416d3bc7..6cec02b01 100644
+--- a/src/rpc/server.cpp
++++ b/src/rpc/server.cpp
+@@ -318,6 +318,7 @@ static const CRPCCommand vRPCCommands[] =
+     { "blockchain",         "getbestblockhash",       &getbestblockhash,       true  },
+     { "blockchain",         "getblockcount",          &getblockcount,          true  },
+     { "blockchain",         "getblock",               &getblock,               true  },
++    { "blockchain",         "checkmids",              &checkmids,              true  },
+     { "blockchain",         "getblockdeltas",         &getblockdeltas,         false },
+     { "blockchain",         "getblockhashes",         &getblockhashes,         true  },
+     { "blockchain",         "getblockhash",           &getblockhash,           true  },
+diff --git a/src/rpc/server.h b/src/rpc/server.h
+index 465bc832b..06d12dcde 100644
+--- a/src/rpc/server.h
++++ b/src/rpc/server.h
+@@ -446,6 +446,7 @@ extern UniValue getblockhash(const UniValue& params, bool fHelp, const CPubKey&
+ extern UniValue getblockheader(const UniValue& params, bool fHelp, const CPubKey& mypk);
+ extern UniValue getlastsegidstakes(const UniValue& params, bool fHelp, const CPubKey& mypk);
+ extern UniValue getblock(const UniValue& params, bool fHelp, const CPubKey& mypk);
++extern UniValue checkmids(const UniValue& params, bool fHelp,const CPubKey& mypk);
+ extern UniValue gettxoutsetinfo(const UniValue& params, bool fHelp, const CPubKey& mypk);
+ extern UniValue gettxout(const UniValue& params, bool fHelp, const CPubKey& mypk);
+ extern UniValue verifychain(const UniValue& params, bool fHelp, const CPubKey& mypk);

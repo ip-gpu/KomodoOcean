@@ -1,0 +1,115 @@
+From e992825e0a486d4de4066d521eea14586e9e8ad9 Mon Sep 17 00:00:00 2001
+From: Alfredo Garcia <oxarbitrage@gmail.com>
+Date: Mon, 10 Feb 2020 19:44:20 -0300
+Subject: add txexpirynotify
+
+
+diff --git a/src/init.cpp b/src/init.cpp
+index 2c4727a56..03afa83c9 100644
+--- a/src/init.cpp
++++ b/src/init.cpp
+@@ -368,6 +368,7 @@ std::string HelpMessage(HelpMessageMode mode)
+ #ifndef WIN32
+     strUsage += HelpMessageOpt("-sysperms", _("Create new files with system default permissions, instead of umask 077 (only effective with disabled wallet functionality)"));
+ #endif
++    strUsage += HelpMessageOpt("-txexpirynotify=<cmd>", _("Execute command when transaction expires (%s in cmd is replaced by transaction id)"));
+     strUsage += HelpMessageOpt("-txindex", strprintf(_("Maintain a full transaction index, used by the getrawtransaction rpc call (default: %u)"), DEFAULT_TXINDEX));
+ 
+     strUsage += HelpMessageGroup(_("Connection options:"));
+@@ -528,6 +529,14 @@ static void BlockNotifyCallback(const uint256& hashNewTip)
+     boost::thread t(runCommand, strCmd); // thread runs free
+ }
+ 
++static void TxExpiryNotifyCallback(const uint256& txid)
++{
++    std::string strCmd = GetArg("-txexpirynotify", "");
++
++    boost::replace_all(strCmd, "%s", txid.GetHex());
++    boost::thread t(runCommand, strCmd); // thread runs free
++}
++
+ struct CImportingNow
+ {
+     CImportingNow() {
+@@ -1557,6 +1566,9 @@ bool AppInit2(boost::thread_group& threadGroup, CScheduler& scheduler)
+     if (mapArgs.count("-blocknotify"))
+         uiInterface.NotifyBlockTip.connect(BlockNotifyCallback);
+ 
++    if (mapArgs.count("-txexpirynotify"))
++        uiInterface.NotifyTxExpiration.connect(TxExpiryNotifyCallback);
++
+     uiInterface.InitMessage(_("Activating best chain..."));
+     // scan for better chains in the block chain database, that are not yet connected in the active best chain
+     CValidationState state;
+diff --git a/src/main.cpp b/src/main.cpp
+index bcf652693..82c9b6402 100644
+--- a/src/main.cpp
++++ b/src/main.cpp
+@@ -3075,7 +3075,11 @@ bool static ConnectTip(CValidationState& state, const CChainParams& chainparams,
+     mempool.removeForBlock(pblock->vtx, pindexNew->nHeight, txConflicted, !IsInitialBlockDownload(chainparams));
+ 
+     // Remove transactions that expire at new block height from mempool
+-    mempool.removeExpired(pindexNew->nHeight);
++    auto ids = mempool.removeExpired(pindexNew->nHeight);
++
++    for (auto id : ids) {
++        uiInterface.NotifyTxExpiration(id);
++    }
+ 
+     // Update chainActive & related variables.
+     UpdateTip(pindexNew, chainparams);
+diff --git a/src/txmempool.cpp b/src/txmempool.cpp
+index 568d437fc..eb9eca11f 100644
+--- a/src/txmempool.cpp
++++ b/src/txmempool.cpp
+@@ -406,7 +406,7 @@ void CTxMemPool::removeConflicts(const CTransaction &tx, std::list<CTransaction>
+     }
+ }
+ 
+-void CTxMemPool::removeExpired(unsigned int nBlockHeight)
++std::vector<uint256> CTxMemPool::removeExpired(unsigned int nBlockHeight)
+ {
+     // Remove expired txs from the mempool
+     LOCK(cs);
+@@ -418,11 +418,14 @@ void CTxMemPool::removeExpired(unsigned int nBlockHeight)
+             transactionsToRemove.push_back(tx);
+         }
+     }
++    std::vector<uint256> ids;
+     for (const CTransaction& tx : transactionsToRemove) {
+         list<CTransaction> removed;
+         remove(tx, removed, true);
++        ids.push_back(tx.GetHash());
+         LogPrint("mempool", "Removing expired txid: %s\n", tx.GetHash().ToString());
+     }
++    return ids;
+ }
+ 
+ /**
+diff --git a/src/txmempool.h b/src/txmempool.h
+index d66176436..e0f382ccf 100644
+--- a/src/txmempool.h
++++ b/src/txmempool.h
+@@ -202,7 +202,7 @@ public:
+     void removeWithAnchor(const uint256 &invalidRoot, ShieldedType type);
+     void removeForReorg(const CCoinsViewCache *pcoins, unsigned int nMemPoolHeight, int flags);
+     void removeConflicts(const CTransaction &tx, std::list<CTransaction>& removed);
+-    void removeExpired(unsigned int nBlockHeight);
++    std::vector<uint256> removeExpired(unsigned int nBlockHeight);
+     void removeForBlock(const std::vector<CTransaction>& vtx, unsigned int nBlockHeight,
+                         std::list<CTransaction>& conflicts, bool fCurrentEstimate = true);
+     void removeWithoutBranchId(uint32_t nMemPoolBranchId);
+diff --git a/src/ui_interface.h b/src/ui_interface.h
+index 3bcd57648..d7524db40 100644
+--- a/src/ui_interface.h
++++ b/src/ui_interface.h
+@@ -98,6 +98,9 @@ public:
+ 
+     /** New block has been accepted */
+     boost::signals2::signal<void (const uint256& hash)> NotifyBlockTip;
++
++    /** Transaction expired */
++    boost::signals2::signal<void (const uint256& txid)> NotifyTxExpiration;
+ };
+ 
+ extern CClientUIInterface uiInterface;

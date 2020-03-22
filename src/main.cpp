@@ -20,6 +20,7 @@
 
 #include "main.h"
 #include "sodium.h"
+#include "consensus/merkle.h"
 
 #include "addrman.h"
 #include "alert.h"
@@ -1264,9 +1265,9 @@ bool ContextualCheckTransaction(int32_t slowflag,const CBlock *block, CBlockInde
         if (IsExpiredTx(tx, nHeight)) {
             // Don't increase banscore if the transaction only just expired
             int expiredDosLevel = IsExpiredTx(tx, nHeight - 1) ? (dosLevel > 10 ? dosLevel : 10) : 0;
-            string strHex = EncodeHexTx(tx);
+            //string strHex = EncodeHexTx(tx);
             //LogPrintf( "transaction exipred.%s\n",strHex.c_str());
-            return state.DoS(expiredDosLevel, error("ContextualCheckTransaction(): transaction %s is expired, expiry block %i vs current block %i\n txhex.%s",tx.GetHash().ToString(),tx.nExpiryHeight,nHeight,strHex), REJECT_INVALID, "tx-overwinter-expired");
+            return state.DoS(expiredDosLevel, error("ContextualCheckTransaction(): transaction %s is expired, expiry block %i vs current block %i\n",tx.GetHash().ToString(),tx.nExpiryHeight,nHeight), REJECT_INVALID, "tx-overwinter-expired");
         }
     }
 
@@ -2039,7 +2040,7 @@ bool AcceptToMemoryPool(CTxMemPool& pool, CValidationState &state, const CTransa
             nLastTime = nNow;
             // -limitfreerelay unit is thousand-bytes-per-minute
             // At default rate it would take over a month to fill 1GB
-            if (dFreeCount >= GetArg("-limitfreerelay", 15)*10*1000)
+            if (dFreeCount >= GetArg("-limitfreerelay", DEFAULT_LIMITFREERELAY)*10*1000)
             {
                 LogPrintf("accept failure.7\n");
                 //return state.DoS(0, error("AcceptToMemoryPool: free transaction rejected by rate limiter"), REJECT_INSUFFICIENTFEE, "rate limited free transaction");
@@ -5214,7 +5215,7 @@ bool CheckBlock(int32_t *futureblockp,int32_t height,CBlockIndex *pindex,const C
     // Check the merkle root.
     if (fCheckMerkleRoot) {
         bool mutated;
-        uint256 hashMerkleRoot2 = block.BuildMerkleTree(&mutated);
+        uint256 hashMerkleRoot2 = BlockMerkleRoot(block,&mutated);
         if (block.hashMerkleRoot != hashMerkleRoot2)
             return state.DoS(100, error("CheckBlock: hashMerkleRoot mismatch"),
                              REJECT_INVALID, "bad-txnmrklroot", true);
@@ -6048,7 +6049,7 @@ bool CheckDiskSpace(uint64_t nAdditionalBytes)
 
 FILE* OpenDiskFile(const CDiskBlockPos &pos, const char *prefix, bool fReadOnly)
 {
-    static int32_t didinit[256];
+    //static int32_t didinit[256];
     if (pos.IsNull())
         return NULL;
     boost::filesystem::path path = GetBlockPosFilename(pos, prefix);
@@ -6060,11 +6061,13 @@ FILE* OpenDiskFile(const CDiskBlockPos &pos, const char *prefix, bool fReadOnly)
         LogPrintf("Unable to open file %s\n", path.string());
         return NULL;
     }
+    /*
     if ( pos.nFile < sizeof(didinit)/sizeof(*didinit) && didinit[pos.nFile] == 0 && strcmp(prefix,(char *)"blk") == 0 )
     {
         komodo_prefetch(file);
         didinit[pos.nFile] = 1;
     }
+    */
     if (pos.nPos) {
         if (fseek(file, pos.nPos, SEEK_SET)) {
             LogPrintf("Unable to seek to position %u of %s\n", pos.nPos, path.string());
@@ -6232,13 +6235,26 @@ bool static LoadBlockIndexDB()
         }
     }
     //LogPrintf("load blockindexDB %u\n",(uint32_t)time(NULL));
+
+    int64_t count = 0; int reportDone = 0;
+    uiInterface.ShowProgress(_("Checking all blk files are present..."), 0, false);
     for (std::set<int>::iterator it = setBlkDataFiles.begin(); it != setBlkDataFiles.end(); it++)
     {
         CDiskBlockPos pos(*it, 0);
         if (CAutoFile(OpenBlockFile(pos, true), SER_DISK, CLIENT_VERSION).IsNull()) {
             return false;
         }
+        count++;
+        int percentageDone = (int)(count * 100.0 / setBlkDataFiles.size() + 0.5);
+        if (reportDone < percentageDone/10) {
+            // report max. every 10% step
+            LogPrintf("[%d%%]...", percentageDone); /* Continued */
+            uiInterface.ShowProgress(_("Checking all blk files are present..."), percentageDone, false);
+            reportDone = percentageDone/10;
+        }
     }
+    LogPrintf("[%s].\n", "DONE");
+    uiInterface.ShowProgress("", 100, false);
 
     // Check whether we have ever pruned block & undo files
     pblocktree->ReadFlag("prunedblockfiles", fHavePruned);

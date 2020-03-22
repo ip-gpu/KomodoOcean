@@ -1,0 +1,21 @@
+From a41021777eeb8fc06c9f8deb910468e4b5c65bbc Mon Sep 17 00:00:00 2001
+From: Dimitris Apostolou <dimitris.apostolou@icloud.com>
+Date: Thu, 12 Dec 2019 00:11:12 +0200
+Subject: depends macOS: hide linker visibility warnings
+
+
+diff --git a/depends/builders/darwin.mk b/depends/builders/darwin.mk
+index 7990b872f..f8ff4e23a 100644
+--- a/depends/builders/darwin.mk
++++ b/depends/builders/darwin.mk
+@@ -10,8 +10,8 @@ build_darwin_SHA256SUM = shasum -a 256
+ build_darwin_DOWNLOAD = curl --location --fail --connect-timeout $(DOWNLOAD_CONNECT_TIMEOUT) --retry $(DOWNLOAD_RETRIES) -o
+ 
+ #darwin host on darwin builder. overrides darwin host preferences.
+-darwin_CC=$(shell xcrun -f clang) -mmacosx-version-min=$(OSX_MIN_VERSION) --sysroot $(shell xcrun --show-sdk-path)
+-darwin_CXX:=$(shell xcrun -f clang++) -mmacosx-version-min=$(OSX_MIN_VERSION) -stdlib=libc++ --sysroot $(shell xcrun --show-sdk-path)
++darwin_CC=$(shell xcrun -f clang) -mmacosx-version-min=$(OSX_MIN_VERSION) -fvisibility=hidden -fvisibility-inlines-hidden --sysroot $(shell xcrun --show-sdk-path)
++darwin_CXX:=$(shell xcrun -f clang++) -mmacosx-version-min=$(OSX_MIN_VERSION) -fvisibility=hidden -fvisibility-inlines-hidden -stdlib=libc++ --sysroot $(shell xcrun --show-sdk-path)
+ darwin_AR:=$(shell xcrun -f ar)
+ darwin_RANLIB:=$(shell xcrun -f ranlib)
+ darwin_STRIP:=$(shell xcrun -f strip)

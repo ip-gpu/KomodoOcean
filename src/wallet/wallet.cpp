@@ -4311,13 +4311,14 @@ CAmount CWallet::GetMinimumFee(unsigned int nTxBytes, unsigned int nConfirmTarge
 }
 */
 
-void komodo_prefetch(FILE *fp);
+//void komodo_prefetch(FILE *fp);
 
 DBErrors CWallet::LoadWallet(bool& fFirstRunRet)
 {
     if (!fFileBacked)
         return DB_LOAD_OK;
     fFirstRunRet = false;
+    /*
     if ( 0 ) // doesnt help
     {
         LogPrintf("loading wallet %s %u\n",strWalletFile.c_str(),(uint32_t)time(NULL));
@@ -4328,6 +4329,7 @@ DBErrors CWallet::LoadWallet(bool& fFirstRunRet)
             fclose(fp);
         }
     }
+    */
     //LogPrintf("prefetched wallet %s %u\n",strWalletFile.c_str(),(uint32_t)time(NULL));
     DBErrors nLoadWalletRet = CWalletDB(strWalletFile,"cr+").LoadWallet(this);
     //LogPrintf("loaded wallet %s %u\n",strWalletFile.c_str(),(uint32_t)time(NULL));
