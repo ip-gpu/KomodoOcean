@@ -1,0 +1,104 @@
+From d3e21778dd52cbbd94796694da30bea50f7620e8 Mon Sep 17 00:00:00 2001
+From: DeckerSU <support@decker.su>
+Date: Fri, 17 Apr 2020 15:28:47 +0300
+Subject: [PATCH] [test] Add timeout for headers sync
+
+At startup, we choose one peer to serve us the headers chain, until
+our best header is close to caught up.  Disconnect this peer if more
+than 15 minutes + 1ms/expected_header passes and our best header
+is still more than 1 day away from current time.
+
+https://github.com/bitcoin/bitcoin/commit/76f74811c44b5119d5c19364b0594d423248ac0e
+---
+ src/main.cpp | 37 +++++++++++++++++++++++++++++++++++++
+ src/main.h   |  5 +++++
+ 2 files changed, 42 insertions(+)
+
+diff --git a/src/main.cpp b/src/main.cpp
+index 470c20f08..10e5ad837 100644
+--- a/src/main.cpp
++++ b/src/main.cpp
+@@ -319,6 +319,8 @@ namespace {
+         CBlockIndex *pindexLastCommonBlock;
+         //! Whether we've started headers synchronization with this peer.
+         bool fSyncStarted;
++        //! When to potentially disconnect peer for stalling headers download
++        int64_t nHeadersSyncTimeout;
+         //! Since when we're stalling block download progress (in microseconds), or 0.
+         int64_t nStallingSince;
+         list<QueuedBlock> vBlocksInFlight;
+@@ -335,6 +337,7 @@ namespace {
+             hashLastUnknownBlock.SetNull();
+             pindexLastCommonBlock = NULL;
+             fSyncStarted = false;
++            nHeadersSyncTimeout = 0;
+             nStallingSince = 0;
+             nBlocksInFlight = 0;
+             nBlocksInFlightValidHeaders = 0;
+@@ -8474,6 +8477,7 @@ bool SendMessages(CNode* pto, bool fSendTrickle)
+             // Only actively request headers from a single peer, unless we're close to today.
+             if ((nSyncStarted == 0 && fFetch) || pindexBestHeader->GetBlockTime() > GetAdjustedTime() - 24 * 60 * 60) {
+                 state.fSyncStarted = true;
++                state.nHeadersSyncTimeout = GetTimeMicros() + HEADERS_DOWNLOAD_TIMEOUT_BASE + HEADERS_DOWNLOAD_TIMEOUT_PER_HEADER * (GetAdjustedTime() - pindexBestHeader->GetBlockTime())/(consensusParams.nPowTargetSpacing);
+                 nSyncStarted++;
+                 CBlockIndex *pindexStart = pindexBestHeader->pprev ? pindexBestHeader->pprev : pindexBestHeader;
+                 LogPrint("net", "initial getheaders (%d) to peer=%d (startheight:%d)\n", pindexStart->GetHeight(), pto->id, pto->nStartingHeight);
+@@ -8569,6 +8573,39 @@ bool SendMessages(CNode* pto, bool fSendTrickle)
+             }
+         }
+ 
++        // Check for headers sync timeouts
++        if (state.fSyncStarted && state.nHeadersSyncTimeout < std::numeric_limits<int64_t>::max()) {
++            // Detect whether this is a stalling initial-headers-sync peer
++            if (pindexBestHeader->GetBlockTime() <= GetAdjustedTime() - 24*60*60) {
++                if (nNow > state.nHeadersSyncTimeout && nSyncStarted == 1 && (nPreferredDownload - state.fPreferredDownload >= 1)) {
++                    // Disconnect a (non-whitelisted) peer if it is our only sync peer,
++                    // and we have others we could be using instead.
++                    // Note: If all our peers are inbound, then we won't
++                    // disconnect our sync peer for stalling; we have bigger
++                    // problems if we can't get any outbound peers.
++                    if (!pto->fWhitelisted) {
++                        LogPrintf("Timeout downloading headers from peer=%d, disconnecting\n", pto->GetId());
++                        pto->fDisconnect = true;
++                        return true;
++                    } else {
++                        LogPrintf("Timeout downloading headers from whitelisted peer=%d, not disconnecting\n", pto->GetId());
++                        // Reset the headers sync state so that we have a
++                        // chance to try downloading from a different peer.
++                        // Note: this will also result in at least one more
++                        // getheaders message to be sent to
++                        // this peer (eventually).
++                        state.fSyncStarted = false;
++                        nSyncStarted--;
++                        state.nHeadersSyncTimeout = 0;
++                    }
++                }
++            } else {
++                // After we've caught up once, reset the timeout so we can't trigger
++                // disconnect later.
++                state.nHeadersSyncTimeout = std::numeric_limits<int64_t>::max();
++            }
++        }
++
+         //
+         // Message: getdata (blocks)
+         //
+diff --git a/src/main.h b/src/main.h
+index f08340ad9..6c477d1fe 100644
+--- a/src/main.h
++++ b/src/main.h
+@@ -196,6 +196,11 @@ static const unsigned int MIN_BLOCKS_TO_KEEP = 288;
+ // Setting the target to > than 550MB will make it likely we can respect the target.
+ static const uint64_t MIN_DISK_SPACE_FOR_BLOCK_FILES = 550 * 1024 * 1024;
+ 
++/** Headers download timeout expressed in microseconds
++ *  Timeout = base + per_header * (expected number of headers) */
++static constexpr int64_t HEADERS_DOWNLOAD_TIMEOUT_BASE = 15 * 60 * 1000000; // 15 minutes
++static constexpr int64_t HEADERS_DOWNLOAD_TIMEOUT_PER_HEADER = 1000; // 1ms/header
++
+ /** Register with a network node to receive its signals */
+ void RegisterNodeSignals(CNodeSignals& nodeSignals);
+ /** Unregister a network node */
+-- 
+2.25.0
+
