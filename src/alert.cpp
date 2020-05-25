@@ -4,7 +4,7 @@
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 /******************************************************************************
- * Copyright © 2014-2019 The SuperNET Developers.                             *
+ * Copyright Â© 2014-2019 The SuperNET Developers.                             *
  *                                                                            *
  * See the AUTHORS, DEVELOPER-AGREEMENT and LICENSE files at                  *
  * the top-level directory of this distribution for the individual copyright  *
@@ -117,7 +117,7 @@ uint256 CAlert::GetHash() const
 
 bool CAlert::IsInEffect() const
 {
-    return (GetAdjustedTime() < nExpiration);
+    return (GetTime() < nExpiration);
 }
 
 bool CAlert::Cancels(const CAlert& alert) const
@@ -152,7 +152,7 @@ bool CAlert::RelayTo(CNode* pnode) const
     {
         if (AppliesTo(pnode->nVersion, pnode->strSubVer) ||
             AppliesToMe() ||
-            GetAdjustedTime() < nRelayUntil)
+            GetTime() < nRelayUntil)
         {
             pnode->PushMessage("alert", *this);
             return true;
