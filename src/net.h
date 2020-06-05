@@ -235,6 +235,11 @@ public:
     double dPingWait;
     double dMinPing;
     std::string addrLocal;
+    // Address of this peer
+    CAddress addr;
+    // Bind address of our side of the connection
+    // CAddress addrBind; // https://github.com/bitcoin/bitcoin/commit/a7e3c2814c8e49197889a4679461be42254e5c51
+    uint32_t m_mapped_as;
 };
 
 
@@ -307,7 +312,10 @@ public:
     int64_t nTimeConnected;
     int64_t nTimeOffset;
     uint32_t prevtimes[16];
+    // Address of this peer
     CAddress addr;
+    // Bind address of our side of the connection
+    // const CAddress addrBind; // https://github.com/bitcoin/bitcoin/commit/a7e3c2814c8e49197889a4679461be42254e5c51
     std::string addrName;
     CService addrLocal;
     int nVersion;
@@ -450,7 +458,7 @@ public:
         if (addr.IsValid() && !addrKnown.contains(addr.GetKey())) {
             if (vAddrToSend.size() >= MAX_ADDR_TO_SEND) {
                 vAddrToSend[insecure_rand() % vAddrToSend.size()] = addr;
-            } else {
+            } else { 
                 vAddrToSend.push_back(addr);
             }
         }
@@ -671,7 +679,7 @@ public:
     static bool Unban(const CSubNet &ip);
 //    static void GetBanned(std::map<CSubNet, int64_t> &banmap);
 
-    void copyStats(CNodeStats &stats);
+    void copyStats(CNodeStats &stats, const std::vector<bool> &m_asmap);
 
     static bool IsWhitelistedRange(const CNetAddr &ip);
     static void AddWhitelistedRange(const CSubNet &subnet);
