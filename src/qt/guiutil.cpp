@@ -928,6 +928,27 @@ QString formatServicesStr(quint64 mask)
             }
         }
     }
+    // Scan bits 28-30 reserved for temporary experiments
+    for (int i = 28; i < 31; i++) {
+        uint64_t check = 1 << i;
+        if (mask & check)
+        {
+            switch (check)
+            {
+            case NODE_NSPV:
+                strList.append("NSPV");
+                break;
+            case NODE_ADDRINDEX:
+                strList.append("ADDRINDEX");
+                break;
+            case NODE_SPENTINDEX:
+                strList.append("SPENTINDEX");
+                break;
+            default:
+                strList.append(QString("%1[%2]").arg("UNKNOWN").arg(check));
+            }
+        }
+    }
 
     if (strList.size())
         return strList.join(" & ");
