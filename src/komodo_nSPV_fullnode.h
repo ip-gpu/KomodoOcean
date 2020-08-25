@@ -449,7 +449,8 @@ int32_t NSPV_getaddresstxids(struct NSPV_txidsresp *ptr,char *coinaddr,bool isCC
     ptr->filter = filter;
     if ( skipcount < 0 )
         skipcount = 0;
-    if ( (ptr->numtxids= (int32_t)txids.size()) >= 0 && ptr->numtxids < maxlen )
+    if ( txids.size() <= std::numeric_limits<uint16_t>::max() &&
+        (ptr->numtxids = txids.size()) >= 0 && ptr->numtxids < maxlen )
     {
         if ( skipcount >= ptr->numtxids )
             skipcount = ptr->numtxids-1;

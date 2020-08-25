@@ -7614,7 +7614,7 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv, 
         BOOST_FOREACH(const CAddress &addr, vAddr)
         pfrom->PushAddress(addr);
     }
-    else if (strCommand == "getnSPV")
+    else if (GetBoolArg("-nspv_msg", DEFAULT_NSPV_PROCESSING) && strCommand == "getnSPV")
     {
         if ( KOMODO_NSPV == 0 )//&& KOMODO_INSYNC != 0 )
         {
@@ -7624,7 +7624,7 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv, 
         }
         return(true);
     }
-    else if (strCommand == "nSPV")
+    else if (GetBoolArg("-nspv_msg", DEFAULT_NSPV_PROCESSING) && strCommand == "nSPV")
     {
         if ( KOMODO_NSPV_SUPERLITE )
         {
