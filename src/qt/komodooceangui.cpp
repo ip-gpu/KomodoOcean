@@ -388,7 +388,7 @@ void KomodoOceanGUI::createActions()
     usedSendingAddressesAction->setStatusTip(tr("Show the list of used sending addresses and labels"));
     usedReceivingAddressesAction = new QAction(platformStyle->TextColorIcon(":/icons/address-book"), tr("&Receiving addresses..."), this);
     usedReceivingAddressesAction->setStatusTip(tr("Show the list of used receiving addresses and labels"));
-    usedReceivingZAddressesAction = new QAction(platformStyle->TextColorIcon(":/icons/address-book"), tr("&Receiving z-addresses..."), this);
+    usedReceivingZAddressesAction = new QAction(platformStyle->TextColorIcon(":/icons/address-book"), tr("Receiving &z-addresses..."), this);
     usedReceivingZAddressesAction->setStatusTip(tr("Show the list of used receiving z-addresses and labels"));
 
     openAction = new QAction(platformStyle->TextColorIcon(":/icons/open"), tr("Open &URI..."), this);
