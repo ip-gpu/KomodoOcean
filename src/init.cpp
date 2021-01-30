@@ -1336,6 +1336,7 @@ bool AppInit2(boost::thread_group& threadGroup, CScheduler& scheduler)
           << BOOST_VERSION % 100;                     // patch level
     LogPrintf("Using Boost version %s\n",  boost_version_ss.str() /*BOOST_LIB_VERSION*/ );
     LogPrintf("Using Sodium version %s\n", sodium_version_string());
+    LogPrintf("Using LevelDB version %d.%d\n", leveldb::kMajorVersion, leveldb::kMinorVersion);
 
     if (!fLogTimestamps)
         LogPrintf("Startup time: %s\n", DateTimeStrFormat("%Y-%m-%d %H:%M:%S", GetTime()));
