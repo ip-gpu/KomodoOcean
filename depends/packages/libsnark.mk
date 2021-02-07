@@ -1,4 +1,5 @@
 package=libsnark
+
 $(package)_version=0.1
 $(package)_download_path=https://github.com/ca333/libsnark/releases/download/v$($(package)_version)-$($(package)_git_commit)/
 $(package)_file_name=$(package)-$($(package)_git_commit).tar.gz
@@ -21,9 +22,17 @@ define $(package)_build_cmds
 	CXX="x86_64-w64-mingw32-g++-posix" CXXFLAGS="-DBINARY_OUTPUT -DPTW32_STATIC_LIB -DSTATICLIB -DNO_PT_COMPRESSION=1 -fopenmp" $(MAKE) lib DEPINST=$(host_prefix) CURVE=ALT_BN128 MULTICORE=1 NO_PROCPS=1 NO_GTEST=1 NO_DOCS=1 STATIC=1 NO_SUPERCOP=1 FEATUREFLAGS=-DMONTGOMERY_OUTPUT OPTFLAGS="-O2 -march=x86-64 -g "
 endef
 else
+ifneq ($(host_os),darwin)
 define $(package)_build_cmds
 	CXXFLAGS="-fPIC -DBINARY_OUTPUT -DNO_PT_COMPRESSION=1" $(MAKE) lib DEPINST=$(host_prefix) CURVE=ALT_BN128 MULTICORE=1 NO_PROCPS=1 NO_GTEST=1 NO_DOCS=1 STATIC=1 NO_SUPERCOP=1 FEATUREFLAGS=-DMONTGOMERY_OUTPUT OPTFLAGS="-O2 -march=x86-64 -g "
 endef
+else
+# cross-compile for mac
+define $(package)_build_cmds
+	CC="$(build_prefix)/bin/$($(package)_cc)" CXX="$(build_prefix)/bin/$($(package)_cxx)" \
+	CXXFLAGS="-fPIC -DBINARY_OUTPUT -DNO_PT_COMPRESSION=1" $(MAKE) lib DEPINST=$(host_prefix) CURVE=ALT_BN128 MULTICORE=1 NO_PROCPS=1 NO_GTEST=1 NO_DOCS=1 STATIC=1 NO_SUPERCOP=1 FEATUREFLAGS=-DMONTGOMERY_OUTPUT OPTFLAGS="-O2 -march=x86-64 -g "
+endef
+endif
 endif
 
 
