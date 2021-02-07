@@ -29,8 +29,6 @@ $(package)_exact_file_name=rust-std-$($(package)_version)-$($(package)_rust_targ
 $(package)_exact_sha256_hash=$($(package)_rust_std_sha256_hash_$($(package)_rust_target))
 $(package)_build_subdir=buildos
 $(package)_extra_sources=$($(package)_file_name_$(build_os))
-#$(info $(shell tput setaf 11)[ Decker ]$(shell tput sgr0) $(package)_rust_target is [$($(package)_rust_target)])
-#$(info $(shell tput setaf 11)[ Decker ]$(shell tput sgr0) $(package)_exact_file_name is [$($(package)_exact_file_name)])
 
 define $(package)_fetch_cmds
 $(call fetch_file,$(package),$($(package)_download_path),$($(package)_download_file),$($(package)_file_name),$($(package)_sha256_hash)) && \
@@ -52,7 +50,7 @@ define $(package)_extract_cmds
 endef
 
 # Runs from: build dir/$(package)_build_subdir
-# bash ./install.sh --destdir=$($(package)_staging_dir) --prefix=$(build_prefix) --disable-ldconfig && ../$(canonical_host)/install.sh --destdir=$($(package)_staging_dir) --prefix=$(build_prefix) --disable-ldconfig
+# first install.sh is from buildos for native build_os platform, second it for host_os (target) platform
 define $(package)_stage_cmds
   bash ./install.sh --destdir=$($(package)_staging_dir) --prefix=$(build_prefix) --disable-ldconfig && \
   ../$(canonical_host)/install.sh --destdir=$($(package)_staging_dir) --prefix=$(build_prefix) --disable-ldconfig
