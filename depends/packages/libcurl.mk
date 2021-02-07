@@ -47,7 +47,8 @@ else
     define $(package)_config_cmds
       echo '=== config for $(package):' && \
       echo '$($(package)_config_env) $($(package)_conf_tool) $($(package)_config_opts)' && \
-      echo '=== '
+      echo '=== ' && \
+      $($(package)_config_env) $($(package)_conf_tool) $($(package)_config_opts)
     endef
 endif
 
