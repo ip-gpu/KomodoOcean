@@ -13,7 +13,11 @@ $(package)_rust_target=$(if $(rust_rust_target_$(canonical_host)),$(rust_rust_ta
 ifeq ($(host_os),mingw32)
 $(package)_library_file=target/x86_64-pc-windows-gnu/release/rustzcash.lib
 else ifneq ($(canonical_host),$(build))
-$(package)_library_file=target/$($(package)_rust_target)/release/librustzcash.a
+  ifeq ($(build_os)$(host_os),darwindarwin)
+    $(package)_library_file=target/release/librustzcash.a
+  else
+    $(package)_library_file=target/$($(package)_rust_target)/release/librustzcash.a
+  endif
 else
 $(package)_library_file=target/release/librustzcash.a
 endif
