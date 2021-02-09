@@ -7,12 +7,12 @@ $(package)_sha256_hash=52af3361cf806330b88b4fe6f483b6844209d47ae196ac46da4de59bb
 $(package)_config_opts_linux=--disable-shared --enable-static --prefix=$(host_prefix) --host=x86_64-unknown-linux-gnu
 $(package)_config_opts_mingw32=--enable-mingw --disable-shared --enable-static --prefix=$(host_prefix) --host=x86_64-w64-mingw32
 $(package)_config_opts_darwin=--disable-shared --enable-static --prefix=$(host_prefix)
-$(package)_cflags_darwin=-mmacosx-version-min=10.9
+$(package)_cflags_darwin=-mmacosx-version-min=$(OSX_MIN_VERSION)
 $(package)_conf_tool=./configure
 
 ifeq ($(build_os),darwin)
     define $(package)_set_vars
-      $(package)_build_env=MACOSX_DEPLOYMENT_TARGET="10.9"
+      $(package)_build_env=MACOSX_DEPLOYMENT_TARGET="$(OSX_MIN_VERSION)"
     endef
 endif
 
@@ -54,7 +54,7 @@ endif
 
 ifeq ($(build_os),darwin)
     define $(package)_build_cmds
-      $(MAKE) CPPFLAGS="-I$(host_prefix)/include -fPIC" CFLAGS='-mmacosx-version-min=10.9'
+      $(MAKE) CPPFLAGS="-I$(host_prefix)/include -fPIC" CFLAGS="-mmacosx-version-min=$(OSX_MIN_VERSION)"
     endef
 else
     define $(package)_build_cmds
