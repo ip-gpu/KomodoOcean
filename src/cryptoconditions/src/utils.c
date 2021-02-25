@@ -217,7 +217,7 @@ unsigned char *hashFingerprintContents(asn_TYPE_descriptor_t *asnType, void *fp)
 
     if (rc.encoded < 1) {
         fprintf(stderr, "Encoding fingerprint failed\n");
-        return; // 0 (?)
+        return 0;
     }
     unsigned char *hash = calloc(1,32);
     sha256(buf, rc.encoded, hash);
