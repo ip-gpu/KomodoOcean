@@ -702,7 +702,7 @@ libzcashconsensus_la_CPPFLAGS = $(CRYPTO_CFLAGS) -I$(builddir)/obj -I$(srcdir)/s
 endif
 #
 
-CLEANFILES = $(EXTRA_LIBRARIES)
+CLEANFILES = $(LIBBITCOIN_COMMON) libbitcoin_server.a $(LIBBITCOIN_CLI) $(LIBBITCOIN_UTIL) $(LIBBITCOIN_WALLET) $(LIBBITCOIN_ZMQ) libzcash.a
 CLEANFILES += *.gcda *.gcno */*.gcno wallet/*/*.gcno
 DISTCLEANFILES = obj/build.h
 
