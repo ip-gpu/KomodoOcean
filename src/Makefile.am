@@ -702,8 +702,8 @@ libzcashconsensus_la_CPPFLAGS = $(CRYPTO_CFLAGS) -I$(builddir)/obj -I$(srcdir)/s
 endif
 #
 
-CLEANFILES = *.gcda *.gcno */*.gcno wallet/*/*.gcno
-
+CLEANFILES = $(EXTRA_LIBRARIES)
+CLEANFILES += *.gcda *.gcno */*.gcno wallet/*/*.gcno
 DISTCLEANFILES = obj/build.h
 
 EXTRA_DIST = snark
@@ -711,7 +711,9 @@ EXTRA_DIST = snark
 clean-local:
 	-$(MAKE) -C secp256k1 clean
 	-$(MAKE) -C snark clean
-	rm -f leveldb/*/*.gcno leveldb/helpers/memenv/*.gcno
+	-$(MAKE) -C univalue clean
+	-$(MAKE) -C cryptoconditions clean
+	-rm -f leveldb/*/*.gcno leveldb/helpers/memenv/*.gcno
 	-rm -f config.h
 
 .rc.o:
