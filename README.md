@@ -93,7 +93,7 @@ cd komodo
 ```
 **komodo is experimental and a work-in-progress.** Use at your own risk.
 
-
+*p.s.* Currently only `x86_64` arch supported for MacOS, build for `Apple M1` processors unfortunately not yet supported.
 
 ## Developers of Qt wallet ##
 
