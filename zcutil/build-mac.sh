@@ -1,8 +1,7 @@
 #!/usr/bin/env bash
 
 # seems clang on native darwin doesn't support -fopenmp compiler flag (MULTICORE=1 for libsnark)
-# sed -i.old -e 's|\(CURVE=ALT_BN128[ \t]*MULTICORE=\)\([0-9]\{1,\}\)|\10|' ./depends/packages/libsnark.mk
-
+sed -i.old -e 's|\(CURVE=ALT_BN128[ \t]*MULTICORE=\)\([0-9]\{1,\}\)|\10|' ./depends/packages/libsnark.mk
 make -C ${PWD}/depends v=1 NO_PROTON=1 HOST=x86_64-apple-darwin18 -j$(nproc --all)
 ./autogen.sh
 CXXFLAGS="-g0 -O2" \
