@@ -6,22 +6,12 @@
 
 Komodo-Qt (KomodoOcean) is a world-first Qt native wallet for KMD ([Komodo](https://komodoplatform.com/)) and smartchains (assetchains). It's available for three OS platforms - Windows, Linux, MacOS.
 
-**NB!** Earlier (till 23.05.2019) we had three branches:
+Use the default `static` branch and following scripts to build:
 
-
-- [master](../../tree/master) for Windows.
-- [Linux](../../tree/Linux) for Linux.
-- [MacOS](../../tree/MacOS) for MacOS.
-
-Now we have only one branch [static](../../tree/static) for build static Komodo-Qt binaries from one branch for each OS.
-
-Use the following scripts to build:
-
-- Linux: `build-linux.sh` (native build)
+- Linux: `build.sh` (native build)
 - Windows: `build-win.sh` (cross-compilation for Win)
+- MacOS: `build-mac-cross.sh` (cross-compilation for OSX)
 - MacOS: `build-mac.sh` (native build)
-
-`master` branch **can't** be used anymore to build actual wallet version, but it still can be used as an example of build with MSVC compiler.  To build actual version plz use `static` branch.
 
 Visit [#wallet-ocean-qt](https://discord.gg/U5WWaJR) channel in Komodo Discord for more information.
 
@@ -43,8 +33,18 @@ cd komodo
 #This can take some time.
 ```
 
+#### OSX (Cross-compile)
 
-#### OSX
+Before start, read the following docs: [depends](https://github.com/bitcoin/bitcoin/blob/master/depends/README.md), [macdeploy](https://github.com/bitcoin/bitcoin/blob/master/contrib/macdeploy/README.md) .
+
+Install dependencies:
+```
+sudo apt-get install curl librsvg2-bin libtiff-tools bsdmainutils cmake imagemagick libcap-dev libz-dev libbz2-dev python3-setuptools libtinfo5 xorriso
+```
+
+Place prepared SDK file `Xcode-11.3.1-11C505-extracted-SDK-with-libcxx-headers.tar.gz` in repo root, use `build-mac-cross.sh` script to build.
+
+#### OSX (Native)
 Ensure you have [brew](https://brew.sh) and Command Line Tools installed.
 ```shell
 # Install brew
@@ -56,7 +56,7 @@ brew update
 brew upgrade
 brew tap discoteq/discoteq; brew install flock
 brew install autoconf autogen automake
-brew install gcc@6
+# brew install gcc@6
 brew install binutils
 brew install protobuf
 brew install coreutils
