@@ -7,6 +7,7 @@ tar -C ${PWD}/depends/SDKs -xf ${PWD}/Xcode-11.3.1-11C505-extracted-SDK-with-lib
 make -C ${PWD}/depends v=1 NO_PROTON=1 HOST=x86_64-apple-darwin18 DARWIN_SDK_PATH=${PWD}/depends/SDKs/Xcode-11.3.1-11C505-extracted-SDK-with-libcxx-headers -j$(nproc --all)
 ./autogen.sh
 LDFLAGS="-Wl,-no_pie" \
+CXXFLAGS="-g0 -O2" \
 CONFIG_SITE="$PWD/depends/x86_64-apple-darwin18/share/config.site" ./configure --disable-tests --disable-bench --with-gui=qt5 --disable-bip70
 # make app
 make V=1 -j$(nproc --all)
