@@ -105,3 +105,14 @@ bcz few procedures uses `vcalc_sha256` even to check incoming block, so it needs
 ### part 4
 
 - Probably we have some unexpected / unpredictable behavior (strange side-effect) with this [linux_release_CFLAGS: -O1 -> -O2](https://github.com/DeckerSU/KomodoOcean/commit/511b27aba1c53b05acdc2a169eb374017b7b9145) commit. When wallet built with `CXXFLAGS='-g0 -O2'` all is ok, when with `CXXFLAGS='-g -O2'` - it's ok too. But when we tried to build wallet with just `CXXFLAGS='-g'` in `zcutil/build.sh ` it crashed somewhere in init of [CDBEnv](https://github.com/DeckerSU/KomodoOcean/blob/b8d315bbbece1cb3786855dae40de70a3f8385f0/src/wallet/db.cpp#L49). So, i just want to mention it here. In future it should be investigated to find a solution, may be commit should be reverted or additional BDB build flags should be added.
+
+### part 5
+
+- If you want to build under Linux for multiple OSes from the same repo / folder, like, build for Win64 and then build for MacOS - you can do the following:
+```
+make clean
+make -C src/univalue clean
+make -C src/cryptoconditions clean
+rm src/qt/moc_*.cpp
+```
+after each different build.
