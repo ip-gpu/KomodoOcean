@@ -59,7 +59,7 @@ wallet_packages=bdb
 packages := boost openssl libevent zeromq $(zcash_packages) googletest libcurl # googlemock
 
 ifneq ($(build_os),darwin)
-darwin_native_packages += native_cctools
+darwin_native_packages += native_cctools native_cdrkit
 ifeq ($(host_os),darwin)
 packages += libsnark
 endif
