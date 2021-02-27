@@ -1,0 +1,134 @@
+diff --git a/configure.ac b/configure.ac
+index 0359d1c..38c2cb1 100644
+--- a/configure.ac
++++ b/configure.ac
+@@ -568,6 +568,9 @@ AX_GCC_FUNC_ATTRIBUTE([dllimport])
+ 
+ if test x$use_glibc_compat != xno; then
+ 
++  AX_CHECK_LINK_FLAG([[-Wl,--wrap=__divmoddi4]], [COMPAT_LDFLAGS="$COMPAT_LDFLAGS -Wl,--wrap=__divmoddi4"])
++  AX_CHECK_LINK_FLAG([[-Wl,--wrap=log2f]], [COMPAT_LDFLAGS="$COMPAT_LDFLAGS -Wl,--wrap=log2f"])
++
+   #glibc absorbed clock_gettime in 2.17. librt (its previous location) is safe to link
+   #in anyway for back-compat.
+   AC_CHECK_LIB([rt],[clock_gettime],, AC_MSG_ERROR(lib missing))
+@@ -1209,6 +1212,7 @@ AC_SUBST(BITCOIN_GUI_NAME)
+ AC_SUBST(BITCOIN_CLI_NAME)
+ AC_SUBST(BITCOIN_TX_NAME)
+ 
++AC_SUBST(COMPAT_LDFLAGS)
+ AC_SUBST(RELDFLAGS)
+ AC_SUBST(SSE42_CXXFLAGS)
+ AC_SUBST(SSE41_CXXFLAGS)
+diff --git a/src/Makefile.am b/src/Makefile.am
+index 1cbf956..f825d77 100644
+--- a/src/Makefile.am
++++ b/src/Makefile.am
+@@ -529,7 +529,8 @@ libbitcoin_util_a_SOURCES = \
+   $(LIBZCASH_H)
+ 
+ if GLIBC_BACK_COMPAT
+-libbitcoin_util_a_SOURCES += compat/glibc_compat.cpp
++  libbitcoin_util_a_SOURCES += compat/glibc_compat.cpp
++  AM_LDFLAGS += $(COMPAT_LDFLAGS)
+ endif
+ 
+ # cli: zcash-cli
+@@ -694,6 +695,7 @@ libzcashconsensus_la_SOURCES = \
+ 
+ if GLIBC_BACK_COMPAT
+   libzcashconsensus_la_SOURCES += compat/glibc_compat.cpp
++  AM_LDFLAGS += $(COMPAT_LDFLAGS)
+ endif
+ 
+ libzcashconsensus_la_LDFLAGS = -no-undefined $(RELDFLAGS) -static
+diff --git a/src/compat/glibc_compat.cpp b/src/compat/glibc_compat.cpp
+index 3b9c70d..d0c5ed4 100644
+--- a/src/compat/glibc_compat.cpp
++++ b/src/compat/glibc_compat.cpp
+@@ -7,6 +7,7 @@
+ #endif
+ 
+ #include <cstddef>
++#include <cstring>
+ 
+ #if defined(HAVE_SYS_SELECT_H)
+ #include <sys/select.h>
+@@ -27,3 +28,77 @@ extern "C" FDELT_TYPE __fdelt_warn(FDELT_TYPE a)
+     return a / __NFDBITS;
+ }
+ extern "C" FDELT_TYPE __fdelt_chk(FDELT_TYPE) __attribute__((weak, alias("__fdelt_warn")));
++
++#if defined(__i386__) || defined(__arm__)
++
++extern "C" int64_t __udivmoddi4(uint64_t u, uint64_t v, uint64_t* rp);
++
++extern "C" int64_t __wrap___divmoddi4(int64_t u, int64_t v, int64_t* rp)
++{
++    int32_t c1 = 0, c2 = 0;
++    int64_t uu = u, vv = v;
++    int64_t w;
++    int64_t r;
++
++    if (uu < 0) {
++        c1 = ~c1, c2 = ~c2, uu = -uu;
++    }
++    if (vv < 0) {
++        c1 = ~c1, vv = -vv;
++    }
++
++    w = __udivmoddi4(uu, vv, (uint64_t*)&r);
++    if (c1)
++        w = -w;
++    if (c2)
++        r = -r;
++
++    *rp = r;
++    return w;
++}
++#endif
++
++extern "C" float log2f_old(float x);
++#ifdef __i386__
++__asm(".symver log2f_old,log2f@GLIBC_2.1");
++#elif defined(__amd64__)
++__asm(".symver log2f_old,log2f@GLIBC_2.2.5");
++#elif defined(__arm__)
++__asm(".symver log2f_old,log2f@GLIBC_2.4");
++#elif defined(__aarch64__)
++__asm(".symver log2f_old,log2f@GLIBC_2.17");
++#elif defined(__riscv)
++__asm(".symver log2f_old,log2f@GLIBC_2.27");
++#endif
++extern "C" float __wrap_log2f(float x)
++{
++    return log2f_old(x);
++}
++
++/* glibc-internal users use __explicit_bzero_chk, and explicit_bzero
++redirects to that.  */
++#undef explicit_bzero
++/* Set LEN bytes of S to 0.  The compiler will not delete a call to
++this function, even if S is dead after the call.  */
++void explicit_bzero (void *s, size_t len)
++{
++    memset (s, '\0', len);
++    /* Compiler barrier.  */
++    asm volatile ("" ::: "memory");
++}
++
++// Redefine explicit_bzero_chk
++void __explicit_bzero_chk (void *dst, size_t len, size_t dstlen)
++{
++    /* Inline __memset_chk to avoid a PLT reference to __memset_chk.  */
++    if (__glibc_unlikely (dstlen < len))
++        __chk_fail ();
++    memset (dst, '\0', len);
++    /* Compiler barrier.  */
++    asm volatile ("" ::: "memory");
++}
++/* libc-internal references use the hidden
++__explicit_bzero_chk_internal symbol.  This is necessary if
++__explicit_bzero_chk is implemented as an IFUNC because some
++targets do not support hidden references to IFUNC symbols.  */
++#define strong_alias (__explicit_bzero_chk, __explicit_bzero_chk_internal)
