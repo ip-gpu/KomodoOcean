@@ -72,8 +72,12 @@ venv-mnf/
 *.lo
 *.la
 
-# Compilation
+# Compilation and Qt preprocessor part
+*.qm
 Makefile
+src/qt/komodo-qt
+Komodo-Qt.app
+background.tiff*
 
 # Unit-tests
 Makefile.test

@@ -203,7 +203,7 @@ class Repairer {
     while (reader.ReadRecord(&record, &scratch)) {
       if (record.size() < 12) {
         reporter.Corruption(
-            record.size(), Status::Corruption("log record too small"));
+            record.size(), Status::Corruption("log record too small", logname));
         continue;
       }
       WriteBatchInternal::SetContents(&batch, record);
@@ -399,7 +399,7 @@ class Repairer {
                     t.meta.smallest, t.meta.largest);
     }
 
-    //LogPrintf( "NewDescriptor:\n%s\n", edit_.DebugString().c_str());
+    //fprintf(stderr, "NewDescriptor:\n%s\n", edit_.DebugString().c_str());
     {
       log::Writer log(file);
       std::string record;
