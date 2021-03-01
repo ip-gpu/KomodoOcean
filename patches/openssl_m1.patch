@@ -1,0 +1,23 @@
+diff --git a/depends/packages/openssl.mk b/depends/packages/openssl.mk
+index 296a55389..80e2d9cf2 100644
+--- a/depends/packages/openssl.mk
++++ b/depends/packages/openssl.mk
+@@ -1,8 +1,8 @@
+ package=openssl
+-$(package)_version=1.1.1f
++$(package)_version=1.1.1i
+ $(package)_download_path=https://www.openssl.org/source
+ $(package)_file_name=$(package)-$($(package)_version).tar.gz
+-$(package)_sha256_hash=186c6bfe6ecfba7a5b48c47f8a1673d0f3b0e5ba2e25602dd23b629975da3f35
++$(package)_sha256_hash=e8be6a35fe41d10603c3cc635e93289ed00bf34b79671a3a4de64fcee00d5242
+ 
+ define $(package)_set_vars
+ $(package)_config_env=AR="$($(package)_ar)" RANLIB="$($(package)_ranlib)" CC="$($(package)_cc)"
+@@ -83,6 +83,7 @@ $(package)_config_opts_mipsel_linux=linux-generic32
+ $(package)_config_opts_mips_linux=linux-generic32
+ $(package)_config_opts_powerpc_linux=linux-generic32
+ $(package)_config_opts_x86_64_darwin=darwin64-x86_64-cc
++$(package)_config_opts_arm_darwin=darwin64-arm64-cc
+ $(package)_config_opts_x86_64_mingw32=mingw64
+ $(package)_config_opts_i686_mingw32=mingw
+ endef
