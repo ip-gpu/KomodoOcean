@@ -1,8 +1,8 @@
 package=native_ccache
-$(package)_version=3.7.4
+$(package)_version=3.7.12
 $(package)_download_path=https://github.com/ccache/ccache/releases/download/v$($(package)_version)
-$(package)_file_name=ccache-$($(package)_version).tar.xz
-$(package)_sha256_hash=04c0af414b8cf89e541daed59735547fbfd323b1aaa983da0216f6b6731e6836
+$(package)_file_name=ccache-$($(package)_version).tar.gz
+$(package)_sha256_hash=d2abe88d4c283ce960e233583061127b156ffb027c6da3cf10770fc0c7244194
 
 define $(package)_set_vars
 $(package)_config_opts=

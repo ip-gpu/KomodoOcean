@@ -1,0 +1,118 @@
+diff --git a/configure.ac b/configure.ac
+index b0184e9..3e4f4e4 100644
+--- a/configure.ac
++++ b/configure.ac
+@@ -853,6 +853,7 @@ if test x$use_pkgconfig = xyes; then
+     [
+       PKG_CHECK_MODULES([SSL], [libssl],, [AC_MSG_ERROR(openssl  not found.)])
+       PKG_CHECK_MODULES([CRYPTO], [libcrypto],,[AC_MSG_ERROR(libcrypto  not found.)])
++      PKG_CHECK_MODULES([CURL], [libcurl],,[AC_MSG_ERROR(libcurl  not found.)])
+       if test x$enable_bip70 != xno; then
+         BITCOIN_QT_CHECK([PKG_CHECK_MODULES([PROTOBUF], [protobuf], [have_protobuf=yes], [BITCOIN_QT_FAIL(libprotobuf not found)])])
+       fi
+@@ -887,6 +888,9 @@ else
+   AC_CHECK_HEADER([openssl/ssl.h],, AC_MSG_ERROR(libssl headers missing),)
+   AC_CHECK_LIB([ssl],         [main],SSL_LIBS=-lssl, AC_MSG_ERROR(libssl missing))
+ 
++  AC_CHECK_HEADER([curl/curl.h],, AC_MSG_ERROR(libcurl headers missing),)
++  AC_CHECK_LIB([curl],        [curl_global_init],[CURL_LIBS=-lcurl], AC_MSG_ERROR([unable to link with libcurl]),[-lssl -lcrypto])
++
+   if test x$build_komodo_utils$build_komodod$bitcoin_enable_qt$use_tests != xnononono; then
+     AC_CHECK_HEADER([event2/event.h],, AC_MSG_ERROR(libevent headers missing),)
+     AC_CHECK_LIB([event],[main],EVENT_LIBS=-levent,AC_MSG_ERROR(libevent missing))
+@@ -1213,6 +1217,7 @@ AC_SUBST(ARM_CRC_CXXFLAGS)
+ AC_SUBST(LIBTOOL_APP_LDFLAGS)
+ AC_SUBST(USE_UPNP)
+ AC_SUBST(BOOST_LIBS)
++AC_SUBST(CURL_LIBS)
+ AC_SUBST(TESTDEFS)
+ AC_SUBST(LEVELDB_TARGET_FLAGS)
+ AC_SUBST(LEVELDB_ATOMIC_CPPFLAGS)
+diff --git a/depends/packages/libcurl.mk b/depends/packages/libcurl.mk
+index 001173e..a1d3e21 100644
+--- a/depends/packages/libcurl.mk
++++ b/depends/packages/libcurl.mk
+@@ -5,7 +5,7 @@ $(package)_download_path=https://curl.haxx.se/download
+ $(package)_file_name=curl-$($(package)_version).tar.gz
+ $(package)_sha256_hash=52af3361cf806330b88b4fe6f483b6844209d47ae196ac46da4de59bb361ab02
+ $(package)_config_opts_linux=--disable-shared --enable-static --prefix=$(host_prefix) --host=x86_64-unknown-linux-gnu
+-$(package)_config_opts_mingw32=--enable-mingw --disable-shared --enable-static --prefix=$(host_prefix) --host=x86_64-w64-mingw32
++$(package)_config_opts_mingw32=--enable-mingw --disable-shared --enable-static --prefix=$(host_prefix) --host=x86_64-w64-mingw32 --disable-ldap
+ $(package)_config_opts_darwin=--disable-shared --enable-static --prefix=$(host_prefix)
+ $(package)_cflags_darwin=-mmacosx-version-min=$(OSX_MIN_VERSION)
+ $(package)_conf_tool=./configure
+diff --git a/src/Makefile.am b/src/Makefile.am
+index 60b03df..939243b 100644
+--- a/src/Makefile.am
++++ b/src/Makefile.am
+@@ -17,15 +17,7 @@ BITCOIN_INCLUDES += -I$(srcdir)/snark
+ BITCOIN_INCLUDES += -I$(srcdir)/snark/libsnark
+ BITCOIN_INCLUDES += -I$(srcdir)/univalue/include
+ 
+-if TARGET_WINDOWS
+-LIBBITCOIN_SERVER=libbitcoin_server.a -lcurl
+-endif
+-if TARGET_DARWIN
+-LIBBITCOIN_SERVER=libbitcoin_server.a -lcurl
+-else
+-LIBBITCOIN_SERVER=libbitcoin_server.a -lcurl
+-endif
+-
++LIBBITCOIN_SERVER=libbitcoin_server.a
+ LIBBITCOIN_WALLET=libbitcoin_wallet.a
+ LIBBITCOIN_COMMON=libbitcoin_common.a
+ LIBBITCOIN_CLI=libbitcoin_cli.a
+@@ -50,7 +42,7 @@ LIBSECP256K1=secp256k1/libsecp256k1.la
+ LIBCRYPTOCONDITIONS=cryptoconditions/libcryptoconditions_core.la
+ LIBSNARK=snark/libsnark.a
+ LIBUNIVALUE=univalue/libunivalue.la
+-LIBZCASH=libzcash.a -lcurl
++LIBZCASH=libzcash.a
+ 
+ $(LIBSECP256K1): $(wildcard secp256k1/src/*) $(wildcard secp256k1/include/*)
+ 	$(AM_V_at)$(MAKE) $(AM_MAKEFLAGS) -C $(@D) $(@F)
+diff --git a/src/Makefile.qt.include b/src/Makefile.qt.include
+index 30d8fcb..05d8a94 100644
+--- a/src/Makefile.qt.include
++++ b/src/Makefile.qt.include
+@@ -446,39 +446,7 @@ if TARGET_WINDOWS
+   qt_komodo_qt_SOURCES += $(KOMODO_RC)
+ endif
+ 
+-# libbitcoin_server.a(libbitcoin_server_a-rpcserver.o): In function `__static_initialization_and_destruction_0(int, int)':
+-#
+-#/home/decker/ssd_m2/komodoocean_src/src/rpcserver.cpp:413: undefined reference to `kvupdate(UniValue const&, bool)'
+-#/home/decker/ssd_m2/komodoocean_src/src/rpcserver.cpp:413: undefined reference to `fundrawtransaction(UniValue const&, bool)'
+-#/home/decker/ssd_m2/komodoocean_src/src/rpcserver.cpp:413: undefined reference to `resendwallettransactions(UniValue const&, bool)'
+-#/home/decker/ssd_m2/komodoocean_src/src/rpcserver.cpp:413: undefined reference to `addmultisigaddress(UniValue const&, bool)'
+-#/home/decker/ssd_m2/komodoocean_src/src/rpcserver.cpp:413: undefined reference to `backupwallet(UniValue const&, bool)'
+-#/home/decker/ssd_m2/komodoocean_src/src/rpcserver.cpp:413: undefined reference to `dumpprivkey(UniValue const&, bool)'
+-#/home/decker/ssd_m2/komodoocean_src/src/rpcserver.cpp:413: undefined reference to `dumpwallet(UniValue const&, bool)'
+-#/home/decker/ssd_m2/komodoocean_src/src/rpcserver.cpp:413: undefined reference to `encryptwallet(UniValue const&, bool)'
+-#
+-# we need add libbitcoin_server_a-rpcserver.o wallet/libbitcoin_wallet_a-rpcwallet.o
+-#
+-# 	Objects?
+-# 	wallet/libbitcoin_wallet_a-rpcdump.$(OBJEXT) \
+-#	wallet/libbitcoin_wallet_a-rpcwallet.$(OBJEXT) \
+-#	Or sources?
+-#	  wallet/rpcdump.cpp \
+-#	  wallet/rpcwallet.cpp \
+-#
+-# 	Link of komodod:
+-#	----------------
+-# komodo_qt_clean: FORCE
+-#	rm -f $(CLEAN_QT) $(qt_libkomodoqt_a_OBJECTS) $(qt_komodo_qt_OBJECTS) qt/komodo-qt$(EXEEXT) $(LIBBITCOINQT)
+-#
+-# komodo_qt : qt/komodo-qt$(EXEEXT)
+-#
+-# From written makefile:
+-# komodod$(EXEEXT): $(komodod_OBJECTS) $(komodod_DEPENDENCIES) $(EXTRA_komodod_DEPENDENCIES) 
+-#	@rm -f komodod$(EXEEXT)
+-#	$(AM_V_CXXLD)$(komodod_LINK) $(komodod_OBJECTS) $(komodod_LDADD) $(LIBS)
+-
+-qt_komodo_qt_LDADD = $(LIBBITCOIN_SERVER) qt/libkomodoqt.a 
++qt_komodo_qt_LDADD = $(LIBBITCOIN_SERVER) $(CURL_LIBS) qt/libkomodoqt.a
+ if ENABLE_ZMQ
+ qt_komodo_qt_LDADD += $(LIBBITCOIN_ZMQ) $(ZMQ_LIBS)
+ endif

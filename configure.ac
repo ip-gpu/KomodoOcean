@@ -3,11 +3,11 @@ AC_PREREQ([2.60])
 define(_CLIENT_VERSION_MAJOR, 3)
 define(_CLIENT_VERSION_MINOR, 0)
 define(_CLIENT_VERSION_REVISION, 1)
-define(_CLIENT_VERSION_BUILD, 3)
+define(_CLIENT_VERSION_BUILD, 4)
 define(_ZC_BUILD_VAL, m4_if(m4_eval(_CLIENT_VERSION_BUILD < 25), 1, m4_incr(_CLIENT_VERSION_BUILD), m4_eval(_CLIENT_VERSION_BUILD < 50), 1, m4_eval(_CLIENT_VERSION_BUILD - 24), m4_eval(_CLIENT_VERSION_BUILD == 50), 1, , m4_eval(_CLIENT_VERSION_BUILD - 50)))
 define(_CLIENT_VERSION_SUFFIX, m4_if(m4_eval(_CLIENT_VERSION_BUILD < 25), 1, _CLIENT_VERSION_REVISION-beta$1, m4_eval(_CLIENT_VERSION_BUILD < 50), 1, _CLIENT_VERSION_REVISION-rc$1, m4_eval(_CLIENT_VERSION_BUILD == 50), 1, _CLIENT_VERSION_REVISION, _CLIENT_VERSION_REVISION-$1)))
 define(_CLIENT_VERSION_IS_RELEASE, true)
-define(_COPYRIGHT_YEAR, 2020)
+define(_COPYRIGHT_YEAR, 2021)
 define(_COPYRIGHT_HOLDERS, "The %s developers")
 define(_COPYRIGHT_HOLDERS_SUBSTITUTION, "Ocean and Decker")
 
@@ -237,102 +237,102 @@ enable_shani=no
 
 if test "x$use_asm" = "xyes"; then
 
-dnl Check for optional instruction set support. Enabling these does _not_ imply that all code will
-dnl be compiled with them, rather that specific objects/libs may use them after checking for runtime
-dnl compatibility.
+  dnl Check for optional instruction set support. Enabling these does _not_ imply that all code will
+  dnl be compiled with them, rather that specific objects/libs may use them after checking for runtime
+  dnl compatibility.
 
-dnl x86
-AX_CHECK_COMPILE_FLAG([-msse4.2],[[SSE42_CXXFLAGS="-msse4.2"]],,[[$CXXFLAG_WERROR]])
-AX_CHECK_COMPILE_FLAG([-msse4.1],[[SSE41_CXXFLAGS="-msse4.1"]],,[[$CXXFLAG_WERROR]])
-AX_CHECK_COMPILE_FLAG([-mavx -mavx2],[[AVX2_CXXFLAGS="-mavx -mavx2"]],,[[$CXXFLAG_WERROR]])
-AX_CHECK_COMPILE_FLAG([-msse4 -msha],[[SHANI_CXXFLAGS="-msse4 -msha"]],,[[$CXXFLAG_WERROR]])
+  dnl x86
+  AX_CHECK_COMPILE_FLAG([-msse4.2],[[SSE42_CXXFLAGS="-msse4.2"]],,[[$CXXFLAG_WERROR]])
+  AX_CHECK_COMPILE_FLAG([-msse4.1],[[SSE41_CXXFLAGS="-msse4.1"]],,[[$CXXFLAG_WERROR]])
+  AX_CHECK_COMPILE_FLAG([-mavx -mavx2],[[AVX2_CXXFLAGS="-mavx -mavx2"]],,[[$CXXFLAG_WERROR]])
+  AX_CHECK_COMPILE_FLAG([-msse4 -msha],[[SHANI_CXXFLAGS="-msse4 -msha"]],,[[$CXXFLAG_WERROR]])
 
-TEMP_CXXFLAGS="$CXXFLAGS"
-CXXFLAGS="$CXXFLAGS $SSE42_CXXFLAGS"
-AC_MSG_CHECKING(for SSE4.2 intrinsics)
-AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
-    #include <stdint.h>
-    #if defined(_MSC_VER)
-    #include <intrin.h>
-    #elif defined(__GNUC__) && defined(__SSE4_2__)
-    #include <nmmintrin.h>
-    #endif
-  ]],[[
-    uint64_t l = 0;
-    l = _mm_crc32_u8(l, 0);
-    l = _mm_crc32_u32(l, 0);
-    l = _mm_crc32_u64(l, 0);
-    return l;
-  ]])],
- [ AC_MSG_RESULT(yes); enable_sse42=yes],
- [ AC_MSG_RESULT(no)]
-)
-CXXFLAGS="$TEMP_CXXFLAGS"
+  TEMP_CXXFLAGS="$CXXFLAGS"
+  CXXFLAGS="$CXXFLAGS $SSE42_CXXFLAGS"
+  AC_MSG_CHECKING(for SSE4.2 intrinsics)
+  AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
+      #include <stdint.h>
+      #if defined(_MSC_VER)
+      #include <intrin.h>
+      #elif defined(__GNUC__) && defined(__SSE4_2__)
+      #include <nmmintrin.h>
+      #endif
+    ]],[[
+      uint64_t l = 0;
+      l = _mm_crc32_u8(l, 0);
+      l = _mm_crc32_u32(l, 0);
+      l = _mm_crc32_u64(l, 0);
+      return l;
+    ]])],
+  [ AC_MSG_RESULT(yes); enable_sse42=yes],
+  [ AC_MSG_RESULT(no)]
+  )
+  CXXFLAGS="$TEMP_CXXFLAGS"
 
-TEMP_CXXFLAGS="$CXXFLAGS"
-CXXFLAGS="$CXXFLAGS $SSE41_CXXFLAGS"
-AC_MSG_CHECKING(for SSE4.1 intrinsics)
-AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
-    #include <stdint.h>
-    #include <immintrin.h>
-  ]],[[
-    __m128i l = _mm_set1_epi32(0);
-    return _mm_extract_epi32(l, 3);
-  ]])],
- [ AC_MSG_RESULT(yes); enable_sse41=yes; AC_DEFINE(ENABLE_SSE41, 1, [Define this symbol to build code that uses SSE4.1 intrinsics]) ],
- [ AC_MSG_RESULT(no)]
-)
-CXXFLAGS="$TEMP_CXXFLAGS"
+  TEMP_CXXFLAGS="$CXXFLAGS"
+  CXXFLAGS="$CXXFLAGS $SSE41_CXXFLAGS"
+  AC_MSG_CHECKING(for SSE4.1 intrinsics)
+  AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
+      #include <stdint.h>
+      #include <immintrin.h>
+    ]],[[
+      __m128i l = _mm_set1_epi32(0);
+      return _mm_extract_epi32(l, 3);
+    ]])],
+  [ AC_MSG_RESULT(yes); enable_sse41=yes; AC_DEFINE(ENABLE_SSE41, 1, [Define this symbol to build code that uses SSE4.1 intrinsics]) ],
+  [ AC_MSG_RESULT(no)]
+  )
+  CXXFLAGS="$TEMP_CXXFLAGS"
 
-TEMP_CXXFLAGS="$CXXFLAGS"
-CXXFLAGS="$CXXFLAGS $AVX2_CXXFLAGS"
-AC_MSG_CHECKING(for AVX2 intrinsics)
-AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
-    #include <stdint.h>
-    #include <immintrin.h>
-  ]],[[
-    __m256i l = _mm256_set1_epi32(0);
-    return _mm256_extract_epi32(l, 7);
-  ]])],
- [ AC_MSG_RESULT(yes); enable_avx2=yes; AC_DEFINE(ENABLE_AVX2, 1, [Define this symbol to build code that uses AVX2 intrinsics]) ],
- [ AC_MSG_RESULT(no)]
-)
-CXXFLAGS="$TEMP_CXXFLAGS"
+  TEMP_CXXFLAGS="$CXXFLAGS"
+  CXXFLAGS="$CXXFLAGS $AVX2_CXXFLAGS"
+  AC_MSG_CHECKING(for AVX2 intrinsics)
+  AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
+      #include <stdint.h>
+      #include <immintrin.h>
+    ]],[[
+      __m256i l = _mm256_set1_epi32(0);
+      return _mm256_extract_epi32(l, 7);
+    ]])],
+  [ AC_MSG_RESULT(yes); enable_avx2=yes; AC_DEFINE(ENABLE_AVX2, 1, [Define this symbol to build code that uses AVX2 intrinsics]) ],
+  [ AC_MSG_RESULT(no)]
+  )
+  CXXFLAGS="$TEMP_CXXFLAGS"
 
-TEMP_CXXFLAGS="$CXXFLAGS"
-CXXFLAGS="$CXXFLAGS $SHANI_CXXFLAGS"
-AC_MSG_CHECKING(for SHA-NI intrinsics)
-AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
-    #include <stdint.h>
-    #include <immintrin.h>
-  ]],[[
-    __m128i i = _mm_set1_epi32(0);
-    __m128i j = _mm_set1_epi32(1);
-    __m128i k = _mm_set1_epi32(2);
-    return _mm_extract_epi32(_mm_sha256rnds2_epu32(i, i, k), 0);
-  ]])],
- [ AC_MSG_RESULT(yes); enable_shani=yes; AC_DEFINE(ENABLE_SHANI, 1, [Define this symbol to build code that uses SHA-NI intrinsics]) ],
- [ AC_MSG_RESULT(no)]
-)
-CXXFLAGS="$TEMP_CXXFLAGS"
+  TEMP_CXXFLAGS="$CXXFLAGS"
+  CXXFLAGS="$CXXFLAGS $SHANI_CXXFLAGS"
+  AC_MSG_CHECKING(for SHA-NI intrinsics)
+  AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
+      #include <stdint.h>
+      #include <immintrin.h>
+    ]],[[
+      __m128i i = _mm_set1_epi32(0);
+      __m128i j = _mm_set1_epi32(1);
+      __m128i k = _mm_set1_epi32(2);
+      return _mm_extract_epi32(_mm_sha256rnds2_epu32(i, i, k), 0);
+    ]])],
+  [ AC_MSG_RESULT(yes); enable_shani=yes; AC_DEFINE(ENABLE_SHANI, 1, [Define this symbol to build code that uses SHA-NI intrinsics]) ],
+  [ AC_MSG_RESULT(no)]
+  )
+  CXXFLAGS="$TEMP_CXXFLAGS"
 
-# ARM
-AX_CHECK_COMPILE_FLAG([-march=armv8-a+crc+crypto],[[ARM_CRC_CXXFLAGS="-march=armv8-a+crc+crypto"]],,[[$CXXFLAG_WERROR]])
+  # ARM
+  AX_CHECK_COMPILE_FLAG([-march=armv8-a+crc+crypto],[[ARM_CRC_CXXFLAGS="-march=armv8-a+crc+crypto"]],,[[$CXXFLAG_WERROR]])
 
-TEMP_CXXFLAGS="$CXXFLAGS"
-CXXFLAGS="$CXXFLAGS $ARM_CRC_CXXFLAGS"
-AC_MSG_CHECKING(for ARM CRC32 intrinsics)
-AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
-    #include <arm_acle.h>
-    #include <arm_neon.h>
-  ]],[[
-    __crc32cb(0, 0); __crc32ch(0, 0); __crc32cw(0, 0); __crc32cd(0, 0);
-    vmull_p64(0, 0);
-  ]])],
- [ AC_MSG_RESULT(yes); enable_arm_crc=yes; ],
- [ AC_MSG_RESULT(no)]
-)
-CXXFLAGS="$TEMP_CXXFLAGS"
+  TEMP_CXXFLAGS="$CXXFLAGS"
+  CXXFLAGS="$CXXFLAGS $ARM_CRC_CXXFLAGS"
+  AC_MSG_CHECKING(for ARM CRC32 intrinsics)
+  AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
+      #include <arm_acle.h>
+      #include <arm_neon.h>
+    ]],[[
+      __crc32cb(0, 0); __crc32ch(0, 0); __crc32cw(0, 0); __crc32cd(0, 0);
+      vmull_p64(0, 0);
+    ]])],
+  [ AC_MSG_RESULT(yes); enable_arm_crc=yes; ],
+  [ AC_MSG_RESULT(no)]
+  )
+  CXXFLAGS="$TEMP_CXXFLAGS"
 
 fi
 
@@ -401,7 +401,7 @@ case $host in
      fi
 
      CPPFLAGS="$CPPFLAGS -D_MT -DWIN32 -D_WINDOWS -DBOOST_THREAD_USE_LIB"
-     LEVELDB_TARGET_FLAGS="TARGET_OS=OS_WINDOWS_CROSSCOMPILE"
+     LEVELDB_TARGET_FLAGS="-DOS_WINDOWS"
      if test "x$CXXFLAGS_overridden" = "xno"; then
        CXXFLAGS="$CXXFLAGS -w"
      fi
@@ -423,7 +423,7 @@ case $host in
      ;;
   *darwin*)
      TARGET_OS=darwin
-     LEVELDB_TARGET_FLAGS="TARGET_OS=Darwin"
+     LEVELDB_TARGET_FLAGS="-DOS_MACOSX"
      if  test x$cross_compiling != xyes; then
        BUILD_OS=darwin
        AC_CHECK_PROG([PORT],port, port)
@@ -489,8 +489,11 @@ case $host in
      ;;
    *linux*)
      TARGET_OS=linux
+     LEVELDB_TARGET_FLAGS="-DOS_LINUX"
      ;;
    *)
+     OTHER_OS=`echo ${host_os} | awk '{print toupper($0)}'`
+     LEVELDB_TARGET_FLAGS="-DOS_${OTHER_OS}"
      ;;
 esac
 
@@ -604,8 +607,8 @@ if test x$use_hardening != xno; then
 
   if test x$TARGET_OS != xwindows; then
     # All windows code is PIC, forcing it on just adds useless compile warnings
-    AX_CHECK_LINK_FLAG([[-Wl,-z,relro]], [HARDENED_LDFLAGS="$HARDENED_LDFLAGS -Wl,-z,relro"],[AC_MSG_ERROR(Cannot enable RELRO)])
-    AX_CHECK_LINK_FLAG([[-Wl,-z,now]], [HARDENED_LDFLAGS="$HARDENED_LDFLAGS -Wl,-z,now"],[AC_MSG_ERROR(Cannot enable BIND_NOW)])
+    # AX_CHECK_LINK_FLAG([[-Wl,-z,relro]], [HARDENED_LDFLAGS="$HARDENED_LDFLAGS -Wl,-z,relro"],[AC_MSG_ERROR(Cannot enable RELRO)])
+    # AX_CHECK_LINK_FLAG([[-Wl,-z,now]], [HARDENED_LDFLAGS="$HARDENED_LDFLAGS -Wl,-z,now"],[AC_MSG_ERROR(Cannot enable BIND_NOW)])
     AX_CHECK_COMPILE_FLAG([-fPIE],[HARDENED_CXXFLAGS="$HARDENED_CXXFLAGS -fPIE"],[AC_MSG_ERROR(Cannot enable -fPIE)])
     AX_CHECK_LINK_FLAG([[-pie]], [HARDENED_LDFLAGS="$HARDENED_LDFLAGS -pie"],[AC_MSG_ERROR(Cannot enable -pie)])
   else
@@ -956,7 +959,7 @@ CPPFLAGS="-I$LIBSNARK_INCDIR $CPPFLAGS"
 # Now check for libsnark compilability using traditional autoconf tests:
 if test x$TARGET_OS = xdarwin; then
 AC_CHECK_HEADER([libsnark/gadgetlib1/gadget.hpp],,AC_MSG_ERROR(libsnark headers missing))
-AC_CHECK_LIB([snark],[main],LIBSNARK_LIBS=-lsnark, [AC_MSG_ERROR(libsnark missing)], [-lgmpxx])
+#AC_CHECK_LIB([snark],[main],LIBSNARK_LIBS=-lsnark, [AC_MSG_ERROR(libsnark missing)], [-lgmpxx])
 fi
 #AC_CHECK_HEADER([libsnark/gadgetlib1/gadget.hpp],,AC_MSG_ERROR(libsnark headers missing))
 #AC_CHECK_LIB([snark],[main],LIBSNARK_LIBS=-lsnark, [AC_MSG_ERROR(libsnark missing)], [-lgmpxx])
@@ -1201,6 +1204,11 @@ AC_SUBST(COPYRIGHT_YEAR, _COPYRIGHT_YEAR)
 AC_SUBST(COPYRIGHT_HOLDERS, _COPYRIGHT_HOLDERS)
 AC_SUBST(COPYRIGHT_HOLDERS_SUBSTITUTION, _COPYRIGHT_HOLDERS_SUBSTITUTION)
 
+AC_SUBST(BITCOIN_DAEMON_NAME)
+AC_SUBST(BITCOIN_GUI_NAME)
+AC_SUBST(BITCOIN_CLI_NAME)
+AC_SUBST(BITCOIN_TX_NAME)
+
 AC_SUBST(RELDFLAGS)
 AC_SUBST(SSE42_CXXFLAGS)
 AC_SUBST(SSE41_CXXFLAGS)
@@ -1212,13 +1220,15 @@ AC_SUBST(USE_UPNP)
 AC_SUBST(BOOST_LIBS)
 AC_SUBST(TESTDEFS)
 AC_SUBST(LEVELDB_TARGET_FLAGS)
+AC_SUBST(LEVELDB_ATOMIC_CPPFLAGS)
+AC_SUBST(LEVELDB_ATOMIC_CXXFLAGS)
 AC_SUBST(MINIUPNPC_CPPFLAGS)
 AC_SUBST(MINIUPNPC_LIBS)
 AC_SUBST(GMP_LIBS)
 AC_SUBST(GMPXX_LIBS)
 AC_SUBST(LIBSNARK_DEPINST)
 AC_SUBST(LIBZCASH_LIBS)
-AC_CONFIG_FILES([Makefile src/Makefile doc/man/Makefile share/setup.nsi src/test/buildenv.py])
+AC_CONFIG_FILES([Makefile src/Makefile doc/man/Makefile share/setup.nsi share/qt/Info.plist src/test/buildenv.py])
 AC_CONFIG_FILES([qa/pull-tester/run-komodod-for-test.sh],[chmod +x qa/pull-tester/run-komodod-for-test.sh])
 AC_CONFIG_FILES([qa/pull-tester/tests-config.sh],[chmod +x qa/pull-tester/tests-config.sh])
 
