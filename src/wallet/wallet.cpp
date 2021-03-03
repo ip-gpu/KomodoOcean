@@ -62,6 +62,8 @@ bool fSendFreeTransactions = false;
 bool fPayAtLeastCustomFee = true;
 #include "komodo_defs.h"
 
+const char * DEFAULT_WALLET_DAT = "wallet.dat";
+
 bool fWalletRbf = DEFAULT_WALLET_RBF;
 
 CBlockIndex *komodo_chainactive(int32_t height);

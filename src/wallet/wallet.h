@@ -92,6 +92,8 @@ extern unsigned int WITNESS_CACHE_SIZE;
 //! Size of HD seed in bytes
 static const size_t HD_WALLET_SEED_LENGTH = 32;
 
+extern const char * DEFAULT_WALLET_DAT;
+
 class CBlockIndex;
 class CCoinControl;
 class COutput;
