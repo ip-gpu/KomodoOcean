@@ -1432,6 +1432,7 @@ bool CheckTransaction(uint32_t tiptime,const CTransaction& tx, CValidationState 
     }
 }
 
+// ARRR notary exception
 int32_t komodo_isnotaryvout(char *coinaddr,uint32_t tiptime) // from ac_private chains only
 {
     int32_t season = getacseason(tiptime);
@@ -1458,7 +1459,7 @@ int32_t komodo_acpublic(uint32_t tiptime);
 bool CheckTransactionWithoutProofVerification(uint32_t tiptime,const CTransaction& tx, CValidationState &state)
 {
     // Basic checks that don't depend on any context
-    int32_t invalid_private_taddr=0,z_z=0,z_t=0,t_z=0,acpublic = komodo_acpublic(tiptime);
+    int32_t invalid_private_taddr=0,z_z=0,z_t=0,t_z=0,acpublic = komodo_acpublic(tiptime), current_season = getacseason(tiptime);
     /**
      * Previously:
      * 1. The consensus rule below was:
@@ -1568,9 +1569,18 @@ bool CheckTransactionWithoutProofVerification(uint32_t tiptime,const CTransactio
     }
     if ( ASSETCHAINS_PRIVATE != 0 && invalid_private_taddr != 0 && tx.vShieldedSpend.empty() == 0 )
     {
-        return state.DoS(100, error("CheckTransaction(): this is a private chain, no sapling -> taddr"),
-                         REJECT_INVALID, "bad-txns-acprivate-chain");
+        if ( !( current_season > 5 &&
+                tx.vin.size() == 0 &&
+                tx.vout.size() == 2 &&
+                tx.vout[0].scriptPubKey.IsPayToScriptHash() &&
+                tx.vout[0].scriptPubKey.IsRedeemScriptReveal(tx.vout[1].scriptPubKey) )) {
+                    return state.DoS(100, error("CheckTransaction(): this is a private chain, no sapling -> taddr"),
+                                     REJECT_INVALID, "bad-txns-acprivate-chain");
+                } else {
+                    invalid_private_taddr = false;
+                }
     }
+
     // Check for overflow valueBalance
     if (tx.valueBalance > MAX_MONEY || tx.valueBalance < -MAX_MONEY) {
         return state.DoS(100, error("CheckTransaction(): abs(tx.valueBalance) too large"),
