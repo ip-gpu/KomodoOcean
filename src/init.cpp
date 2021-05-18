@@ -463,7 +463,7 @@ std::string HelpMessage(HelpMessageMode mode)
     strUsage += HelpMessageOpt("-maxtxfee=<amt>", strprintf(_("Maximum total fees (in %s) to use in a single wallet transaction; setting this too low may abort large transactions (default: %s)"),
         CURRENCY_UNIT, FormatMoney(maxTxFee)));
     strUsage += HelpMessageOpt("-upgradewallet", _("Upgrade wallet to latest format") + " " + _("on startup"));
-    strUsage += HelpMessageOpt("-wallet=<file>", _("Specify wallet file (within data directory)") + " " + strprintf(_("(default: %s)"), "wallet.dat"));
+    strUsage += HelpMessageOpt("-wallet=<file>", _("Specify wallet file (within data directory)") + " " + strprintf(_("(default: %s)"), DEFAULT_WALLET_DAT));
     strUsage += HelpMessageOpt("-walletbroadcast", _("Make the wallet broadcast transactions") + " " + strprintf(_("(default: %u)"), true));
     strUsage += HelpMessageOpt("-walletnotify=<cmd>", _("Execute command when a wallet transaction changes (%s in cmd is replaced by TxID)"));
     strUsage += HelpMessageOpt("-whitelistaddress=<Raddress>", _("Enable the wallet filter for notary nodes and add one Raddress to the whitelist of the wallet filter. If -whitelistaddress= is used, then the wallet filter is automatically activated. Several Raddresses can be defined using several -whitelistaddress= (similar to -addnode). The wallet filter will filter the utxo to only ones coming from my own Raddress (derived from pubkey) and each Raddress defined using -whitelistaddress= this option is mostly for Notary Nodes)."));
@@ -1192,7 +1192,7 @@ bool AppInit2(boost::thread_group& threadGroup, CScheduler& scheduler)
     bSpendZeroConfChange = GetBoolArg("-spendzeroconfchange", true);
     fSendFreeTransactions = GetBoolArg("-sendfreetransactions", false);
 
-    std::string strWalletFile = GetArg("-wallet", "wallet.dat");
+    std::string strWalletFile = GetArg("-wallet", DEFAULT_WALLET_DAT);
 #endif // ENABLE_WALLET
 
     fIsBareMultisigStd = GetBoolArg("-permitbaremultisig", true);

@@ -1047,12 +1047,25 @@ std::string PrivacyInfo()
 
 std::string LicenseInfo()
 {
+
+    const std::string URL_SOURCE_CODE = "<https://github.com/KomodoPlatform/KomodoOcean>";
+
     return "\n" +
            FormatParagraph(strprintf(_("Copyright (C) 2009-%i The Bitcoin Core Developers"), COPYRIGHT_YEAR)) + "\n" +
            FormatParagraph(strprintf(_("Copyright (C) 2015-%i The Zcash Developers"), COPYRIGHT_YEAR)) + "\n" +
            FormatParagraph(strprintf(_("Copyright (C) 2015-%i jl777 and SuperNET developers"), COPYRIGHT_YEAR)) + "\n" +
            FormatParagraph(strprintf(_("Copyright (C) 2018-%i The Verus developers"), COPYRIGHT_YEAR)) + "\n" +
            FormatParagraph(strprintf(_("Copyright (C) 2017-%i Ocean and Decker developers"), COPYRIGHT_YEAR)) + "\n" +
+           "\n" +
+           FormatParagraph(strprintf(_("Please contribute if you find %s useful. "
+                       "Visit %s for further information about the software."),
+               PACKAGE_NAME, "<" PACKAGE_URL ">")) +
+           /*
+           "\n" +
+           FormatParagraph(strprintf(_("The source code is available from %s."),
+               URL_SOURCE_CODE)) +
+           */
+           "\n" +
            "\n" +
            FormatParagraph(_("This is experimental software.")) + "\n" +
            "\n" +
