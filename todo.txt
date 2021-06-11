@@ -9,3 +9,29 @@ gui: remove OpenSSL PRNG seeding (Windows, Qt only)
    [Refactor] Remove unused fQuit var from checkqueue.h
    https://github.com/bitcoin/bitcoin/commit/30ded3e3d888f75b6fa8b2e55a3883f799e00775
 
+4. Win64 cross-compile from Arch-Linux:
+
+sudo pacman -Syy
+sudo pacman -Sy wget curl git base-devel pkg-config m4 python
+sudo pacman -Sy mingw-w64
+sudo ln -s /usr/bin/x86_64-w64-mingw32-g++ /usr/bin/x86_64-w64-mingw32-g++-posix
+sudo ln -s /usr/bin/x86_64-w64-mingw32-gcc /usr/bin/x86_64-w64-mingw32-gcc-posix
+cd KomodoOcean/
+make -C ${PWD}/depends V=1 HOST=x86_64-w64-mingw32 -j$(nproc --all)
+./autogen.sh
+CXXFLAGS="-g0 -O2" CPPFLAGS="-DCURL_STATICLIB" \
+CONFIG_SITE="$PWD/depends/x86_64-w64-mingw32/share/config.site" ./configure --disable-tests --disable-bench --with-gui=no --without-miniupnpc --disable-bip70
+### Edit src/cc/Makefile_custom and add -DWIN32 to CFLAGS_WIN
+cd src/cc && HOST=x86_64-w64-mingw32 ./makecustom && cd ../..
+make V=1 -j$(nproc --all)
+
+Fail with this:
+
+/usr/lib/gcc/x86_64-w64-mingw32/11.1.0/../../../../x86_64-w64-mingw32/bin/ld: libbitcoin_server.a(libbitcoin_server_a-asyncrpcoperation.o):asyncrpcoperation.cpp:(.text+0x105): undefined reference to `BCryptCloseAlgorithmProvider'
+/usr/lib/gcc/x86_64-w64-mingw32/11.1.0/../../../../x86_64-w64-mingw32/bin/ld: libbitcoin_server.a(libbitcoin_server_a-asyncrpcoperation.o):asyncrpcoperation.cpp:(.text+0x8fc): undefined reference to `BCryptGenRandom'
+/usr/lib/gcc/x86_64-w64-mingw32/11.1.0/../../../../x86_64-w64-mingw32/bin/ld: libbitcoin_server.a(libbitcoin_server_a-asyncrpcoperation.o):asyncrpcoperation.cpp:(.text$_ZN5boost5uuids6detail20random_provider_baseC2Ev[_ZN5boost5uuids6detail20random_provider_baseC2Ev]+0x31): undefined reference to `BCryptOpenAlgorithmProvider'
+
+Solution:
+
+cd src
+/bin/sh ../libtool  --tag=CXX   --mode=link /home/decker/KomodoOcean/depends/x86_64-w64-mingw32/share/../native/bin/ccache x86_64-w64-mingw32-g++-posix    -std=c++11 -pipe -std=c++11 -O2 -g0 -O2  -Wformat -Wformat-security -Wstack-protector -fstack-protector-all -fopenmp -fwrapv -fno-strict-aliasing -Wno-builtin-declaration-mismatch       -all-static -L/home/decker/KomodoOcean/depends/x86_64-w64-mingw32/share/../lib   -Wl,--dynamicbase -Wl,--nxcompat -o komodod.exe komodod-bitcoind.o bitcoind-res.o libbitcoin_server.a libbitcoin_common.a univalue/libunivalue.la libbitcoin_util.a crypto/libbitcoin_crypto.a crypto/libbitcoin_crypto_sse41.a crypto/libbitcoin_crypto_avx2.a crypto/libbitcoin_crypto_shani.a crypto/libverus_crypto.a crypto/libverus_portable_crypto.a libzcash.a snark/libsnark.a leveldb/libleveldb.a leveldb/libleveldb_sse42.a leveldb/libmemenv.a secp256k1/libsecp256k1.la cryptoconditions/libcryptoconditions_core.la -lcurl libbitcoin_zmq.a -lzmq libbitcoin_wallet.a -L/home/decker/KomodoOcean/depends/x86_64-w64-mingw32/share/../lib -lboost_system -lboost_filesystem -lboost_program_options -lboost_thread -lboost_chrono -ldb_cxx-6.2 -lssl -lcrypto   -levent libzcash.a crypto/libbitcoin_crypto.a crypto/libbitcoin_crypto_sse41.a crypto/libbitcoin_crypto_avx2.a crypto/libbitcoin_crypto_shani.a crypto/libverus_crypto.a crypto/libverus_portable_crypto.a snark/libsnark.a -lgmp -lgmpxx -lboost_system -lcrypto -lsodium -lrustzcash secp256k1/libsecp256k1.la -lssp -lcrypt32 -liphlpapi -lshlwapi -lmswsock -lws2_32 -ladvapi32 -lrpcrt4 -luuid -loleaut32 -lole32 -lcomctl32 -lshell32 -lwinmm -lwinspool -lcomdlg32 -lgdi32 -luser32 -lkernel32 -lmingwthrd -lbcrypt
