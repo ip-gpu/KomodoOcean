@@ -3,7 +3,7 @@
 # file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 # TODO: Remove this dirty hack ... 
-CXXFLAGS+=-fPIC -DHAVE_DECL_EVP_MD_CTX_NEW
+CXXFLAGS+=-fPIC
 
 #PROTOC=/usr/bin/protoc # this is already fixed in configure.ac, PROTOC should be set till here
 

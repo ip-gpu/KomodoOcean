@@ -932,6 +932,14 @@ else
   fi
 fi
 
+dnl set the HAVE_DECL_EVP_MD_CTX_NEW preprocessor flag if needed for paymentrequestplus.cpp
+save_CXXFLAGS="${CXXFLAGS}"
+CXXFLAGS="${CXXFLAGS} ${CRYPTO_CFLAGS} ${SSL_CFLAGS}"
+AC_CHECK_DECLS([EVP_MD_CTX_new],,,[AC_INCLUDES_DEFAULT
+#include <openssl/x509_vfy.h>
+])
+CXXFLAGS="${save_CXXFLAGS}"
+
 # These packages don't provide pkgconfig config files across all
 # platforms, so we use older autoconf detection mechanisms:
 if test x$TARGET_OS = xdarwin; then
