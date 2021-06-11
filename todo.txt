@@ -1,0 +1,11 @@
+1. https://github.com/bitcoin/bitcoin/commit/cc3b5289ef648dca30469ee4afa615a1ed5b4e04
+
+gui: remove OpenSSL PRNG seeding (Windows, Qt only)
+
+2. qt/komodo.cpp:379:14: warning: address of 'this->threadGroup' will always evaluate to 'true' [-Wpointer-bool-conversion]
+
+3. Fix CCheckQueue IsIdle (potential) race condition and remove dangerous constructors.
+   https://github.com/bitcoin/bitcoin/commit/e2073424fd5a185781750347fbfbb0c108ef66fd
+   [Refactor] Remove unused fQuit var from checkqueue.h
+   https://github.com/bitcoin/bitcoin/commit/30ded3e3d888f75b6fa8b2e55a3883f799e00775
+
