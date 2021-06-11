@@ -107,13 +107,14 @@ noinst_PROGRAMS =
 TESTS =
 
 if BUILD_KOMODOD
-#  temporary disable komodod build ... 
-#  bin_PROGRAMS += komodod
+  bin_PROGRAMS += komodod
 endif
 
 if BUILD_KOMODO_UTILS
-  bin_PROGRAMS += komodo-cli
-# bin_PROGRAMS += komodo-cli komodo-tx
+  bin_PROGRAMS += komodo-cli komodo-tx
+endif
+if ENABLE_WALLET
+  bin_PROGRAMS += wallet-utility
 endif
 
 LIBZCASH_H = \
@@ -597,6 +598,14 @@ komodo_cli_SOURCES = bitcoin-cli.cpp
 komodo_cli_CPPFLAGS = $(BITCOIN_INCLUDES) $(EVENT_CFLAGS)
 komodo_cli_LDFLAGS = $(RELDFLAGS) $(AM_LDFLAGS) $(LIBTOOL_APP_LDFLAGS)
 
+# wallet-utility binary #
+if ENABLE_WALLET
+wallet_utility_SOURCES = wallet-utility.cpp
+wallet_utility_CPPFLAGS = $(AM_CPPFLAGS) $(BITCOIN_INCLUDES)
+wallet_utility_CXXFLAGS = $(AM_CXXFLAGS) $(PIE_FLAGS)
+wallet_utility_LDFLAGS = $(RELDFLAGS) $(AM_LDFLAGS) $(LIBTOOL_APP_LDFLAGS)
+endif
+
 if TARGET_WINDOWS
 komodo_cli_SOURCES += bitcoin-cli-res.rc
 endif
@@ -615,7 +624,24 @@ komodo_cli_LDADD = \
   $(LIBVERUS_PORTABLE_CRYPTO) \
   $(LIBBITCOIN_CRYPTO) \
   $(LIBZCASH_LIBS)
-#
+
+if ENABLE_WALLET
+wallet_utility_LDADD = \
+	$(LIBBITCOIN_WALLET) \
+	$(LIBBITCOIN_COMMON) \
+	$(LIBBITCOIN_CRYPTO) \
+  $(LIBVERUS_CRYPTO) \
+  $(LIBVERUS_PORTABLE_CRYPTO) \
+	$(LIBSECP256K1) \
+	$(LIBBITCOIN_UTIL) \
+	$(BOOST_LIBS) \
+	$(BDB_LIBS) \
+	$(CRYPTO_LIBS) \
+	$(LIBZCASH) \
+  $(LIBSNARK) \
+	$(LIBZCASH_LIBS)\
+  $(LIBCRYPTOCONDITIONS)
+endif
 
 # zcash-tx binary #
 komodo_tx_SOURCES = komodo-tx.cpp
@@ -755,6 +781,6 @@ endif
 
 #include Makefile.zcash.include
 
-#if ENABLE_QT
+if ENABLE_QT
 include Makefile.qt.include
-#endif
+endif
