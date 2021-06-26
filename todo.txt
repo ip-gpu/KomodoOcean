@@ -39,3 +39,7 @@ cd src
 5. https://github.com/zcash/zcash/pull/5009 - Bitcoin 0.14 locking PRs #5009
 
 6. https://github.com/zcash/zcash/pull/4060 - Remove libsnark (!)
+
+7. https://github.com/zcash/zcash/pull/5012 - Bitcoin 0.15 locking PRs #5012 (included 3)
+
+8. https://github.com/zcash/zcash/pull/5017 - Bitcoin 0.16 locking PRs #5017
