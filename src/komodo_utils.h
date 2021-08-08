@@ -1373,7 +1373,7 @@ void komodo_statefname(char *fname,char *symbol,char *str)
         len = (int32_t)strlen(fname);
         if ( !mapArgs.count("-datadir") && strcmp(ASSETCHAINS_SYMBOL,&fname[len - n]) == 0 )
             fname[len - n] = 0;
-        else if(mapArgs.count("-datadir")) printf("DEBUG - komodo_utils:1363: custom datadir\n");
+        else if(mapArgs.count("-datadir")) LogPrintf("DEBUG - %s:%d: custom datadir\n", __FILE__, __LINE__);
         else
         {
             if ( strcmp(symbol,"REGTEST") != 0 )
