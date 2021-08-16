@@ -43,3 +43,10 @@ cd src
 7. https://github.com/zcash/zcash/pull/5012 - Bitcoin 0.15 locking PRs #5012 (included 3)
 
 8. https://github.com/zcash/zcash/pull/5017 - Bitcoin 0.16 locking PRs #5017
+
+9. Interface of void hashFingerprintContents (src/cryptoconditions/src/utils.c):
+
+   1. void hashFingerprintContents(asn_TYPE_descriptor_t *asnType, void *fp, uint8_t *out)
+   2. unsigned char *hashFingerprintContents(asn_TYPE_descriptor_t *asnType, void *fp)
+
+   Make sure that we have transition to (1) everywhere.
