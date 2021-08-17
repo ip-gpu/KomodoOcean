@@ -18,6 +18,10 @@
 #include "komodo_defs.h"
 #include "notaries_staked.h"
 
+// #ifdef _WIN32
+// #define printf(...)
+// #endif
+
 // Todo:
 // verify: reorgs
 
@@ -831,7 +835,7 @@ int32_t komodo_connectblock(bool fJustCheck, CBlockIndex *pindex,CBlock& block)
     }
     //LogPrintf("%s connect.%d\n",ASSETCHAINS_SYMBOL,pindex->nHeight);
     // Wallet Filter. Disabled here. Cant be activated by notaries or pools with some changes.
-    if ( is_STAKED(ASSETCHAINS_SYMBOL) != 0 || IS_STAKED_NOTARY > -1 )
+    if ( is_STAKED(ASSETCHAINS_SYMBOL) != 0 || IS_STAKED_NOTARY > -1 ) /* IS_STAKED_NOTARY - STAKED_NOTARY_ID */
     {
         staked_era = STAKED_era(pindex->GetBlockTime());
         if ( !fJustCheck && staked_era != lastStakedEra )
@@ -933,26 +937,8 @@ int32_t komodo_connectblock(bool fJustCheck, CBlockIndex *pindex,CBlock& block)
                 sp->NOTARIZED_HASH     = block.GetHash();
                 sp->NOTARIZED_DESTTXID = txhash;
             }
-            // if ( IS_KOMODO_NOTARY != 0 && ASSETCHAINS_SYMBOL[0] == 0 )
-            //     LogPrintf("(tx.%d: ",i);
             for (j=0; j<numvouts; j++)
             {
-                /*if ( i == 0 && j == 0 )
-                {
-                    uint8_t *script = (uint8_t *)&block.vtx[0].vout[numvouts-1].scriptPubKey[0];
-                    if ( numvouts <= 2 || script[0] != 0x6a )
-                    {
-                        if ( numvouts == 2 && block.vtx[0].vout[1].nValue != 0 )
-                        {
-                            LogPrintf("ht.%d numvouts.%d value %.8f\n",height,numvouts,dstr(block.vtx[0].vout[1].nValue));
-                            if ( height >= 235300 && block.vtx[0].vout[1].nValue >= 100000*COIN )
-                                block.vtx[0].vout[1].nValue = 0;
-                            break;
-                        }
-                    }
-                }*/
-                // if ( IS_KOMODO_NOTARY != 0 && ASSETCHAINS_SYMBOL[0] == 0 )
-                //     LogPrintf("%.8f ",dstr(block.vtx[i].vout[j].nValue));
                 len = block.vtx[i].vout[j].scriptPubKey.size();
                 
                 if ( len >= sizeof(uint32_t) && len <= sizeof(scriptbuf) )
@@ -972,8 +958,6 @@ int32_t komodo_connectblock(bool fJustCheck, CBlockIndex *pindex,CBlock& block)
                     }
                 }
             }
-            // if ( IS_KOMODO_NOTARY != 0 && ASSETCHAINS_SYMBOL[0] == 0 )
-            //     LogPrintf(") ");
             if ( 0 && ASSETCHAINS_SYMBOL[0] == 0 )
                 LogPrintf("[%s] ht.%d txi.%d signedmask.%llx numvins.%d numvouts.%d notarized.%d special.%d isratification.%d\n",ASSETCHAINS_SYMBOL,height,i,(long long)signedmask,numvins,numvouts,notarized,specialtx,isratification);
             if ( !fJustCheck && (notarized != 0 && (notarizedheight != 0 || specialtx != 0)) )
@@ -1040,6 +1024,5 @@ int32_t komodo_connectblock(bool fJustCheck, CBlockIndex *pindex,CBlock& block)
     }
     else return(0);
 }
-
 
 #endif
