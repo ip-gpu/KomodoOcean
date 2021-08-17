@@ -25,7 +25,6 @@
 //#include "cryptoconditions.h"
 #include "internal.h"
 
-
 static unsigned char encoding_table[] = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H',
                                 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P',
                                 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X',
@@ -210,18 +209,15 @@ void jsonAddBase64(cJSON *params, char *key, unsigned char *bin, size_t size) {
 }
 
 
-unsigned char *hashFingerprintContents(asn_TYPE_descriptor_t *asnType, void *fp) {
+void hashFingerprintContents(asn_TYPE_descriptor_t *asnType, void *fp, uint8_t *out) {
     unsigned char buf[BUF_SIZE];
     asn_enc_rval_t rc = der_encode_to_buffer(asnType, fp, buf, BUF_SIZE);
     ASN_STRUCT_FREE(*asnType, fp);
-
     if (rc.encoded < 1) {
         fprintf(stderr, "Encoding fingerprint failed\n");
         return 0;
     }
-    unsigned char *hash = calloc(1,32);
-    sha256(buf, rc.encoded, hash);
-    return hash;
+    sha256(buf, rc.encoded, out);
 }
 
 
@@ -302,5 +298,3 @@ int jsonGetHexOptional(const cJSON *params, char *key, char *err, unsigned char 
     }
     return checkDecodeHex(item, key, err, data, size);
 }
-
-
