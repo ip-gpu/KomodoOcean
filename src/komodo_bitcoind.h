@@ -639,11 +639,7 @@ uint32_t komodo_txtime(CScript &opret,uint64_t *valuep,uint256 hash, int32_t n, 
 {
     CTxDestination address; CTransaction tx; uint256 hashBlock; int32_t numvouts;
     *valuep = 0;
-    if (!GetTransaction(hash, tx,
-#ifndef KOMODO_ZCASH
-                        Params().GetConsensus(),
-#endif
-                        hashBlock, true))
+    if (!GetTransaction(hash, tx, hashBlock, true))
     {
         //LogPrintf("ERROR: %s/v%d locktime.%u\n",hash.ToString().c_str(),n,(uint32_t)tx.nLockTime);
         return(0);
@@ -670,11 +666,7 @@ uint32_t komodo_txtime2(uint64_t *valuep,uint256 hash,int32_t n,char *destaddr)
 {
     CTxDestination address; CBlockIndex *pindex; CTransaction tx; uint256 hashBlock; uint32_t txtime = 0;
     *valuep = 0;
-    if (!GetTransaction(hash, tx,
-#ifndef KOMODO_ZCASH
-                        Params().GetConsensus(),
-#endif
-                        hashBlock, true))
+    if (!GetTransaction(hash, tx, hashBlock, true))
     {
         //LogPrintf("ERROR: %s/v%d locktime.%u\n",hash.ToString().c_str(),n,(uint32_t)tx.nLockTime);
         return(0);
@@ -1855,11 +1847,7 @@ bool verusCheckPOSBlock(int32_t slowflag, CBlock *pblock, int32_t height)
                     LogPrintf("ERROR: chain not fully loaded or invalid PoS block %s - no past block found\n",blkHash.ToString().c_str());
                 }
                 else
-#ifndef KOMODO_ZCASH
-                if (!GetTransaction(txid, tx, Params().GetConsensus(), blkHash, true))
-#else
                 if (!GetTransaction(txid, tx, blkHash, true))
-#endif
                 {
                     LogPrintf("ERROR: invalid PoS block %s - no source transaction\n",blkHash.ToString().c_str());
                 }

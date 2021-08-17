@@ -649,7 +649,6 @@ CBlockTreeDB *pblocktree = NULL;
 
 // Komodo globals
 
-#define KOMODO_ZCASH
 #include "komodo.h"
 
 UniValue komodo_snapshot(int top)
