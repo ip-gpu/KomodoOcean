@@ -31,8 +31,6 @@ bool EnsureWalletIsAvailable(bool avoidException);
 extern bool fRequestShutdown;
 extern CScript KOMODO_EARLYTXID_SCRIPTPUB;
 
-int32_t MarmaraSignature(uint8_t *utxosig,CMutableTransaction &txNew);
-uint8_t DecodeMaramaraCoinbaseOpRet(const CScript scriptPubKey,CPubKey &pk,int32_t &height,int32_t &unlockht);
 uint32_t komodo_heightstamp(int32_t height);
 
 //#define issue_curl(cmdstr) bitcoind_RPC(0,(char *)"curl",(char *)"http://127.0.0.1:7776",0,0,(char *)(cmdstr))
@@ -722,7 +720,7 @@ int32_t komodo_newStakerActive(int32_t height, uint32_t timestamp)
 
 int32_t komodo_hasOpRet(int32_t height, uint32_t timestamp)
 {    
-    return((ASSETCHAINS_MARMARA!=0 || komodo_newStakerActive(height, timestamp) == 1));
+    return komodo_newStakerActive(height, timestamp) == 1;
 }
 
 bool komodo_checkopret(CBlock *pblock, CScript &merkleroot)
@@ -735,8 +733,6 @@ bool komodo_hardfork_active(uint32_t time)
 {
     return ( (ASSETCHAINS_SYMBOL[0] == 0 && chainActive.Height() > nDecemberHardforkHeight) || (ASSETCHAINS_SYMBOL[0] != 0 && time > nStakedDecemberHardforkTimestamp) ); //December 2019 hardfork
 }
-
-bool MarmaraPoScheck(char *destaddr,CScript opret,CTransaction staketx);
 
 uint256 komodo_calcmerkleroot(CBlock *pblock, uint256 prevBlockHash, int32_t nHeight, bool fNew, CScript scriptPubKey)
 {
@@ -788,21 +784,7 @@ int32_t komodo_isPoS(CBlock *pblock, int32_t height,CTxDestination *addressout)
                 {
                     if ( pblock->vtx[n-1].vout[0].nValue == value && strcmp(destaddr,voutaddr) == 0 )
                     {
-                        if ( ASSETCHAINS_MARMARA == 0 )
-                            return(1);
-                        else 
-                        {
-                            if ( pblock->vtx[n-1].vout[0].scriptPubKey.IsPayToCryptoCondition() != 0 && (numvouts= pblock->vtx[n-1].vout.size()) == 2 )
-                            {
-                                //LogPrintf("validate proper %s %s signature and unlockht preservation\n",voutaddr,destaddr);
-                                return(MarmaraPoScheck(destaddr,opret,pblock->vtx[n-1]));
-                            }
-                            else
-                            {
-                                LogPrintf("reject ht.%d PoS block\n",height);
-                                return(strcmp(ASSETCHAINS_SYMBOL,"MTST2") == 0); // allow until MTST3
-                            }
-                        }
+                        return(1);
                     }
                 }
             }
@@ -2695,9 +2677,7 @@ int32_t komodo_staked(CMutableTransaction &txNew,uint32_t nBits,uint32_t *blockt
         LOCK(cs_main);
         CBlockIndex* pblockindex = chainActive[tipindex->GetHeight()];
         CBlock block; CTxDestination addressout;
-        if ( ASSETCHAINS_MARMARA != 0 )
-            resetstaker = true;
-         else if ( ReadBlockFromDisk(block, pblockindex, 1) && komodo_isPoS(&block, nHeight, &addressout) != 0 && IsMine(*pwalletMain,addressout) != 0 )
+        if ( ReadBlockFromDisk(block, pblockindex, 1) && komodo_isPoS(&block, nHeight, &addressout) != 0 && IsMine(*pwalletMain,addressout) != 0 )
         {
               resetstaker = true;
               LogPrintf( "[%s:%d] Reset ram staker after mining a block!\n",ASSETCHAINS_SYMBOL,nHeight);
@@ -2715,60 +2695,31 @@ int32_t komodo_staked(CMutableTransaction &txNew,uint32_t nBits,uint32_t *blockt
             maxkp = numkp = 0;
             lasttime = 0;
         }
-        if ( ASSETCHAINS_MARMARA == 0 )
+        BOOST_FOREACH(const COutput& out, vecOutputs)
         {
-            BOOST_FOREACH(const COutput& out, vecOutputs)
+            if ( (tipindex= chainActive.Tip()) == 0 || tipindex->GetHeight()+1 > nHeight )
             {
-                if ( (tipindex= chainActive.Tip()) == 0 || tipindex->GetHeight()+1 > nHeight )
-                {
-                    LogPrintf("[%s:%d] chain tip changed during staking loop t.%u counter.%d\n",ASSETCHAINS_SYMBOL,nHeight,(uint32_t)time(NULL),counter);
-                    return(0);
-                }
-                counter++;
-                if ( out.nDepth < nMinDepth || out.nDepth > nMaxDepth )
-                {
-                    //LogPrintf("komodo_staked invalid depth %d\n",(int32_t)out.nDepth);
-                    continue;
-                }
-                CAmount nValue = out.tx->vout[out.i].nValue;
-                if ( nValue < COIN  || !out.fSpendable )
-                    continue;
-                const CScript& pk = out.tx->vout[out.i].scriptPubKey;
-                if ( ExtractDestination(pk,address) != 0 )
-                {
-                    if ( IsMine(*pwalletMain,address) == 0 )
-                        continue;
-                    if ( myGetTransaction(out.tx->GetHash(),tx,hashBlock) != 0 && (pindex= komodo_getblockindex(hashBlock)) != 0 )
-                    {
-                        array = komodo_addutxo(array,&numkp,&maxkp,(uint32_t)pindex->nTime,(uint64_t)nValue,out.tx->GetHash(),out.i,(char *)CBitcoinAddress(address).ToString().c_str(),hashbuf,(CScript)pk);
-                        //LogPrintf("addutxo numkp.%d vs max.%d\n",numkp,maxkp);
-                    }
-                }
+                LogPrintf("[%s:%d] chain tip changed during staking loop t.%u counter.%d\n",ASSETCHAINS_SYMBOL,nHeight,(uint32_t)time(NULL),counter);
+                return(0);
             }
-        }
-        else
-        {
-            struct CCcontract_info *cp,C; uint256 txid; int32_t vout,ht,unlockht; CAmount nValue; char coinaddr[64]; CPubKey mypk,Marmarapk,pk;
-            std::vector<std::pair<CAddressUnspentKey, CAddressUnspentValue> > unspentOutputs;
-            cp = CCinit(&C,EVAL_MARMARA);
-            mypk = pubkey2pk(Mypubkey());
-            Marmarapk = GetUnspendable(cp,0);
-            GetCCaddress1of2(cp,coinaddr,Marmarapk,mypk);
-            SetCCunspents(unspentOutputs,coinaddr,true);
-            for (std::vector<std::pair<CAddressUnspentKey, CAddressUnspentValue> >::const_iterator it=unspentOutputs.begin(); it!=unspentOutputs.end(); it++)
+            counter++;
+            if ( out.nDepth < nMinDepth || out.nDepth > nMaxDepth )
             {
-                txid = it->first.txhash;
-                vout = (int32_t)it->first.index;
-                if ( (nValue= it->second.satoshis) < COIN )
+                //LogPrintf("komodo_staked invalid depth %d\n",(int32_t)out.nDepth);
+                continue;
+            }
+            CAmount nValue = out.tx->vout[out.i].nValue;
+            if ( nValue < COIN  || !out.fSpendable )
+                continue;
+            const CScript& pk = out.tx->vout[out.i].scriptPubKey;
+            if ( ExtractDestination(pk,address) != 0 )
+            {
+                if ( IsMine(*pwalletMain,address) == 0 )
                     continue;
-                if ( myGetTransaction(txid,tx,hashBlock) != 0 && (pindex= komodo_getblockindex(hashBlock)) != 0 && myIsutxo_spentinmempool(ignoretxid,ignorevin,txid,vout) == 0 )
+                if ( myGetTransaction(out.tx->GetHash(),tx,hashBlock) != 0 && (pindex= komodo_getblockindex(hashBlock)) != 0 )
                 {
-                    const CScript &scriptPubKey = tx.vout[vout].scriptPubKey;
-                    if ( DecodeMaramaraCoinbaseOpRet(tx.vout[tx.vout.size()-1].scriptPubKey,pk,ht,unlockht) != 0 && pk == mypk )
-                    {
-                        array = komodo_addutxo(array,&numkp,&maxkp,(uint32_t)pindex->nTime,(uint64_t)nValue,txid,vout,coinaddr,hashbuf,(CScript)scriptPubKey);
-                    }
-                    // else LogPrintf("SKIP addutxo %.8f numkp.%d vs max.%d\n",(double)nValue/COIN,numkp,maxkp);
+                    array = komodo_addutxo(array,&numkp,&maxkp,(uint32_t)pindex->nTime,(uint64_t)nValue,out.tx->GetHash(),out.i,(char *)CBitcoinAddress(address).ToString().c_str(),hashbuf,(CScript)pk);
+                    //LogPrintf("addutxo numkp.%d vs max.%d\n",numkp,maxkp);
                 }
             }
         }
@@ -2847,23 +2798,13 @@ int32_t komodo_staked(CMutableTransaction &txNew,uint32_t nBits,uint32_t *blockt
             txNew.vout[1].nValue = 0;
         } 
         CTransaction txNewConst(txNew);
-        if ( ASSETCHAINS_MARMARA == 0 )
-        {
-            signSuccess = ProduceSignature(TransactionSignatureCreator(&keystore, &txNewConst, 0, *utxovaluep, SIGHASH_ALL), best_scriptPubKey, sigdata, consensusBranchId);
-            UpdateTransaction(txNew,0,sigdata);
-            ptr = (uint8_t *)&sigdata.scriptSig[0];
-            siglen = sigdata.scriptSig.size();
-            for (i=0; i<siglen; i++)
-                utxosig[i] = ptr[i];
-            *utxovaluep = newStakerActive != 0 ? tocoinbase : txNew.vout[0].nValue+txfee;
-        }
-        else
-        {
-            siglen = MarmaraSignature(utxosig,txNew);
-            if ( siglen > 0 )
-                signSuccess = true;
-            else signSuccess = false;
-        }
+        signSuccess = ProduceSignature(TransactionSignatureCreator(&keystore, &txNewConst, 0, *utxovaluep, SIGHASH_ALL), best_scriptPubKey, sigdata, consensusBranchId);
+        UpdateTransaction(txNew,0,sigdata);
+        ptr = (uint8_t *)&sigdata.scriptSig[0];
+        siglen = sigdata.scriptSig.size();
+        for (i=0; i<siglen; i++)
+            utxosig[i] = ptr[i];
+        *utxovaluep = newStakerActive != 0 ? tocoinbase : txNew.vout[0].nValue+txfee;
         if (!signSuccess)
             LogPrintf("failed to create signature\n");
         else
