@@ -453,7 +453,7 @@ crypto_libverus_portable_crypto_a_SOURCES = \
   crypto/haraka_portable.c
 
 # common: shared between zcashd and non-server tools
-libbitcoin_common_a_CPPFLAGS = $(BITCOIN_INCLUDES)
+libbitcoin_common_a_CPPFLAGS = -fPIC $(BITCOIN_INCLUDES)
 libbitcoin_common_a_SOURCES = \
   amount.cpp \
   arith_uint256.cpp \
