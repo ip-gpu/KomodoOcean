@@ -215,7 +215,7 @@ void hashFingerprintContents(asn_TYPE_descriptor_t *asnType, void *fp, uint8_t *
     ASN_STRUCT_FREE(*asnType, fp);
     if (rc.encoded < 1) {
         fprintf(stderr, "Encoding fingerprint failed\n");
-        return 0;
+        return;
     }
     sha256(buf, rc.encoded, out);
 }
