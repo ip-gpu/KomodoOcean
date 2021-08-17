@@ -20,11 +20,11 @@
 #include <stdint.h>
 #include <memory.h>
 #include <string.h>
+#include "bits256.h"
 
 #ifdef _WIN32
 #include <sodium.h>
 #endif
-
 bits320 fmul(const bits320 in2,const bits320 in);
 bits320 fexpand(bits256 basepoint);
 bits256 fcontract(const bits320 input);

@@ -547,13 +547,13 @@ int32_t komodo_voutupdate(bool fJustCheck,int32_t *isratificationp,int32_t notar
         return(-1);
     if ( scriptlen == 35 && scriptbuf[0] == 33 && scriptbuf[34] == 0xac )
     {
-        if ( i == 0 && j == 0 && memcmp(NOTARY_PUBKEY33,scriptbuf+1,33) == 0 && IS_KOMODO_NOTARY != 0 )
+        if ( i == 0 && j == 0 && memcmp(NOTARY_PUBKEY33,scriptbuf+1,33) == 0 && IS_KOMODO_NOTARY )
         {
             LogPrintf("%s KOMODO_LASTMINED.%d -> %d\n",ASSETCHAINS_SYMBOL,KOMODO_LASTMINED,height);
             prevKOMODO_LASTMINED = KOMODO_LASTMINED;
             KOMODO_LASTMINED = height;
         }
-        decode_hex(crypto777,33,(char *)CRYPTO777_PUBSECPSTR);
+        decode_hex(crypto777,33,CRYPTO777_PUBSECPSTR);
         /*for (k=0; k<33; k++)
             LogPrintf("%02x",crypto777[k]);
         LogPrintf(" crypto777 ");
@@ -835,7 +835,7 @@ int32_t komodo_connectblock(bool fJustCheck, CBlockIndex *pindex,CBlock& block)
     }
     //LogPrintf("%s connect.%d\n",ASSETCHAINS_SYMBOL,pindex->nHeight);
     // Wallet Filter. Disabled here. Cant be activated by notaries or pools with some changes.
-    if ( is_STAKED(ASSETCHAINS_SYMBOL) != 0 || IS_STAKED_NOTARY > -1 ) /* IS_STAKED_NOTARY - STAKED_NOTARY_ID */
+    if ( is_STAKED(ASSETCHAINS_SYMBOL) != 0 || STAKED_NOTARY_ID > -1 )
     {
         staked_era = STAKED_era(pindex->GetBlockTime());
         if ( !fJustCheck && staked_era != lastStakedEra )
@@ -998,7 +998,7 @@ int32_t komodo_connectblock(bool fJustCheck, CBlockIndex *pindex,CBlock& block)
                 }
             }
         }
-        if ( !fJustCheck && IS_KOMODO_NOTARY != 0 && ASSETCHAINS_SYMBOL[0] == 0 )
+        if ( !fJustCheck && IS_KOMODO_NOTARY && ASSETCHAINS_SYMBOL[0] == 0 )
             LogPrintf("%s ht.%d\n",ASSETCHAINS_SYMBOL[0] == 0 ? "KMD" : ASSETCHAINS_SYMBOL,height);
         if ( !fJustCheck && pindex->GetHeight() == hwmheight )
             komodo_stateupdate(height,0,0,0,zero,0,0,0,0,height,(uint32_t)pindex->nTime,0,0,0,0,zero,0);
