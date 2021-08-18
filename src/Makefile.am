@@ -335,6 +335,7 @@ libbitcoin_server_a_SOURCES = \
   txdb.cpp \
   txmempool.cpp \
   validationinterface.cpp \
+  mini-gmp.c \
   cc/cclib.cpp \
   $(BITCOIN_CORE_H) \
   $(LIBZCASH_H)
