@@ -479,6 +479,7 @@ libbitcoin_common_a_SOURCES = \
   key_io.cpp \
   keystore.cpp \
   komodo_bitcoind.cpp \
+  komodo_curve25519.cpp \
   komodo_events.cpp \
   komodo_globals.cpp \
   komodo_kv.cpp \
