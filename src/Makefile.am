@@ -481,6 +481,7 @@ libbitcoin_common_a_SOURCES = \
   komodo_events.cpp \
   komodo_globals.cpp \
   komodo_notary.cpp \
+  komodo_pax.cpp \
   komodo_structs.cpp \
   komodo_utils.cpp \
   netbase.cpp \
