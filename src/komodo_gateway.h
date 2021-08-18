@@ -1731,6 +1731,7 @@ int32_t komodo_priceclamp(int32_t n,uint32_t *pricebits,uint32_t *refprices,int6
     return(0);
 }
 
+void komodo_cbopretupdate(int32_t forceflag);
 // komodo_mineropret() returns a valid pricedata to add to the coinbase opreturn for nHeight
 CScript komodo_mineropret(int32_t nHeight)
 {
