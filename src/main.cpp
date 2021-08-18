@@ -52,6 +52,7 @@
 #include "wallet/asyncrpcoperation_shieldcoinbase.h"
 #include "policy/fees.h"
 #include "notaries_staked.h"
+#include "komodo_extern_globals.h"
 
 #include <cstring>
 #include <algorithm>
