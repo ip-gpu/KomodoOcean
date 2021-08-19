@@ -21,13 +21,10 @@
  THE SOFTWARE.
  */
 
-/* cJSON */
-/* JSON parser in C. */
 #include <math.h>
 
-#include "cJSON.h"
 #include "komodo_cJSON.h"
-#include "cJSON.c"
+#include "cJSON.h"
 #include "hex.h"
 
 #ifndef DBL_EPSILON
@@ -54,6 +51,61 @@ static int32_t cJSON_strcasecmp(const char *s1,const char *s2)
 	for(; tolower((int32_t)(*s1)) == tolower((int32_t)(*s2)); ++s1, ++s2)	if(*s1 == 0)	return 0;
 	return tolower((int32_t)(*(const unsigned char *)s1)) - tolower((int32_t)(*(const unsigned char *)s2));
 }
+
+/* komodo_cutils [begin] */
+static int32_t safecopy(char *dest,char *src,long len)
+{
+    int32_t i = -1;
+    if ( src != 0 && dest != 0 && src != dest )
+    {
+        if ( dest != 0 )
+            memset(dest,0,len);
+        for (i=0; i<len&&src[i]!=0; i++)
+            dest[i] = src[i];
+        if ( i == len )
+        {
+            printf("safecopy: %s too long %ld\n",src,len);
+#ifdef __APPLE__
+            //getchar();
+#endif
+            return(-1);
+        }
+        dest[i] = 0;
+    }
+    return(i);
+}
+
+static long _stripwhite(char *buf,int accept)
+{
+    int32_t i,j,c;
+    if ( buf == 0 || buf[0] == 0 )
+        return(0);
+    for (i=j=0; buf[i]!=0; i++)
+    {
+        buf[j] = c = buf[i];
+        if ( c == accept || (c != ' ' && c != '\n' && c != '\r' && c != '\t' && c != '\b') )
+            j++;
+    }
+    buf[j] = 0;
+    return(j);
+}
+
+static char *clonestr(char *str)
+{
+    char *clone;
+    if ( str == 0 || str[0] == 0 )
+    {
+        printf("warning cloning nullstr.%p\n",str);
+#ifdef __APPLE__
+        while ( 1 ) sleep(1);
+#endif
+        str = (char *)"<nullstr>";
+    }
+    clone = (char *)malloc(strlen(str)+16);
+    strcpy(clone,str);
+    return(clone);
+}
+/* komodo_cutils [end] */
 
 // the following written by jl777
 /******************************************************************************
@@ -218,13 +270,13 @@ uint64_t get_satoshi_obj(cJSON *json,char *field)
     {
         satoshis += (mult * (numstr.buf[i] - '0'));
         if ( satoshis < prev )
-            LogPrintf("get_satoshi_obj numstr.(%s) i.%d prev.%llu vs satoshis.%llu\n",numstr.buf,i,(unsigned long long)prev,(unsigned long long)satoshis);
+            printf("get_satoshi_obj numstr.(%s) i.%d prev.%llu vs satoshis.%llu\n",numstr.buf,i,(unsigned long long)prev,(unsigned long long)satoshis);
         prev = satoshis;
     }
     sprintf(checkstr.buf,"%llu",(long long)satoshis);
     if ( strcmp(checkstr.buf,numstr.buf) != 0 )
     {
-        LogPrintf("SATOSHI GREMLIN?? numstr.(%s) -> %.8f -> (%s)\n",numstr.buf,dstr(satoshis),checkstr.buf);
+        printf("SATOSHI GREMLIN?? numstr.(%s) -> %.8f -> (%s)\n",numstr.buf,dstr(satoshis),checkstr.buf);
     }
     return(satoshis);
 }
@@ -237,7 +289,7 @@ void add_satoshis_json(cJSON *json,char *field,uint64_t satoshis)
     obj = cJSON_CreateString(numstr);
     cJSON_AddItemToObject(json,field,obj);
     if ( satoshis != get_satoshi_obj(json,field) )
-        LogPrintf("error adding satoshi obj %ld -> %ld\n",(unsigned long)satoshis,(unsigned long)get_satoshi_obj(json,field));
+        printf("error adding satoshi obj %ld -> %ld\n",(unsigned long)satoshis,(unsigned long)get_satoshi_obj(json,field));
 }
 
 char *cJSON_str(cJSON *json)
@@ -501,18 +553,18 @@ uint64_t calc_nxt64bits(const char *NXTaddr)
     uint64_t lastval,mult,nxt64bits = 0;
     if ( NXTaddr == 0 )
     {
-        LogPrintf("calling calc_nxt64bits with null ptr!\n");
+        printf("calling calc_nxt64bits with null ptr!\n");
         return(0);
     }
     n = strlen(NXTaddr);
     if ( n >= 22 )
     {
-        LogPrintf("calc_nxt64bits: illegal NXTaddr.(%s) too long\n",NXTaddr);
+        printf("calc_nxt64bits: illegal NXTaddr.(%s) too long\n",NXTaddr);
         return(0);
     }
     else if ( strcmp(NXTaddr,"0") == 0 || strcmp(NXTaddr,"false") == 0 )
     {
-        // LogPrintf("zero address?\n"); getchar();
+        // printf("zero address?\n"); getchar();
         return(0);
     }
     if ( NXTaddr[0] == '-' )
@@ -524,25 +576,25 @@ uint64_t calc_nxt64bits(const char *NXTaddr)
         c = NXTaddr[i];
         if ( c < '0' || c > '9' )
         {
-            LogPrintf("calc_nxt64bits: illegal char.(%c %d) in (%s).%d\n",c,c,NXTaddr,(int32_t)i);
+            printf("calc_nxt64bits: illegal char.(%c %d) in (%s).%d\n",c,c,NXTaddr,(int32_t)i);
 #ifdef __APPLE__
             //while ( 1 )
             {
                 //sleep(60);
-                LogPrintf("calc_nxt64bits: illegal char.(%c %d) in (%s).%d\n",c,c,NXTaddr,(int32_t)i);
+                printf("calc_nxt64bits: illegal char.(%c %d) in (%s).%d\n",c,c,NXTaddr,(int32_t)i);
             }
 #endif
             return(0);
         }
         nxt64bits += mult * (c - '0');
         if ( nxt64bits < lastval )
-            LogPrintf("calc_nxt64bits: warning: 64bit overflow %llx < %llx\n",(long long)nxt64bits,(long long)lastval);
+            printf("calc_nxt64bits: warning: 64bit overflow %llx < %llx\n",(long long)nxt64bits,(long long)lastval);
         lastval = nxt64bits;
     }
     while ( *NXTaddr == '0' && *NXTaddr != 0 )
         NXTaddr++;
     if ( cmp_nxt64bits(NXTaddr,nxt64bits) != 0 )
-        LogPrintf("error calculating nxt64bits: %s -> %llx -> %s\n",NXTaddr,(long long)nxt64bits,nxt64str(nxt64bits));
+        printf("error calculating nxt64bits: %s -> %llx -> %s\n",NXTaddr,(long long)nxt64bits,nxt64str(nxt64bits));
     if ( polarity < 0 )
         return(-(int64_t)nxt64bits);
     return(nxt64bits);

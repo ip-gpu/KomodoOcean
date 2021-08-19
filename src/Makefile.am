@@ -68,6 +68,19 @@ $(LIBUNIVALUE): $(wildcard univalue/lib/*)
 $(LIBCRYPTOCONDITIONS): $(wildcard cryptoconditions/src/*) $(wildcard cryptoconditions/include/*)
 	$(AM_V_at)$(MAKE) $(AM_MAKEFLAGS) -C $(@D) $(@F)
 
+# %.o: %.c
+# 	$(CC) -c -o $@ $<
+
+# $(LIBCJSON): cJSON.o komodo_cJSON.o
+# 	$(AR) cr $(LIBCJSON) $^
+
+# libcjson build
+LIBCJSON=libcjson.a
+libcjson_a_SOURCES = cJSON.c \
+  komodo_cJSON.c
+libcjson_a_CPPFLAGS=-fPIC
+EXTRA_LIBRARIES += $(LIBCJSON)
+
 # Make is not made aware of per-object dependencies to avoid limiting building parallelization
 # But to build the less dependent modules first, we manually select their order here:
 EXTRA_LIBRARIES += \
@@ -582,6 +595,7 @@ komodod_LDADD += $(LIBBITCOIN_WALLET)
 endif
 
 komodod_LDADD += \
+  $(LIBCJSON) \
   $(BOOST_LIBS) \
   $(BDB_LIBS) \
   $(SSL_LIBS) \
