@@ -24,6 +24,7 @@
  z_sendmany "fromaddress" [{"address":... ,"amount":..., "memo":"<hex>"},...] ( minconf ) ( fee )
  */
 #pragma once
+#include "komodo_defs.h"
 #include "uthash.h" // UT_hash_handle
 #include "komodo_cJSON.h"
 #include "bits256.h"
