@@ -491,6 +491,8 @@ libbitcoin_common_a_SOURCES = \
   key.cpp \
   key_io.cpp \
   keystore.cpp \
+  komodo_structs.cpp \
+  komodo.cpp \
   komodo_bitcoind.cpp \
   komodo_ccdata.cpp \
   komodo_curve25519.cpp \
@@ -502,7 +504,6 @@ libbitcoin_common_a_SOURCES = \
   komodo_kv.cpp \
   komodo_notary.cpp \
   komodo_pax.cpp \
-  komodo_structs.cpp \
   komodo_utils.cpp \
   netbase.cpp \
   metrics.cpp \
