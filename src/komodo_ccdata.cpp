@@ -14,11 +14,6 @@
  ******************************************************************************/
 #include "komodo_ccdata.h"
 #include "komodo_extern_globals.h"
-
-// TODO: komodo.h was included in komodo_ccdata.h, but on this step we trying to
-// avoid include komodo.h, so declarations and includes below is just to avoid
-// including komodo.h
-
 #include "komodo_utils.h" // portable_mutex_lock
 #include "komodo_notary.h" // komodo_npptr
 

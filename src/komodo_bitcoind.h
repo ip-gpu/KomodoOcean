@@ -12,7 +12,7 @@
  * Removal or modification of this copyright notice is prohibited.            *
  *                                                                            *
  ******************************************************************************/
-
+#pragma once
 // komodo functions that interact with bitcoind C++
 
 #include <curl/curl.h>
@@ -22,7 +22,6 @@
 #include "komodo_defs.h"
 #include "script/standard.h"
 #include "cc/CCinclude.h"
-#include "komodo_notary.h" // komodo_init
 
 int32_t komodo_notaries(uint8_t pubkeys[64][33],int32_t height,uint32_t timestamp);
 int32_t komodo_electednotary(int32_t *numnotariesp,uint8_t *pubkey33,int32_t height,uint32_t timestamp);
@@ -44,16 +43,49 @@ struct return_string { char *ptr; size_t len; };
 #define CURL_GLOBAL_SSL (1<<0)
 #define CURL_GLOBAL_WIN32 (1<<1)
 
+
+/************************************************************************
+ *
+ * Initialize the string handler so that it is thread safe
+ *
+ ************************************************************************/
+
 void init_string(struct return_string *s);
 
 int tx_height( const uint256 &hash );
 
+
+/************************************************************************
+ *
+ * Use the "writer" to accumulate text until done
+ *
+ ************************************************************************/
+
 size_t accumulatebytes(void *ptr,size_t size,size_t nmemb,struct return_string *s);
+
+/************************************************************************
+ *
+ * return the current system time in milliseconds
+ *
+ ************************************************************************/
 
 #define EXTRACT_BITCOIND_RESULT  // if defined, ensures error is null and returns the "result" field
 #ifdef EXTRACT_BITCOIND_RESULT
+
+/************************************************************************
+ *
+ * perform post processing of the results
+ *
+ ************************************************************************/
+
 char *post_process_bitcoind_RPC(char *debugstr,char *command,char *rpcstr,char *params);
 #endif
+
+/************************************************************************
+ *
+ * perform the query
+ *
+ ************************************************************************/
 
 char *bitcoind_RPC(char **retstrp,char *debugstr,char *url,char *userpass,char *command,char *params);
 

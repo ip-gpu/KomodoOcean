@@ -12,26 +12,11 @@
  * Removal or modification of this copyright notice is prohibited.            *
  *                                                                            *
  ******************************************************************************/
-#include "komodo_gateway.h"
-//#include "komodo.h"
-
-// TODO: (1)-(5) are replacement to don't include "komodo.h"
-#include "komodo_pax.h" // max_allowed (1)
-#include "komodo_bitcoind.h" // komodo_isrealtime & komodo_checkcommission (2)
-#include "komodo_kv.h" // komodo_kvupdate (3)
-#include "komodo_jumblr.h" // jumblr_iteration (4)
-
+//#include "komodo_gateway.h"
+#include "komodo.h"
 #include "komodo_extern_globals.h"
 #include "komodo_utils.h" // komodo_stateptrget
-
-// TODO: use headers instead of direct declarations
-int32_t komodo_parsestatefile(struct komodo_state *sp,FILE *fp,char *symbol,char *dest); // (5)
-
-const char *Cryptos[] = { "KMD", "ETH" }; // must be on binance (for now)
-// "LTC", "BCHABC", "XMR", "IOTA", "ZEC", "WAVES",  "LSK", "DCR", "RVN", "DASH", "XEM", "BTS", "ICX", "HOT", "STEEM", "ENJ", "STRAT"
-const char *Forex[] =
-{ "BGN","NZD","ILS","RUB","CAD","PHP","CHF","AUD","JPY","TRY","HKD","MYR","HRK","CZK","IDR","DKK","NOK","HUF","GBP","MXN","THB","ISK","ZAR","BRL","SGD","PLN","INR","KRW","RON","CNY","SEK","EUR"
-}; // must be in ECB list
+#include "komodo_bitcoind.h" // komodo_checkcommission
 
 struct komodo_extremeprice
 {
@@ -41,14 +26,20 @@ struct komodo_extremeprice
     int16_t dir,ind;
 } ExtremePrice;
 
+uint32_t PriceCache[KOMODO_LOCALPRICE_CACHESIZE][KOMODO_MAXPRICES];//4+sizeof(Cryptos)/sizeof(*Cryptos)+sizeof(Forex)/sizeof(*Forex)];
+int64_t PriceMult[KOMODO_MAXPRICES];
+
 struct komodo_priceinfo
 {
     FILE *fp;
     char symbol[64];
 } PRICES[KOMODO_MAXPRICES];
 
-uint32_t PriceCache[KOMODO_LOCALPRICE_CACHESIZE][KOMODO_MAXPRICES];//4+sizeof(Cryptos)/sizeof(*Cryptos)+sizeof(Forex)/sizeof(*Forex)];
-int64_t PriceMult[KOMODO_MAXPRICES];
+const char *Cryptos[] = { "KMD", "ETH" }; // must be on binance (for now)
+// "LTC", "BCHABC", "XMR", "IOTA", "ZEC", "WAVES",  "LSK", "DCR", "RVN", "DASH", "XEM", "BTS", "ICX", "HOT", "STEEM", "ENJ", "STRAT"
+const char *Forex[] =
+{ "BGN","NZD","ILS","RUB","CAD","PHP","CHF","AUD","JPY","TRY","HKD","MYR","HRK","CZK","IDR","DKK","NOK","HUF","GBP","MXN","THB","ISK","ZAR","BRL","SGD","PLN","INR","KRW","RON","CNY","SEK","EUR"
+}; // must be in ECB list
 
 int32_t pax_fiatstatus(uint64_t *available,uint64_t *deposited,uint64_t *issued,uint64_t *withdrawn,uint64_t *approved,uint64_t *redeemed,char *base)
 {

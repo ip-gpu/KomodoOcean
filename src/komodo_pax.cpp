@@ -17,7 +17,6 @@
 #include "komodo_utils.h" // iguana_rwnum
 //#include "komodo.h" // KOMODO_PAXMAX
 
-// TODO: use headers instead of direct declarations
 #define KOMODO_PAXMAX (10000 * COIN)
 uint64_t komodo_seed(int32_t height); // komodo_bitcoind.h
 

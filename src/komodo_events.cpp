@@ -14,16 +14,11 @@
  ******************************************************************************/
 #include "komodo_events.h"
 #include "komodo_extern_globals.h"
-//#include "komodo_bitcoind.h" // komodo_verifynotarization
+#include "komodo_bitcoind.h" // komodo_verifynotarization
 #include "komodo_notary.h" // komodo_notarized_update
-//#include "komodo_pax.h" // komodo_pvals
-//#include "komodo_gateway.h" // komodo_opreturn
+#include "komodo_pax.h" // komodo_pvals
+#include "komodo_gateway.h" // komodo_opreturn
 #include "komodo_utils.h" // portable_mutex_lock / unlock
-
-// TODO: here we should use headers (!), instead of direct declarations
-int32_t komodo_verifynotarization(char *symbol,char *dest,int32_t height,int32_t NOTARIZED_HEIGHT,uint256 NOTARIZED_HASH,uint256 NOTARIZED_DESTTXID);
-void komodo_pvals(int32_t height,uint32_t *pvals,uint8_t numpvals);
-const char *komodo_opreturn(int32_t height,uint64_t value,uint8_t *opretbuf,int32_t opretlen,uint256 txid,uint16_t vout,char *source);
 
 struct komodo_event *komodo_eventadd(struct komodo_state *sp,int32_t height,char *symbol,uint8_t type,uint8_t *data,uint16_t datalen)
 {

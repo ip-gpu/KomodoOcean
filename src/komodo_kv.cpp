@@ -15,10 +15,7 @@
 #include "komodo_kv.h"
 #include "komodo_extern_globals.h"
 #include "komodo_utils.h" // portable_mutex_lock
-//#include "komodo_curve25519.h" // komodo_kvsigverify
-
-// TODO: use headers, instead of declarations
-int32_t komodo_kvsigverify(uint8_t *buf,int32_t len,uint256 _pubkey,uint256 sig); // komodo_curve25519.h
+#include "komodo_curve25519.h" // komodo_kvsigverify
 
 int32_t komodo_kvcmp(uint8_t *refvalue,uint16_t refvaluesize,uint8_t *value,uint16_t valuesize)
 {
