@@ -15,6 +15,7 @@
 
 #ifndef H_KOMODOCCDATA_H
 #define H_KOMODOCCDATA_H
+#include "komodo_extern_globals.h"
 
 struct komodo_ccdata *CC_data;
 int32_t CC_firstheight;
