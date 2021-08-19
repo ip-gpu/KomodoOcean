@@ -25,7 +25,7 @@
  */
 #pragma once
 #include "uthash.h" // UT_hash_handle
-#include "cJSON.h"
+#include "komodo_cJSON.h"
 #include "bits256.h"
 
 #ifdef _WIN32
