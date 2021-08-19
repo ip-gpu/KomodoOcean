@@ -36,7 +36,7 @@ void komodo_eventadd_notarized( komodo_state *sp, char *symbol, int32_t height, 
 {
         static uint32_t counter;
         if ( counter++ < 100 )
-            printf("[%s] error validating notarization ht.%d notarized_height.%d, if on a pruned %s node this can be ignored\n",
+            LogPrintf("[%s] error validating notarization ht.%d notarized_height.%d, if on a pruned %s node this can be ignored\n",
                     ASSETCHAINS_SYMBOL,height,ntz->notarizedheight, ntz->dest);
     }
     else if ( strcmp(symbol,coin) == 0 )
@@ -108,7 +108,7 @@ void komodo_event_undo(komodo_state *sp, std::shared_ptr<komodo::event> ev)
     switch ( ev->type )
     {
         case KOMODO_EVENT_RATIFY: 
-            printf("rewind of ratify, needs to be coded.%d\n",ev->height); 
+            LogPrintf("rewind of ratify, needs to be coded.%d\n",ev->height); 
             break;
         case KOMODO_EVENT_NOTARIZED: 
             break;
@@ -132,7 +132,7 @@ void komodo_event_rewind(komodo_state *sp, char *symbol, int32_t height)
     {
         if ( ASSETCHAINS_SYMBOL[0] == 0 && height <= KOMODO_LASTMINED && prevKOMODO_LASTMINED != 0 )
         {
-            printf("undo KOMODO_LASTMINED %d <- %d\n",KOMODO_LASTMINED,prevKOMODO_LASTMINED);
+            LogPrintf("undo KOMODO_LASTMINED %d <- %d\n",KOMODO_LASTMINED,prevKOMODO_LASTMINED);
             KOMODO_LASTMINED = prevKOMODO_LASTMINED;
             prevKOMODO_LASTMINED = 0;
         }
