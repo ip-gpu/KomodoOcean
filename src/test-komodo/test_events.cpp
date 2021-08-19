@@ -155,6 +155,8 @@ bool compare_serialization(const std::string& filename, std::shared_ptr<T> in)
  */
 TEST(TestEvents, komodo_faststateinit_test)
 {
+    SetupEnvironment();
+
     char symbol[] = "TST";
     strcpy(ASSETCHAINS_SYMBOL, symbol);
     KOMODO_EXTERNAL_NOTARIES = 1;
@@ -169,10 +171,10 @@ TEST(TestEvents, komodo_faststateinit_test)
         // pubkey record
         {
             // create a binary file that should be readable by komodo
-            const std::string temp_filename = temp.native() + "/kstate.tmp";
-            char full_filename[temp_filename.size()+1];
-            strcpy(full_filename, temp_filename.c_str());
-            std::FILE* fp = std::fopen(full_filename, "wb+");
+            boost::filesystem::path full_filename = temp / "kstate.tmp";
+            //char full_filename[temp_filename.size()+1];
+            //strcpy(full_filename, temp_filename.c_str());
+            std::FILE* fp = std::fopen(full_filename.string().c_str(), "wb+");
             EXPECT_NE(fp, nullptr);
             write_p_record(fp);
             std::fclose(fp);
@@ -183,7 +185,7 @@ TEST(TestEvents, komodo_faststateinit_test)
             EXPECT_NE(state, nullptr);
             char* dest = nullptr;
             // attempt to read the file
-            int32_t result = komodo_faststateinit( state, full_filename, symbol, dest);
+            int32_t result = komodo_faststateinit( state, (char *)full_filename.string().c_str(), symbol, dest);
             // compare results
             EXPECT_EQ(result, 1);
             /* old way
@@ -199,14 +201,14 @@ TEST(TestEvents, komodo_faststateinit_test)
             EXPECT_EQ(ev2->height, 1);
             EXPECT_EQ(ev2->type, komodo::komodo_event_type::EVENT_PUBKEYS);
             // the serialized version should match the input
-            EXPECT_TRUE(compare_serialization(full_filename, ev2));
+            EXPECT_TRUE(compare_serialization(full_filename.string(), ev2));
         }
         // notarized record
         {
-            const std::string temp_filename = temp.native() + "/notarized.tmp";
-            char full_filename[temp_filename.size()+1];
-            strcpy(full_filename, temp_filename.c_str());
-            std::FILE* fp = std::fopen(full_filename, "wb+");
+            boost::filesystem::path full_filename = temp / "notarized.tmp";
+            //char full_filename[temp_filename.size()+1];
+            //strcpy(full_filename, temp_filename.c_str());
+            std::FILE* fp = std::fopen(full_filename.string().c_str(), "wb+");
             EXPECT_NE(fp, nullptr);
             write_n_record(fp);
             std::fclose(fp);
@@ -217,7 +219,7 @@ TEST(TestEvents, komodo_faststateinit_test)
             EXPECT_NE(state, nullptr);
             char* dest = (char*)"123456789012345";
             // attempt to read the file
-            int32_t result = komodo_faststateinit( state, full_filename, symbol, dest);
+            int32_t result = komodo_faststateinit( state, (char *)full_filename.string().c_str(), symbol, dest);
             // compare results
             EXPECT_EQ(result, 1);
             /* old way
@@ -232,14 +234,14 @@ TEST(TestEvents, komodo_faststateinit_test)
             EXPECT_EQ(ev2->height, 1);
             EXPECT_EQ(ev2->type, komodo::komodo_event_type::EVENT_NOTARIZED);
             // the serialized version should match the input
-            EXPECT_TRUE(compare_serialization(full_filename, ev2));
+            EXPECT_TRUE(compare_serialization(full_filename.string(), ev2));
         }
         // notarized M record
         {
-            const std::string temp_filename = temp.native() + "/notarized.tmp";
-            char full_filename[temp_filename.size()+1];
-            strcpy(full_filename, temp_filename.c_str());
-            std::FILE* fp = std::fopen(full_filename, "wb+");
+            boost::filesystem::path full_filename = temp / "notarized.tmp";
+            //char full_filename[temp_filename.size()+1];
+            //strcpy(full_filename, temp_filename.c_str());
+            std::FILE* fp = std::fopen(full_filename.string().c_str(), "wb+");
             EXPECT_NE(fp, nullptr);
             write_m_record(fp);
             std::fclose(fp);
@@ -250,7 +252,7 @@ TEST(TestEvents, komodo_faststateinit_test)
             EXPECT_NE(state, nullptr);
             char* dest = (char*)"123456789012345";
             // attempt to read the file
-            int32_t result = komodo_faststateinit(state, full_filename, symbol, dest);
+            int32_t result = komodo_faststateinit(state, (char *)full_filename.string().c_str(), symbol, dest);
             // compare results
             EXPECT_EQ(result, 1);
             /* old way
@@ -267,14 +269,14 @@ TEST(TestEvents, komodo_faststateinit_test)
             EXPECT_EQ(ev2->height, 1);
             EXPECT_EQ(ev2->type, komodo::komodo_event_type::EVENT_NOTARIZED);
             // the serialized version should match the input
-            EXPECT_TRUE(compare_serialization(full_filename, ev2));
+            EXPECT_TRUE(compare_serialization(full_filename.string(), ev2));
         }
         // record type "U" (deprecated)
         {
-            const std::string temp_filename = temp.native() + "/type_u.tmp";
-            char full_filename[temp_filename.size()+1];
-            strcpy(full_filename, temp_filename.c_str());
-            std::FILE* fp = std::fopen(full_filename, "wb+");
+            boost::filesystem::path full_filename = temp / "type_u.tmp";
+            //char full_filename[temp_filename.size()+1];
+            //strcpy(full_filename, temp_filename.c_str());
+            std::FILE* fp = std::fopen(full_filename.string().c_str(), "wb+");
             EXPECT_NE(fp, nullptr);
             write_u_record(fp);
             std::fclose(fp);
@@ -285,7 +287,7 @@ TEST(TestEvents, komodo_faststateinit_test)
             EXPECT_NE(state, nullptr);
             char* dest = (char*)"123456789012345";
             // attempt to read the file
-            int32_t result = komodo_faststateinit(state, full_filename, symbol, dest);
+            int32_t result = komodo_faststateinit(state, (char *)full_filename.string().c_str(), symbol, dest);
             // compare results
             EXPECT_EQ(result, 1);
             /* old way
@@ -302,14 +304,14 @@ TEST(TestEvents, komodo_faststateinit_test)
             ev2->nid = 'I';
             memset(ev2->mask, 1, 8);
             memset(ev2->hash, 2, 32);
-            EXPECT_TRUE(compare_serialization(full_filename, ev2));
+            EXPECT_TRUE(compare_serialization(full_filename.string(), ev2));
         }
         // record type K (KMD height)
         {
-            const std::string temp_filename = temp.native() + "/kmdtype.tmp";
-            char full_filename[temp_filename.size()+1];
-            strcpy(full_filename, temp_filename.c_str());
-            std::FILE* fp = std::fopen(full_filename, "wb+");
+            boost::filesystem::path full_filename = temp / "kmdtype.tmp";
+            //char full_filename[temp_filename.size()+1];
+            //strcpy(full_filename, temp_filename.c_str());
+            std::FILE* fp = std::fopen(full_filename.string().c_str(), "wb+");
             EXPECT_NE(fp, nullptr);
             write_k_record(fp);
             std::fclose(fp);
@@ -320,7 +322,7 @@ TEST(TestEvents, komodo_faststateinit_test)
             EXPECT_NE(state, nullptr);
             char* dest = (char*)"123456789012345";
             // attempt to read the file
-            int32_t result = komodo_faststateinit(state, full_filename, symbol, dest);
+            int32_t result = komodo_faststateinit(state, (char *)full_filename.string().c_str(), symbol, dest);
             // compare results
             EXPECT_EQ(result, 1);
             /* old way
@@ -337,14 +339,14 @@ TEST(TestEvents, komodo_faststateinit_test)
             EXPECT_EQ(ev2->height, 1);
             EXPECT_EQ(ev2->type, komodo::komodo_event_type::EVENT_KMDHEIGHT);
             // the serialized version should match the input
-            EXPECT_TRUE(compare_serialization(full_filename, ev2));
+            EXPECT_TRUE(compare_serialization(full_filename.string(), ev2));
         }
         // record type T (KMD height with timestamp)
         {
-            const std::string temp_filename = temp.native() + "/kmdtypet.tmp";
-            char full_filename[temp_filename.size()+1];
-            strcpy(full_filename, temp_filename.c_str());
-            std::FILE* fp = std::fopen(full_filename, "wb+");
+            boost::filesystem::path full_filename = temp / "kmdtypet.tmp";
+            //char full_filename[temp_filename.size()+1];
+            //strcpy(full_filename, temp_filename.c_str());
+            std::FILE* fp = std::fopen(full_filename.string().c_str(), "wb+");
             EXPECT_NE(fp, nullptr);
             write_t_record(fp);
             std::fclose(fp);
@@ -355,7 +357,7 @@ TEST(TestEvents, komodo_faststateinit_test)
             EXPECT_NE(state, nullptr);
             char* dest = (char*)"123456789012345";
             // attempt to read the file
-            int32_t result = komodo_faststateinit(state, full_filename, symbol, dest);
+            int32_t result = komodo_faststateinit(state, (char *)full_filename.string().c_str(), symbol, dest);
             // compare results
             EXPECT_EQ(result, 1);
             /* old way
@@ -372,14 +374,14 @@ TEST(TestEvents, komodo_faststateinit_test)
             EXPECT_EQ(ev2->height, 1);
             EXPECT_EQ(ev2->type, komodo::komodo_event_type::EVENT_KMDHEIGHT);
             // the serialized version should match the input
-            EXPECT_TRUE(compare_serialization(full_filename, ev2));
+            EXPECT_TRUE(compare_serialization(full_filename.string(), ev2));
         }
         // record type R (opreturn)
         {
-            const std::string temp_filename = temp.native() + "/kmdtypet.tmp";
-            char full_filename[temp_filename.size()+1];
-            strcpy(full_filename, temp_filename.c_str());
-            std::FILE* fp = std::fopen(full_filename, "wb+");
+            boost::filesystem::path full_filename = temp / "kmdtypet.tmp";
+            //char full_filename[temp_filename.size()+1];
+            //strcpy(full_filename, temp_filename.c_str());
+            std::FILE* fp = std::fopen(full_filename.string().c_str(), "wb+");
             EXPECT_NE(fp, nullptr);
             write_r_record(fp);
             std::fclose(fp);
@@ -390,7 +392,7 @@ TEST(TestEvents, komodo_faststateinit_test)
             EXPECT_NE(state, nullptr);
             char* dest = (char*)"123456789012345";
             // attempt to read the file
-            int32_t result = komodo_faststateinit(state, full_filename, symbol, dest);
+            int32_t result = komodo_faststateinit(state, (char *)full_filename.string().c_str(), symbol, dest);
             // compare results
             EXPECT_EQ(result, 1);
             /* old way
@@ -407,14 +409,14 @@ TEST(TestEvents, komodo_faststateinit_test)
             EXPECT_EQ(ev2->height, 1);
             EXPECT_EQ(ev2->type, komodo::komodo_event_type::EVENT_OPRETURN);
             // the serialized version should match the input
-            EXPECT_TRUE(compare_serialization(full_filename, ev2));
+            EXPECT_TRUE(compare_serialization(full_filename.string(), ev2));
         }
         // record type V
         {
-            const std::string temp_filename = temp.native() + "/kmdtypet.tmp";
-            char full_filename[temp_filename.size()+1];
-            strcpy(full_filename, temp_filename.c_str());
-            std::FILE* fp = std::fopen(full_filename, "wb+");
+            boost::filesystem::path full_filename = temp / "kmdtypet.tmp";
+            //char full_filename[temp_filename.size()+1];
+            //strcpy(full_filename, temp_filename.c_str());
+            std::FILE* fp = std::fopen(full_filename.string().c_str(), "wb+");
             EXPECT_NE(fp, nullptr);
             write_v_record(fp);
             std::fclose(fp);
@@ -425,7 +427,7 @@ TEST(TestEvents, komodo_faststateinit_test)
             EXPECT_NE(state, nullptr);
             char* dest = (char*)"123456789012345";
             // attempt to read the file
-            int32_t result = komodo_faststateinit(state, full_filename, symbol, dest);
+            int32_t result = komodo_faststateinit(state, (char *)full_filename.string().c_str(), symbol, dest);
             // compare results
             EXPECT_EQ(result, 1);
             /* old way
@@ -442,14 +444,14 @@ TEST(TestEvents, komodo_faststateinit_test)
             EXPECT_EQ(ev2->height, 1);
             EXPECT_EQ(ev2->type, komodo::komodo_event_type::EVENT_PRICEFEED);
             // the serialized version should match the input
-            EXPECT_TRUE(compare_serialization(full_filename, ev2));
+            EXPECT_TRUE(compare_serialization(full_filename.string(), ev2));
         }
         // record type B (rewind)
         {
-            const std::string temp_filename = temp.native() + "/kmdtypeb.tmp";
-            char full_filename[temp_filename.size()+1];
-            strcpy(full_filename, temp_filename.c_str());
-            std::FILE* fp = std::fopen(full_filename, "wb+");
+            boost::filesystem::path full_filename = temp / "kmdtypeb.tmp";
+            //char full_filename[temp_filename.size()+1];
+            //strcpy(full_filename, temp_filename.c_str());
+            std::FILE* fp = std::fopen(full_filename.string().c_str(), "wb+");
             EXPECT_NE(fp, nullptr);
             write_b_record(fp);
             std::fclose(fp);
@@ -461,7 +463,7 @@ TEST(TestEvents, komodo_faststateinit_test)
             char* dest = (char*)"123456789012345";
             // attempt to read the file
             // NOTE: B records are not read in. Unsure if this is on purpose or an oversight
-            int32_t result = komodo_faststateinit(state, full_filename, symbol, dest);
+            int32_t result = komodo_faststateinit(state, (char *)full_filename.string().c_str(), symbol, dest);
             // compare results
             EXPECT_EQ(result, 1);
             /* old way
@@ -480,15 +482,15 @@ TEST(TestEvents, komodo_faststateinit_test)
             EXPECT_EQ(ev2->height, 1);
             EXPECT_EQ(ev2->type, komodo::komodo_event_type::EVENT_REWIND);
             // the serialized version should match the input
-            EXPECT_TRUE(compare_serialization(full_filename, ev2));
+            EXPECT_TRUE(compare_serialization(full_filename.string(), ev2));
             */
         }        
         // all together in 1 file
         {
-            const std::string temp_filename = temp.native() + "/combined_state.tmp";
-            char full_filename[temp_filename.size()+1];
-            strcpy(full_filename, temp_filename.c_str());
-            std::FILE* fp = std::fopen(full_filename, "wb+");
+            boost::filesystem::path full_filename = temp / "combined_state.tmp";
+            //char full_filename[temp_filename.size()+1];
+            //strcpy(full_filename, temp_filename.c_str());
+            std::FILE* fp = std::fopen(full_filename.string().c_str(), "wb+");
             EXPECT_NE(fp, nullptr);
             write_p_record(fp);
             write_n_record(fp);
@@ -504,7 +506,7 @@ TEST(TestEvents, komodo_faststateinit_test)
             EXPECT_NE(state, nullptr);
             char* dest = (char*)"123456789012345";
             // attempt to read the file
-            int32_t result = komodo_faststateinit( state, full_filename, symbol, dest);
+            int32_t result = komodo_faststateinit( state, (char *)full_filename.string().c_str(), symbol, dest);
             // compare results
             EXPECT_EQ(result, 1);
             /* ol d way
@@ -563,6 +565,8 @@ TEST(TestEvents, komodo_faststateinit_test)
 
 TEST(TestEvents, komodo_faststateinit_test_kmd)
 {
+    SetupEnvironment();
+
     // Nothing should be added to events if this is the komodo chain
 
     char symbol[] = "KMD";
@@ -579,10 +583,10 @@ TEST(TestEvents, komodo_faststateinit_test_kmd)
         // pubkey record
         {
             // create a binary file that should be readable by komodo
-            const std::string temp_filename = temp.native() + "/kstate.tmp";
-            char full_filename[temp_filename.size()+1];
-            strcpy(full_filename, temp_filename.c_str());
-            std::FILE* fp = std::fopen(full_filename, "wb+");
+            boost::filesystem::path full_filename = temp / "kstate.tmp";
+            //char full_filename[temp_filename.size()+1];
+            //strcpy(full_filename, temp_filename.c_str());
+            std::FILE* fp = std::fopen(full_filename.string().c_str(), "wb+");
             EXPECT_NE(fp, nullptr);
             write_p_record(fp);
             std::fclose(fp);
@@ -593,17 +597,17 @@ TEST(TestEvents, komodo_faststateinit_test_kmd)
             EXPECT_NE(state, nullptr);
             char* dest = nullptr;
             // attempt to read the file
-            int32_t result = komodo_faststateinit( state, full_filename, symbol, dest);
+            int32_t result = komodo_faststateinit( state, (char *)full_filename.string().c_str(), symbol, dest);
             // compare results
             EXPECT_EQ(result, 1);
             EXPECT_EQ(state->events.size(), 0);
         }
         // notarized record
         {
-            const std::string temp_filename = temp.native() + "/notarized.tmp";
-            char full_filename[temp_filename.size()+1];
-            strcpy(full_filename, temp_filename.c_str());
-            std::FILE* fp = std::fopen(full_filename, "wb+");
+            boost::filesystem::path full_filename = temp / "notarized.tmp";
+            //char full_filename[temp_filename.size()+1];
+            //strcpy(full_filename, temp_filename.c_str());
+            std::FILE* fp = std::fopen(full_filename.string().c_str(), "wb+");
             EXPECT_NE(fp, nullptr);
             write_n_record(fp);
             std::fclose(fp);
@@ -614,17 +618,17 @@ TEST(TestEvents, komodo_faststateinit_test_kmd)
             EXPECT_NE(state, nullptr);
             char* dest = (char*)"123456789012345";
             // attempt to read the file
-            int32_t result = komodo_faststateinit( state, full_filename, symbol, dest);
+            int32_t result = komodo_faststateinit( state, (char *)full_filename.string().c_str(), symbol, dest);
             // compare results
             EXPECT_EQ(result, 1);
             EXPECT_EQ(state->events.size(), 0);
         }
         // notarized M record
         {
-            const std::string temp_filename = temp.native() + "/notarized.tmp";
-            char full_filename[temp_filename.size()+1];
-            strcpy(full_filename, temp_filename.c_str());
-            std::FILE* fp = std::fopen(full_filename, "wb+");
+            boost::filesystem::path full_filename = temp / "notarized.tmp";
+            //char full_filename[temp_filename.size()+1];
+            //strcpy(full_filename, temp_filename.c_str());
+            std::FILE* fp = std::fopen(full_filename.string().c_str(), "wb+");
             EXPECT_NE(fp, nullptr);
             write_m_record(fp);
             std::fclose(fp);
@@ -635,17 +639,17 @@ TEST(TestEvents, komodo_faststateinit_test_kmd)
             EXPECT_NE(state, nullptr);
             char* dest = (char*)"123456789012345";
             // attempt to read the file
-            int32_t result = komodo_faststateinit(state, full_filename, symbol, dest);
+            int32_t result = komodo_faststateinit(state, (char *)full_filename.string().c_str(), symbol, dest);
             // compare results
             EXPECT_EQ(result, 1);
             EXPECT_EQ(state->events.size(), 0);
         }
         // record type "U" (deprecated)
         {
-            const std::string temp_filename = temp.native() + "/type_u.tmp";
-            char full_filename[temp_filename.size()+1];
-            strcpy(full_filename, temp_filename.c_str());
-            std::FILE* fp = std::fopen(full_filename, "wb+");
+            boost::filesystem::path full_filename = temp / "type_u.tmp";
+            //char full_filename[temp_filename.size()+1];
+            //strcpy(full_filename, temp_filename.c_str());
+            std::FILE* fp = std::fopen(full_filename.string().c_str(), "wb+");
             EXPECT_NE(fp, nullptr);
             write_u_record(fp);
             std::fclose(fp);
@@ -656,17 +660,17 @@ TEST(TestEvents, komodo_faststateinit_test_kmd)
             EXPECT_NE(state, nullptr);
             char* dest = (char*)"123456789012345";
             // attempt to read the file
-            int32_t result = komodo_faststateinit(state, full_filename, symbol, dest);
+            int32_t result = komodo_faststateinit(state, (char *)full_filename.string().c_str(), symbol, dest);
             // compare results
             EXPECT_EQ(result, 1);
             EXPECT_EQ(state->events.size(), 0);
         }
         // record type K (KMD height)
         {
-            const std::string temp_filename = temp.native() + "/kmdtype.tmp";
-            char full_filename[temp_filename.size()+1];
-            strcpy(full_filename, temp_filename.c_str());
-            std::FILE* fp = std::fopen(full_filename, "wb+");
+            boost::filesystem::path full_filename = temp / "kmdtype.tmp";
+            //char full_filename[temp_filename.size()+1];
+            //strcpy(full_filename, temp_filename.c_str());
+            std::FILE* fp = std::fopen(full_filename.string().c_str(), "wb+");
             EXPECT_NE(fp, nullptr);
             write_k_record(fp);
             std::fclose(fp);
@@ -677,17 +681,17 @@ TEST(TestEvents, komodo_faststateinit_test_kmd)
             EXPECT_NE(state, nullptr);
             char* dest = (char*)"123456789012345";
             // attempt to read the file
-            int32_t result = komodo_faststateinit(state, full_filename, symbol, dest);
+            int32_t result = komodo_faststateinit(state, (char *)full_filename.string().c_str(), symbol, dest);
             // compare results
             EXPECT_EQ(result, 1);
             EXPECT_EQ(state->events.size(), 0);
         }
         // record type T (KMD height with timestamp)
         {
-            const std::string temp_filename = temp.native() + "/kmdtypet.tmp";
-            char full_filename[temp_filename.size()+1];
-            strcpy(full_filename, temp_filename.c_str());
-            std::FILE* fp = std::fopen(full_filename, "wb+");
+            boost::filesystem::path full_filename = temp / "kmdtypet.tmp";
+            //char full_filename[temp_filename.size()+1];
+            //strcpy(full_filename, temp_filename.c_str());
+            std::FILE* fp = std::fopen(full_filename.string().c_str(), "wb+");
             EXPECT_NE(fp, nullptr);
             write_t_record(fp);
             std::fclose(fp);
@@ -698,17 +702,17 @@ TEST(TestEvents, komodo_faststateinit_test_kmd)
             EXPECT_NE(state, nullptr);
             char* dest = (char*)"123456789012345";
             // attempt to read the file
-            int32_t result = komodo_faststateinit(state, full_filename, symbol, dest);
+            int32_t result = komodo_faststateinit(state, (char *)full_filename.string().c_str(), symbol, dest);
             // compare results
             EXPECT_EQ(result, 1);
             EXPECT_EQ(state->events.size(), 0);
         }
         // record type R (opreturn)
         {
-            const std::string temp_filename = temp.native() + "/kmdtypet.tmp";
-            char full_filename[temp_filename.size()+1];
-            strcpy(full_filename, temp_filename.c_str());
-            std::FILE* fp = std::fopen(full_filename, "wb+");
+            boost::filesystem::path full_filename = temp / "kmdtypet.tmp";
+            //char full_filename[temp_filename.size()+1];
+            //strcpy(full_filename, temp_filename.c_str());
+            std::FILE* fp = std::fopen(full_filename.string().c_str(), "wb+");
             EXPECT_NE(fp, nullptr);
             write_r_record(fp);
             std::fclose(fp);
@@ -719,17 +723,17 @@ TEST(TestEvents, komodo_faststateinit_test_kmd)
             EXPECT_NE(state, nullptr);
             char* dest = (char*)"123456789012345";
             // attempt to read the file
-            int32_t result = komodo_faststateinit(state, full_filename, symbol, dest);
+            int32_t result = komodo_faststateinit(state, (char *)full_filename.string().c_str(), symbol, dest);
             // compare results
             EXPECT_EQ(result, 1);
             EXPECT_EQ(state->events.size(), 0);
         }
         // record type V
         {
-            const std::string temp_filename = temp.native() + "/kmdtypet.tmp";
-            char full_filename[temp_filename.size()+1];
-            strcpy(full_filename, temp_filename.c_str());
-            std::FILE* fp = std::fopen(full_filename, "wb+");
+            boost::filesystem::path full_filename = temp / "kmdtypet.tmp";
+            //char full_filename[temp_filename.size()+1];
+            //strcpy(full_filename, temp_filename.c_str());
+            std::FILE* fp = std::fopen(full_filename.string().c_str(), "wb+");
             EXPECT_NE(fp, nullptr);
             write_v_record(fp);
             std::fclose(fp);
@@ -740,17 +744,17 @@ TEST(TestEvents, komodo_faststateinit_test_kmd)
             EXPECT_NE(state, nullptr);
             char* dest = (char*)"123456789012345";
             // attempt to read the file
-            int32_t result = komodo_faststateinit(state, full_filename, symbol, dest);
+            int32_t result = komodo_faststateinit(state, (char *)full_filename.string().c_str(), symbol, dest);
             // compare results
             EXPECT_EQ(result, 1);
             EXPECT_EQ(state->events.size(), 0);
         }
         // record type B (rewind)
         {
-            const std::string temp_filename = temp.native() + "/kmdtypeb.tmp";
-            char full_filename[temp_filename.size()+1];
-            strcpy(full_filename, temp_filename.c_str());
-            std::FILE* fp = std::fopen(full_filename, "wb+");
+            boost::filesystem::path full_filename = temp / "kmdtypeb.tmp";
+            //char full_filename[temp_filename.size()+1];
+            //strcpy(full_filename, temp_filename.c_str());
+            std::FILE* fp = std::fopen(full_filename.string().c_str(), "wb+");
             EXPECT_NE(fp, nullptr);
             write_b_record(fp);
             std::fclose(fp);
@@ -762,17 +766,17 @@ TEST(TestEvents, komodo_faststateinit_test_kmd)
             char* dest = (char*)"123456789012345";
             // attempt to read the file
             // NOTE: B records are not read in. Unsure if this is on purpose or an oversight
-            int32_t result = komodo_faststateinit(state, full_filename, symbol, dest);
+            int32_t result = komodo_faststateinit(state, (char *)full_filename.string().c_str(), symbol, dest);
             // compare results
             EXPECT_EQ(result, 1);
             EXPECT_EQ(state->events.size(), 0);
         }        
         // all together in 1 file
         {
-            const std::string temp_filename = temp.native() + "/combined_state.tmp";
-            char full_filename[temp_filename.size()+1];
-            strcpy(full_filename, temp_filename.c_str());
-            std::FILE* fp = std::fopen(full_filename, "wb+");
+            boost::filesystem::path full_filename = temp / "combined_state.tmp";
+            //char full_filename[temp_filename.size()+1];
+            //strcpy(full_filename, temp_filename.c_str());
+            std::FILE* fp = std::fopen(full_filename.string().c_str(), "wb+");
             EXPECT_NE(fp, nullptr);
             write_p_record(fp);
             write_n_record(fp);
@@ -788,7 +792,7 @@ TEST(TestEvents, komodo_faststateinit_test_kmd)
             EXPECT_NE(state, nullptr);
             char* dest = (char*)"123456789012345";
             // attempt to read the file
-            int32_t result = komodo_faststateinit( state, full_filename, symbol, dest);
+            int32_t result = komodo_faststateinit( state, (char *)full_filename.string().c_str(), symbol, dest);
             // compare results
             EXPECT_EQ(result, 1);
             EXPECT_EQ(state->events.size(), 0);
