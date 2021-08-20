@@ -12,27 +12,14 @@
  * Removal or modification of this copyright notice is prohibited.            *
  *                                                                            *
  ******************************************************************************/
-
-/*
- z_exportkey "zaddr"
- z_exportwallet "filename"
- z_getoperationstatus (["operationid", ... ])
- z_gettotalbalance ( minconf )
- z_importkey "zkey" ( rescan )
- z_importwallet "filename"
- z_listaddresses
- z_sendmany "fromaddress" [{"address":... ,"amount":..., "memo":"<hex>"},...] ( minconf ) ( fee )
- */
 #pragma once
-#include "komodo_defs.h"
 #include "uthash.h" // UT_hash_handle
 #include "komodo_cJSON.h"
-#include "bits256.h"
+#include "komodo_defs.h"
 
 #ifdef _WIN32
 #include <wincrypt.h>
 #endif
-#include "komodo_defs.h"
 
 #define JUMBLR_ADDR "RGhxXpXSSBTBm9EvNsXnTQczthMCxHX91t"
 #define JUMBLR_BTCADDR "18RmTJe9qMech8siuhYfMtHo8RtcN1obC6"
@@ -123,7 +110,3 @@ void jumblr_opidsupdate();
 uint64_t jumblr_increment(uint8_t r,int32_t height,uint64_t total,uint64_t biggest,uint64_t medium, uint64_t smallest);
 
 void jumblr_iteration();
-
-
-
-
