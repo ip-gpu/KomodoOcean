@@ -17,15 +17,7 @@ BITCOIN_INCLUDES += -I$(srcdir)/snark
 BITCOIN_INCLUDES += -I$(srcdir)/snark/libsnark
 BITCOIN_INCLUDES += -I$(srcdir)/univalue/include
 
-if TARGET_WINDOWS
-LIBBITCOIN_SERVER=libbitcoin_server.a -lcurl
-endif
-if TARGET_DARWIN
-LIBBITCOIN_SERVER=libbitcoin_server.a -lcurl
-else
-LIBBITCOIN_SERVER=libbitcoin_server.a -lcurl
-endif
-
+LIBBITCOIN_SERVER=libbitcoin_server.a
 LIBBITCOIN_WALLET=libbitcoin_wallet.a
 LIBBITCOIN_COMMON=libbitcoin_common.a
 LIBBITCOIN_CLI=libbitcoin_cli.a
@@ -50,7 +42,7 @@ LIBSECP256K1=secp256k1/libsecp256k1.la
 LIBCRYPTOCONDITIONS=cryptoconditions/libcryptoconditions_core.la
 LIBSNARK=snark/libsnark.a
 LIBUNIVALUE=univalue/libunivalue.la
-LIBZCASH=libzcash.a -lcurl
+LIBZCASH=libzcash.a
 
 $(LIBSECP256K1): $(wildcard secp256k1/src/*) $(wildcard secp256k1/include/*)
 	$(AM_V_at)$(MAKE) $(AM_MAKEFLAGS) -C $(@D) $(@F)
@@ -78,7 +70,7 @@ $(LIBCRYPTOCONDITIONS): $(wildcard cryptoconditions/src/*) $(wildcard cryptocond
 
 # Make is not made aware of per-object dependencies to avoid limiting building parallelization
 # But to build the less dependent modules first, we manually select their order here:
-EXTRA_LIBRARIES = \
+EXTRA_LIBRARIES += \
   $(LIBBITCOIN_CRYPTO) \
   $(LIBVERUS_CRYPTO) \
   $(LIBVERUS_PORTABLE_CRYPTO) \
@@ -107,13 +99,14 @@ noinst_PROGRAMS =
 TESTS =
 
 if BUILD_KOMODOD
-#  temporary disable komodod build ... 
-#  bin_PROGRAMS += komodod
+  bin_PROGRAMS += komodod
 endif
 
 if BUILD_KOMODO_UTILS
-  bin_PROGRAMS += komodo-cli
-# bin_PROGRAMS += komodo-cli komodo-tx
+  bin_PROGRAMS += komodo-cli komodo-tx
+endif
+if ENABLE_WALLET
+  bin_PROGRAMS += wallet-utility
 endif
 
 LIBZCASH_H = \
@@ -565,7 +558,8 @@ komodod_LDADD = \
   $(LIBLEVELDB_SSE42) \
   $(LIBMEMENV) \
   $(LIBSECP256K1) \
-  $(LIBCRYPTOCONDITIONS)
+  $(LIBCRYPTOCONDITIONS) \
+  $(CURL_LIBS)
 
 if ENABLE_ZMQ
 komodod_LDADD += $(LIBBITCOIN_ZMQ) $(ZMQ_LIBS)
@@ -597,6 +591,14 @@ komodo_cli_SOURCES = bitcoin-cli.cpp
 komodo_cli_CPPFLAGS = $(BITCOIN_INCLUDES) $(EVENT_CFLAGS)
 komodo_cli_LDFLAGS = $(RELDFLAGS) $(AM_LDFLAGS) $(LIBTOOL_APP_LDFLAGS)
 
+# wallet-utility binary #
+if ENABLE_WALLET
+wallet_utility_SOURCES = wallet-utility.cpp
+wallet_utility_CPPFLAGS = $(AM_CPPFLAGS) $(BITCOIN_INCLUDES)
+wallet_utility_CXXFLAGS = $(AM_CXXFLAGS) $(PIE_FLAGS)
+wallet_utility_LDFLAGS = $(RELDFLAGS) $(AM_LDFLAGS) $(LIBTOOL_APP_LDFLAGS)
+endif
+
 if TARGET_WINDOWS
 komodo_cli_SOURCES += bitcoin-cli-res.rc
 endif
@@ -615,7 +617,24 @@ komodo_cli_LDADD = \
   $(LIBVERUS_PORTABLE_CRYPTO) \
   $(LIBBITCOIN_CRYPTO) \
   $(LIBZCASH_LIBS)
-#
+
+if ENABLE_WALLET
+wallet_utility_LDADD = \
+	$(LIBBITCOIN_WALLET) \
+	$(LIBBITCOIN_COMMON) \
+	$(LIBBITCOIN_CRYPTO) \
+  $(LIBVERUS_CRYPTO) \
+  $(LIBVERUS_PORTABLE_CRYPTO) \
+	$(LIBSECP256K1) \
+	$(LIBBITCOIN_UTIL) \
+	$(BOOST_LIBS) \
+	$(BDB_LIBS) \
+	$(CRYPTO_LIBS) \
+	$(LIBZCASH) \
+  $(LIBSNARK) \
+	$(LIBZCASH_LIBS)\
+  $(LIBCRYPTOCONDITIONS)
+endif
 
 # zcash-tx binary #
 komodo_tx_SOURCES = komodo-tx.cpp
@@ -702,7 +721,7 @@ libzcashconsensus_la_CPPFLAGS = $(CRYPTO_CFLAGS) -I$(builddir)/obj -I$(srcdir)/s
 endif
 #
 
-CLEANFILES = $(LIBBITCOIN_COMMON) libbitcoin_server.a $(LIBBITCOIN_CLI) $(LIBBITCOIN_UTIL) $(LIBBITCOIN_WALLET) $(LIBBITCOIN_ZMQ) libzcash.a
+CLEANFILES = $(LIBBITCOIN_COMMON) $(LIBBITCOIN_SERVER) $(LIBBITCOIN_CLI) $(LIBBITCOIN_UTIL) $(LIBBITCOIN_WALLET) $(LIBBITCOIN_ZMQ) $(LIBZCASH)
 CLEANFILES += $(LIBBITCOIN_CRYPTO) $(LIBVERUS_CRYPTO) $(LIBVERUS_PORTABLE_CRYPTO)
 CLEANFILES += *.gcda *.gcno */*.gcno wallet/*/*.gcno
 DISTCLEANFILES = obj/build.h
@@ -720,10 +739,6 @@ clean-local:
 .rc.o:
 	@test -f $(WINDRES)
 	$(AM_V_GEN) $(WINDRES) -DWINDRES_PREPROC -i $< -o $@
-
-.mm.o:
-	$(AM_V_CXX) $(OBJCXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) \
-	  $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS)  -c -o $@ $<
 
 check-symbols: $(bin_PROGRAMS)
 if GLIBC_BACK_COMPAT
@@ -755,6 +770,6 @@ endif
 
 #include Makefile.zcash.include
 
-#if ENABLE_QT
+if ENABLE_QT
 include Makefile.qt.include
-#endif
+endif

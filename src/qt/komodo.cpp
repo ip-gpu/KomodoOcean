@@ -218,7 +218,7 @@ class KomodoApplication: public QApplication
 {
     Q_OBJECT
 public:
-    explicit KomodoApplication(int &argc, char **argv);
+    explicit KomodoApplication();
     ~KomodoApplication();
 
 #ifdef ENABLE_WALLET
@@ -393,8 +393,11 @@ void KomodoCore::shutdown()
     }
 }
 
-KomodoApplication::KomodoApplication(int &argc, char **argv):
-    QApplication(argc, argv),
+static int qt_argc = 1;
+static const char* qt_argv = "komodo-qt";
+
+KomodoApplication::KomodoApplication():
+    QApplication(qt_argc, const_cast<char **>(&qt_argv)),
     coreThread(0),
     optionsModel(0),
     clientModel(0),
@@ -406,6 +409,7 @@ KomodoApplication::KomodoApplication(int &argc, char **argv):
 #endif
     returnValue(0)
 {
+    // if (this->arguments().count() > 0) std::cerr << "argc = " << this->arguments().count() << ", argv[0] = " << this->arguments().at(0).toLocal8Bit().constData() << std::endl;
     setQuitOnLastWindowClosed(false);
 
     // UI per-platform customization
@@ -642,7 +646,7 @@ int main(int argc, char *argv[])
     Q_INIT_RESOURCE(komodo);
     Q_INIT_RESOURCE(komodo_locale);
 
-    KomodoApplication app(argc, argv);
+    KomodoApplication app;
 #if QT_VERSION > 0x050100
     // Generate high-dpi pixmaps
     QApplication::setAttribute(Qt::AA_UseHighDpiPixmaps);

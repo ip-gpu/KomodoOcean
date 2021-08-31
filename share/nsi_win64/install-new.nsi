@@ -10,6 +10,7 @@ Icon "komodo.ico"
 CRCCheck on
 
 ; Includes
+!include x64.nsh
 
 ; Pages
 Page components 
@@ -95,3 +96,15 @@ Section "Create komodo.conf" Section2
   SetOutPath $APPDATA\Komodo
   File "content\komodo.conf"
 SectionEnd
+
+# Installer functions
+Function .onInit
+    InitPluginsDir
+    ${If} ${RunningX64}
+      ; disable registry redirection (enable access to 64-bit portion of registry)
+      SetRegView 64
+    ${Else}
+      MessageBox MB_OK|MB_ICONSTOP "Cannot install 64-bit version on a 32-bit system."
+      Abort
+    ${EndIf}
+FunctionEnd
