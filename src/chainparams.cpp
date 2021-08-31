@@ -183,7 +183,16 @@ public:
         assert(genesis.hashMerkleRoot == uint256S("0x4a5e1e4baab89f3a32518a88c31bc87f618f76673e2cc77ab2127b7afdeda33b"));
         vFixedSeeds.clear();
         vSeeds.clear();
-        vSeeds.push_back(CDNSSeedData("komodoseeds.com", "kmd.komodoseeds.com")); // @kolo, static dns seeds revised
+        vSeeds.push_back(CDNSSeedData("komodoseeds.org", "kmd.komodoseeds.org")); // decker
+        vSeeds.push_back(CDNSSeedData("kmd.sh", "seeds1.kmd.sh")); // decker
+        vSeeds.push_back(CDNSSeedData("cipig.net", "kmdseed.cipig.net")); // cipig
+        vSeeds.push_back(CDNSSeedData("lordofthechains.com", "kmdseeds.lordofthechains.com")); // gcharang
+
+        /*
+        vSeeds.push_back(CDNSSeedData("komodoseeds.com", "kmd.komodoseeds.com"));
+        vSeeds.push_back(CDNSSeedData("komodoseeds.com", "dynamic.komodoseeds.com"));
+        */
+
         // TODO: set up bootstrapping for mainnet
         base58Prefixes[PUBKEY_ADDRESS] = std::vector<unsigned char>(1,60);
         base58Prefixes[SCRIPT_ADDRESS] = std::vector<unsigned char>(1,85);
@@ -708,9 +717,12 @@ void *chainparams_commandline()
                 (	2250000,	uint256S("0x0127d1ed5cd6f261631423275b6b17728c392583177e1151a6e638a4b0dea985"))
                 (	2300000,	uint256S("0x07df8af646bc30c71d068b146d9ea2c8b25b27a180e9537d5aef859efcfc41f7"))
                 (	2350000,	uint256S("0x0b8028dbfcd92fe34496953872cba2d256923e3e52b4abbdcbe9911071e929e5"))
-                (	2395555,	uint256S("0x0a09f16d886ed8152aaa2e2fcdf6ab4bb142ff8ce5abac131c5eda385a5d712f")),
-                1621188001,     // * UNIX timestamp of last checkpoint block
-                13903562,         // * total number of transactions between genesis and last checkpoint
+                (	2400000,	uint256S("0x0000000030f4e55dab91dc3528257fdddbbaec7e7e6f877d357654f07704d773"))
+                (	2450000,	uint256S("0x00000000b1cb8e9046e561486a5dbdb7fa06ac35c96f290653d1f0f4578d55c0"))
+                (	2453333,	uint256S("0x0183557e5d92b5337e005499f5e0f58c8c6a02756b55ad56f2be4792d38351bd")),
+
+                1624689070,     // * UNIX timestamp of last checkpoint block
+                14279227,       // * total number of transactions between genesis and last checkpoint
                                 //   (the tx=... number in the SetBestChain debug.log lines)
                 2777            // * estimated number of transactions per day after checkpoint
                                 //   total number of tx / (checkpoint block height / (24 * 24))

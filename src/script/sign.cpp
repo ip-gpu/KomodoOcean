@@ -66,7 +66,7 @@ bool TransactionSignatureCreator::CreateSig(std::vector<unsigned char>& vchSig, 
         key = *pprivKey;
     else if (!keystore || !keystore->GetKey(address, key))
     {
-        fprintf(stderr,"keystore.%p error\n",keystore);
+        //fprintf(stderr,"keystore.%p error\n",keystore);
         return false;
     }
     //fprintf(stderr,"privkey (%s) for %s\n",NSPV_wifstr,EncodeDestination(key.GetPubKey().GetID()).c_str());
@@ -117,7 +117,7 @@ static bool Sign1(const CKeyID& address, const BaseSignatureCreator& creator, co
     vector<unsigned char> vchSig;
     if (!creator.CreateSig(vchSig, address, scriptCode, consensusBranchId))
     {
-        LogPrintf("Sign1 creatsig error\n");
+        //LogPrintf("Sign1 creatsig error\n");
         return false;
     }
     ret.push_back(vchSig);

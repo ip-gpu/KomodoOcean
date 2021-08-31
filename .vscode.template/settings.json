@@ -76,6 +76,29 @@
     "files.exclude": {
         "**/*.o": true,
         "**/*.a": true,
-        "**/*.lo": true
+        "**/*.lo": true,
+        "**/*.Po": true,
+        "**/*.Plo": true,
+        "**/*.la": true,
+        "**/*.lai": true,
+        "depends/sources": true,
+        "depends/work": true,
+        "depends/built": true,
+        "depends/x86_64-unknown-linux-gnu": true
+    },
+    "files.watcherExclude": {
+        "**/.git/objects/**": true,
+        "**/.git/subtree-cache/**": true,
+        "**/*.o": true,
+        "**/*.a": true,
+        "**/*.lo": true,
+        "**/*.Po": true,
+        "**/*.Plo": true,
+        "**/*.la": true,
+        "**/*.lai": true,
+        "depends/sources": true,
+        "depends/work": true,
+        "depends/built": true,
+        "depends/x86_64-unknown-linux-gnu": true
     }
 }

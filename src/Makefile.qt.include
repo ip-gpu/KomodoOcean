@@ -3,7 +3,7 @@
 # file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 # TODO: Remove this dirty hack ... 
-CXXFLAGS+=-fPIC -DHAVE_DECL_EVP_MD_CTX_NEW
+CXXFLAGS+=-fPIC
 
 #PROTOC=/usr/bin/protoc # this is already fixed in configure.ac, PROTOC should be set till here
 
@@ -446,39 +446,7 @@ if TARGET_WINDOWS
   qt_komodo_qt_SOURCES += $(KOMODO_RC)
 endif
 
-# libbitcoin_server.a(libbitcoin_server_a-rpcserver.o): In function `__static_initialization_and_destruction_0(int, int)':
-#
-#/home/decker/ssd_m2/komodoocean_src/src/rpcserver.cpp:413: undefined reference to `kvupdate(UniValue const&, bool)'
-#/home/decker/ssd_m2/komodoocean_src/src/rpcserver.cpp:413: undefined reference to `fundrawtransaction(UniValue const&, bool)'
-#/home/decker/ssd_m2/komodoocean_src/src/rpcserver.cpp:413: undefined reference to `resendwallettransactions(UniValue const&, bool)'
-#/home/decker/ssd_m2/komodoocean_src/src/rpcserver.cpp:413: undefined reference to `addmultisigaddress(UniValue const&, bool)'
-#/home/decker/ssd_m2/komodoocean_src/src/rpcserver.cpp:413: undefined reference to `backupwallet(UniValue const&, bool)'
-#/home/decker/ssd_m2/komodoocean_src/src/rpcserver.cpp:413: undefined reference to `dumpprivkey(UniValue const&, bool)'
-#/home/decker/ssd_m2/komodoocean_src/src/rpcserver.cpp:413: undefined reference to `dumpwallet(UniValue const&, bool)'
-#/home/decker/ssd_m2/komodoocean_src/src/rpcserver.cpp:413: undefined reference to `encryptwallet(UniValue const&, bool)'
-#
-# we need add libbitcoin_server_a-rpcserver.o wallet/libbitcoin_wallet_a-rpcwallet.o
-#
-# 	Objects?
-# 	wallet/libbitcoin_wallet_a-rpcdump.$(OBJEXT) \
-#	wallet/libbitcoin_wallet_a-rpcwallet.$(OBJEXT) \
-#	Or sources?
-#	  wallet/rpcdump.cpp \
-#	  wallet/rpcwallet.cpp \
-#
-# 	Link of komodod:
-#	----------------
-# komodo_qt_clean: FORCE
-#	rm -f $(CLEAN_QT) $(qt_libkomodoqt_a_OBJECTS) $(qt_komodo_qt_OBJECTS) qt/komodo-qt$(EXEEXT) $(LIBBITCOINQT)
-#
-# komodo_qt : qt/komodo-qt$(EXEEXT)
-#
-# From written makefile:
-# komodod$(EXEEXT): $(komodod_OBJECTS) $(komodod_DEPENDENCIES) $(EXTRA_komodod_DEPENDENCIES) 
-#	@rm -f komodod$(EXEEXT)
-#	$(AM_V_CXXLD)$(komodod_LINK) $(komodod_OBJECTS) $(komodod_LDADD) $(LIBS)
-
-qt_komodo_qt_LDADD = $(LIBBITCOIN_SERVER) qt/libkomodoqt.a 
+qt_komodo_qt_LDADD = $(LIBBITCOIN_SERVER) qt/libkomodoqt.a
 if ENABLE_ZMQ
 qt_komodo_qt_LDADD += $(LIBBITCOIN_ZMQ) $(ZMQ_LIBS)
 endif
@@ -511,7 +479,8 @@ qt_komodo_qt_LDADD += $(LIBBITCOIN_CLI) \
   $(MINIUPNPC_LIBS) \
   $(LIBSECP256K1) \
   $(EVENT_PTHREADS_LIBS) \
-  $(EVENT_LIBS)
+  $(EVENT_LIBS) \
+  $(CURL_LIBS)
 
 qt_komodo_qt_LDFLAGS = $(RELDFLAGS) $(AM_LDFLAGS) $(QT_LDFLAGS) $(LIBTOOL_APP_LDFLAGS)
 

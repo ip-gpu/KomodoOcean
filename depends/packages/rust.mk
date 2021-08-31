@@ -52,12 +52,12 @@ endef
 # Runs from: build dir/$(package)_build_subdir
 # first install.sh is from buildos for native build_os platform, second it for host_os (target) platform
 define $(package)_stage_cmds
-  bash ./install.sh --destdir=$($(package)_staging_dir) --prefix=$(build_prefix) --disable-ldconfig && \
-  ../$(canonical_host)/install.sh --destdir=$($(package)_staging_dir) --prefix=$(build_prefix) --disable-ldconfig
+  bash ./install.sh --destdir=$($(package)_staging_dir) --prefix=$(build_prefix) --disable-ldconfig --without=rust-docs && \
+  ../$(canonical_host)/install.sh --destdir=$($(package)_staging_dir) --prefix=$(build_prefix) --disable-ldconfig --without=rust-docs
 endef
 else
 # for normal compilation (non-cross)
 define $(package)_stage_cmds
-  bash ./install.sh --destdir=$($(package)_staging_dir) --prefix=$(build_prefix) --disable-ldconfig
+  bash ./install.sh --destdir=$($(package)_staging_dir) --prefix=$(build_prefix) --disable-ldconfig --without=rust-docs
 endef
 endif
