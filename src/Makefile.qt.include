@@ -458,7 +458,9 @@ $(info $$EXTRA_LIBRARIES is [${EXTRA_LIBRARIES}])
 qt_komodo_qt_LDADD += libbitcoin_wallet.a 
 endif
 
-qt_komodo_qt_LDADD += $(LIBBITCOIN_CLI) \
+qt_komodo_qt_LDADD += \
+  $(LIBCJSON) \
+  $(LIBBITCOIN_CLI) \
   $(LIBBITCOIN_COMMON) \
   $(LIBBITCOIN_UTIL) \
   $(LIBBITCOIN_CONSENSUS) \

@@ -4408,7 +4408,7 @@ int32_t bitcoin_base58decode(uint8_t *data,char *coinaddr)
 	//memset(data,0,be_sz);
     //for (i=0; i<count; i++)
     //    data[i+zeroes] = revdata[count - 1 - i];
-    //LogPrintf("len.%d be_sz.%d zeroes.%d data[0] %02x %02x\n",be_sz+zeroes,be_sz,zeroes,data[0],data[1]);
+    //printf("len.%d be_sz.%d zeroes.%d data[0] %02x %02x\n",be_sz+zeroes,be_sz,zeroes,data[0],data[1]);
     mpz_clear(bn), mpz_clear(bn58);
 	return(be_sz);
 }
@@ -4439,7 +4439,7 @@ bits256 mpz_to_bits256(mpz_t bn)
 bits256 mpz_muldivcmp(bits256 oldval,int32_t mulval,int32_t divval,bits256 targetval)
 {
     mpz_t bn,target; bits256 newval;
-    //LogPrintf("mulval.%d divval.%d]\n",mulval,divval);
+    //printf("mulval.%d divval.%d]\n",mulval,divval);
     mpz_init(bn), mpz_init(target);
     mpz_from_bits256(bn,oldval);
     mpz_mul_ui(bn,bn,mulval);
@@ -4448,7 +4448,7 @@ bits256 mpz_muldivcmp(bits256 oldval,int32_t mulval,int32_t divval,bits256 targe
         newval = targetval;
     newval = mpz_to_bits256(bn);
     //char *bits256_str(char *,bits256);
-    //char str[65],str2[65]; LogPrintf("%s mul.%d div.%d -> %s size.%d\n",bits256_str(str,oldval),mulval,divval,bits256_str(str2,newval),bn->_mp_size);
+    //char str[65],str2[65]; printf("%s mul.%d div.%d -> %s size.%d\n",bits256_str(str,oldval),mulval,divval,bits256_str(str2,newval),bn->_mp_size);
     mpz_clear(bn), mpz_clear(target);
     return(newval);
 }
@@ -4461,7 +4461,7 @@ bits256 mpz_div64(bits256 hash,uint64_t divval)
     mpz_tdiv_qr_ui(bn,NULL,bn,divval);
     newval = mpz_to_bits256(bn);
     //char *bits256_str(char *,bits256);
-    //char str[65],str2[65]; LogPrintf("%s div.%lld -> %s size.%d\n",bits256_str(str,hash),(long long)divval,bits256_str(str2,newval),bn->_mp_size);
+    //char str[65],str2[65]; printf("%s div.%lld -> %s size.%d\n",bits256_str(str,hash),(long long)divval,bits256_str(str2,newval),bn->_mp_size);
     mpz_clear(bn);
     return(newval);
 }

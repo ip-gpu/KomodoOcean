@@ -35,6 +35,7 @@
 #include "httprpc.h"
 #include "key.h"
 #include "notarisationdb.h"
+//#include "komodo_notary.h"
 #ifdef ENABLE_MINING
 #include "key_io.h"
 #endif
