@@ -27,6 +27,7 @@
 #include <string.h>   /* memcmp,strlen */
 #include <stddef.h>   /* ptrdiff_t */
 #include <stdlib.h>   /* exit() */
+#include <stdint.h>
 
 /* These macros use decltype or the earlier __typeof GNU extension.
  As decltype is only available in newer compilers (VS2010 or gcc 4.3+
@@ -285,7 +286,7 @@ HASH_DELETE(hh,head,delptr)
  * This is for uthash developer only; it compiles away if HASH_DEBUG isn't defined.
  */
 #ifdef HASH_DEBUG
-#define HASH_OOPS(...) do { LogPrintf(__VA_ARGS__); exit(-1); } while (0)
+#define HASH_OOPS(...) do { fprintf(stderr,__VA_ARGS__); exit(-1); } while (0)
 #define HASH_FSCK(hh,head)                                                       \
 do {                                                                             \
 struct UT_hash_handle *_thh;                                                 \
