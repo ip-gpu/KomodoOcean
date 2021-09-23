@@ -35,5 +35,6 @@ static void secp256k1_ecmult_const(secp256k1_gej *r, const secp256k1_ge *a, cons
 static void secp256k1_ecmult_const(secp256k1_gej *r, const secp256k1_ge *a, const secp256k1_scalar *q, int bits);
 
 
-#endif
+#endif /* SECP256K1_ECMULT_CONST_H */
+#endif /* ENABLE_MODULE_MUSIG */
 

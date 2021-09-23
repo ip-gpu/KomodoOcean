@@ -286,15 +286,6 @@ extern UniValue priceslist(const UniValue& params, bool fHelp, const CPubKey& my
 extern UniValue mypriceslist(const UniValue& params, bool fHelp, const CPubKey& mypk);
 extern UniValue pricesinfo(const UniValue& params, bool fHelp, const CPubKey& mypk);
 extern UniValue pegsaddress(const UniValue& params, bool fHelp, const CPubKey& mypk);
-extern UniValue marmaraaddress(const UniValue& params, bool fHelp, const CPubKey& mypk);
-extern UniValue marmara_poolpayout(const UniValue& params, bool fHelp, const CPubKey& mypk);
-extern UniValue marmara_receive(const UniValue& params, bool fHelp, const CPubKey& mypk);
-extern UniValue marmara_issue(const UniValue& params, bool fHelp, const CPubKey& mypk);
-extern UniValue marmara_transfer(const UniValue& params, bool fHelp, const CPubKey& mypk);
-extern UniValue marmara_info(const UniValue& params, bool fHelp, const CPubKey& mypk);
-extern UniValue marmara_creditloop(const UniValue& params, bool fHelp, const CPubKey& mypk);
-extern UniValue marmara_settlement(const UniValue& params, bool fHelp, const CPubKey& mypk);
-extern UniValue marmara_lock(const UniValue& params, bool fHelp, const CPubKey& mypk);
 extern UniValue paymentsaddress(const UniValue& params, bool fHelp, const CPubKey& mypk);
 extern UniValue payments_release(const UniValue& params, bool fHelp, const CPubKey& mypk);
 extern UniValue payments_fund(const UniValue& params, bool fHelp, const CPubKey& mypk);

@@ -88,11 +88,10 @@ void initVerify() {
 }
 
 
-static unsigned char *secp256k1Fingerprint(const CC *cond) {
+static void secp256k1Fingerprint(const CC *cond, uint8_t *out) {
     Secp256k1FingerprintContents_t *fp = calloc(1, sizeof(Secp256k1FingerprintContents_t));
-    //fprintf(stderr,"secpfinger %p %p size %d vs %d\n",fp,cond->publicKey,(int32_t)sizeof(Secp256k1FingerprintContents_t),(int32_t)SECP256K1_PK_SIZE);
     OCTET_STRING_fromBuf(&fp->publicKey, cond->publicKey, SECP256K1_PK_SIZE);
-    return hashFingerprintContents(&asn_DEF_Secp256k1FingerprintContents, fp);
+    hashFingerprintContents(&asn_DEF_Secp256k1FingerprintContents, fp, out);
 }
 
 
@@ -157,7 +156,11 @@ static int secp256k1Sign(CC *cond, CCVisitor visitor) {
     int rc = secp256k1_ecdsa_sign(ec_ctx_sign, &sig, visitor.msg, signing->sk, NULL, NULL);
     unlockSign();
 
-    if (rc != 1) return 0;
+    if (rc != 1)
+    {
+        fprintf(stderr,"secp256k1Sign rc.%d\n",rc);
+        return 0;
+    }
 
     if (!cond->signature) cond->signature = calloc(1, SECP256K1_SIG_SIZE);
     secp256k1_ecdsa_signature_serialize_compact(ec_ctx_verify, cond->signature, &sig);
@@ -192,7 +195,13 @@ int cc_signTreeSecp256k1Msg32(CC *cond, const unsigned char *privateKey, const u
     unsigned char publicKey[SECP256K1_PK_SIZE];
     size_t ol = SECP256K1_PK_SIZE;
     secp256k1_ec_pubkey_serialize(ec_ctx_verify, publicKey, &ol, &spk, SECP256K1_EC_COMPRESSED);
-
+    if ( 0 )
+    {
+        int32_t z;
+        for (z=0; z<33; z++)
+            fprintf(stderr,"%02x",publicKey[z]);
+        fprintf(stderr," pubkey\n");
+    }
     // sign
     CCSecp256k1SigningData signing = {publicKey, privateKey, 0};
     CCVisitor visitor = {&secp256k1Sign, msg32, 32, &signing};
