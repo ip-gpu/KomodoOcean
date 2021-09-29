@@ -1683,6 +1683,7 @@ UniValue getblockchaininfo(const UniValue& params, bool fHelp, const CPubKey& my
             "  \"difficulty\": xxxxxx,     (numeric) the current difficulty\n"
             "  \"verificationprogress\": xxxx, (numeric) estimate of verification progress [0..1]\n"
             "  \"chainwork\": \"xxxx\"     (string) total amount of work in active chain, in hexadecimal\n"
+            "  \"size_on_disk\": xxxxxx,   (numeric) the estimated size of the block and undo files on disk\n"
             "  \"commitments\": xxxxxx,    (numeric) the current number of note commitments in the commitment tree\n"
             "  \"softforks\": [            (array) status of softforks in progress\n"
             "     {\n"
@@ -1736,6 +1737,7 @@ UniValue getblockchaininfo(const UniValue& params, bool fHelp, const CPubKey& my
     {
         obj.push_back(Pair("chainstake",        chainActive.LastTip()->chainPower.chainStake.GetHex()));
     }
+    obj.push_back(Pair("size_on_disk",          CalculateCurrentUsage()));
     obj.push_back(Pair("pruned",                fPruneMode));
 
     SproutMerkleTree tree;
