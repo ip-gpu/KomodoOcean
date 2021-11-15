@@ -794,6 +794,7 @@ int main(int argc, char *argv[])
 #endif
     // Allow parameter interaction before we create the options model
     app.parameterSetup();
+    GUIUtil::LogQtInfo();
     // Load GUI settings from QSettings
     app.createOptionsModel(IsArgSet("-resetguisettings"));
 
