@@ -50,3 +50,10 @@ cd src
    2. unsigned char *hashFingerprintContents(asn_TYPE_descriptor_t *asnType, void *fp)
 
    Make sure that we have transition to (1) everywhere.
+
+10. MacOS Themes (Light, Dark) related:
+
+- https://github.com/bitcoin-core/gui/pull/275 - Support runtime appearance adjustment on macOS #275
+- Don't forget to remove NSRequiresAquaSystemAppearance from share/qt/Info.plist.in , as shown here
+  https://github.com/bitcoin-core/gui/pull/154 ,
+  https://developer.apple.com/documentation/appkit/nsappearancecustomization/choosing_a_specific_appearance_for_your_macos_app
