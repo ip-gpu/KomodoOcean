@@ -27,8 +27,8 @@ else
 
     ifeq ($(build_os)$(host_os),linuxdarwin) # cross-compile for MacOS from Linux
         define $(package)_build_cmds
-          $(MAKE) -C googlemock/make CC="$(build_prefix)/bin/$($(package)_cc)" CXX="$(build_prefix)/bin/$($(package)_cxx)" AR="$(build_prefix)/bin/$($(package)_ar)" CXXFLAGS="$($(package)_cxxflags)" gmock.a && \
-          $(MAKE) -C googletest/make CC="$(build_prefix)/bin/$($(package)_cc)" CXX="$(build_prefix)/bin/$($(package)_cxx)" AR="$(build_prefix)/bin/$($(package)_ar)" CXXFLAGS="$($(package)_cxxflags)" gtest.a
+          $(MAKE) -C googlemock/make CC="$(darwin_CC)" CXX="$(darwin_CXX)" AR="$(darwin_AR)" CXXFLAGS="$($(package)_cxxflags)" gmock.a && \
+          $(MAKE) -C googletest/make CC="$(darwin_CC)" CXX="$(darwin_CXX)" AR="$(darwin_AR)" CXXFLAGS="$($(package)_cxxflags)" gtest.a
         endef
     else
         define $(package)_build_cmds
