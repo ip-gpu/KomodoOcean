@@ -124,6 +124,7 @@ $(host_prefix)/share/config.site : config.site.in $(host_prefix)/.stamp_$(final_
             -e 's|@no_wallet@|$(NO_WALLET)|' \
             -e 's|@no_upnp@|$(NO_UPNP)|' \
             -e 's|@debug@|$(DEBUG)|' \
+            -e 's|@cross_toolchain_path@|$(toolchain_path)|' \
             $< > $@
 	$(AT)touch $@
 
@@ -157,7 +158,7 @@ install: check-packages $(host_prefix)/share/config.site
 download-one: check-sources $(all_sources)
 
 download-osx:
-	@$(MAKE) -s HOST=x86_64-apple-darwin18 download-one
+	@$(MAKE) -s HOST=x86_64-apple-darwin19 download-one
 download-linux:
 	@$(MAKE) -s HOST=x86_64-unknown-linux-gnu download-one
 download-win:
