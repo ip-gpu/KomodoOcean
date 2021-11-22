@@ -76,6 +76,8 @@ static const size_t MAPASKFOR_MAX_SZ = MAX_INV_SZ;
 static const size_t SETASKFOR_MAX_SZ = 2 * MAX_INV_SZ;
 /** The maximum number of peer connections to maintain. */
 static const unsigned int DEFAULT_MAX_PEER_CONNECTIONS = 384;
+/** The default for -maxuploadtarget. 0 = Unlimited */
+static const uint64_t DEFAULT_MAX_UPLOAD_TARGET = 0;
 /** The period before a network upgrade activates, where connections to upgrading peers are preferred (in blocks). */
 static const int NETWORK_UPGRADE_PEER_PREFERENCE_BLOCK_PERIOD = 24 * 24 * 3;
 
@@ -397,6 +399,12 @@ private:
     static uint64_t nTotalBytesRecv;
     static uint64_t nTotalBytesSent;
 
+    // outbound limit & stats
+    static uint64_t nMaxOutboundTotalBytesSentInCycle;
+    static uint64_t nMaxOutboundCycleStartTime;
+    static uint64_t nMaxOutboundLimit;
+    static uint64_t nMaxOutboundTimeframe;
+
     CNode(const CNode&);
     void operator=(const CNode&);
 
@@ -690,6 +698,27 @@ public:
 
     static uint64_t GetTotalBytesRecv();
     static uint64_t GetTotalBytesSent();
+
+    //!set the max outbound target in bytes
+    static void SetMaxOutboundTarget(uint64_t limit);
+    static uint64_t GetMaxOutboundTarget();
+
+    //!set the timeframe for the max outbound target
+    static void SetMaxOutboundTimeframe(uint64_t timeframe);
+    static uint64_t GetMaxOutboundTimeframe();
+
+    //!check if the outbound target is reached
+    // if param historicalBlockServingLimit is set true, the function will
+    // response true if the limit for serving historical blocks has been reached
+    static bool OutboundTargetReached(bool historicalBlockServingLimit);
+
+    //!response the bytes left in the current max outbound cycle
+    // in case of no limit, it will always response 0
+    static uint64_t GetOutboundTargetBytesLeft();
+
+    //!response the time in second left in the current max outbound cycle
+    // in case of no limit, it will always response 0
+    static uint64_t GetMaxOutboundTimeLeftInCycle();
 };
 
 
