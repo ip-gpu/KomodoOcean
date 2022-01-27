@@ -98,7 +98,6 @@ QString KomodoUnits::format(int unit, const CAmount& nIn, bool fPlus, SeparatorS
     qint64 remainder = n_abs % coin;
     QString quotient_str = QString::number(quotient);
     QString remainder_str = QString::number(remainder).rightJustified(num_decimals, '0');
-
     // Use SI-style thin space separators as these are locale independent and can't be
     // confused with the decimal marker.
     QChar thin_sp(THIN_SP_CP);
@@ -135,6 +134,17 @@ QString KomodoUnits::formatHtmlWithUnit(int unit, const CAmount& amount, bool pl
     return QString("<span style='white-space: nowrap;'>%1</span>").arg(str);
 }
 
+QString KomodoUnits::formatWithPrivacy(int unit, const CAmount& amount, SeparatorStyle separators, bool privacy)
+{
+    assert(amount >= 0);
+    QString value;
+    if (privacy) {
+        value = format(unit, 0, false, separators).replace('0', '#');
+    } else {
+        value = format(unit, amount, false, separators);
+    }
+    return value + QString(" ") + name(unit);
+}
 
 bool KomodoUnits::parse(int unit, const QString &value, CAmount *val_out)
 {

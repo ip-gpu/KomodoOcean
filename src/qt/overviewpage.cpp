@@ -17,7 +17,9 @@
 #include "util.h" // for KOMODO_ASSETCHAIN_MAXLEN
 
 #include <QAbstractItemDelegate>
+#include <QApplication>
 #include <QPainter>
+#include <QStatusTipEvent>
 
 #define DECORATION_SIZE 54
 #define NUM_ITEMS 5
@@ -159,6 +161,24 @@ void OverviewPage::handleOutOfSyncWarningClicks()
     Q_EMIT outOfSyncWarningClicked();
 }
 
+void OverviewPage::setPrivacy(bool privacy)
+{
+    m_privacy = privacy;
+
+    if (currentBalance != -1) {
+        setBalance(currentBalance, currentUnconfirmedBalance, currentImmatureBalance,
+                       currentWatchOnlyBalance, currentWatchUnconfBalance, currentWatchImmatureBalance,
+                       currentPrivateBalance, currentInterestBalance);
+    }
+
+    ui->listTransactions->setVisible(!m_privacy);
+
+    const QString status_tip = m_privacy ? tr("Privacy mode activated for the Overview tab. To unmask the values, uncheck Settings->Mask values.") : "";
+    setStatusTip(status_tip);
+    QStatusTipEvent event(status_tip);
+    QApplication::sendEvent(this, &event);
+}
+
 OverviewPage::~OverviewPage()
 {
     delete ui;
@@ -175,17 +195,17 @@ void OverviewPage::setBalance(const CAmount& balance, const CAmount& unconfirmed
     currentWatchImmatureBalance = watchImmatureBalance;
     currentPrivateBalance = privateBalance;
     currentInterestBalance = interestBalance;
-    ui->labelBalance->setText(KomodoUnits::formatWithUnit(unit, balance, false, KomodoUnits::separatorAlways));
-    ui->labelUnconfirmed->setText(KomodoUnits::formatWithUnit(unit, unconfirmedBalance, false, KomodoUnits::separatorAlways));
-    ui->labelImmature->setText(KomodoUnits::formatWithUnit(unit, immatureBalance, false, KomodoUnits::separatorAlways));
-    ui->labelTotal->setText(KomodoUnits::formatWithUnit(unit, balance + unconfirmedBalance + immatureBalance + privateBalance + interestBalance, false, KomodoUnits::separatorAlways));
-    ui->labelWatchAvailable->setText(KomodoUnits::formatWithUnit(unit, watchOnlyBalance, false, KomodoUnits::separatorAlways));
-    ui->labelWatchPending->setText(KomodoUnits::formatWithUnit(unit, watchUnconfBalance, false, KomodoUnits::separatorAlways));
-    ui->labelWatchImmature->setText(KomodoUnits::formatWithUnit(unit, watchImmatureBalance, false, KomodoUnits::separatorAlways));
-    ui->labelWatchTotal->setText(KomodoUnits::formatWithUnit(unit, watchOnlyBalance + watchUnconfBalance + watchImmatureBalance, false, KomodoUnits::separatorAlways));
+    ui->labelBalance->setText(KomodoUnits::formatWithPrivacy(unit, balance, KomodoUnits::separatorAlways, m_privacy));
+    ui->labelUnconfirmed->setText(KomodoUnits::formatWithPrivacy(unit, unconfirmedBalance, KomodoUnits::separatorAlways, m_privacy));
+    ui->labelImmature->setText(KomodoUnits::formatWithPrivacy(unit, immatureBalance, KomodoUnits::separatorAlways, m_privacy));
+    ui->labelTotal->setText(KomodoUnits::formatWithPrivacy(unit, balance + unconfirmedBalance + immatureBalance + privateBalance + interestBalance, KomodoUnits::separatorAlways, m_privacy));
+    ui->labelWatchAvailable->setText(KomodoUnits::formatWithPrivacy(unit, watchOnlyBalance, KomodoUnits::separatorAlways, m_privacy));
+    ui->labelWatchPending->setText(KomodoUnits::formatWithPrivacy(unit, watchUnconfBalance, KomodoUnits::separatorAlways, m_privacy));
+    ui->labelWatchImmature->setText(KomodoUnits::formatWithPrivacy(unit, watchImmatureBalance, KomodoUnits::separatorAlways, m_privacy));
+    ui->labelWatchTotal->setText(KomodoUnits::formatWithPrivacy(unit, watchOnlyBalance + watchUnconfBalance + watchImmatureBalance, KomodoUnits::separatorAlways, m_privacy));
 
-    ui->labelPrivateBalance->setText(KomodoUnits::formatWithUnit(unit, privateBalance, false, KomodoUnits::separatorAlways));
-    ui->labelInterestBalance->setText(KomodoUnits::formatWithUnit(unit, interestBalance, false, KomodoUnits::separatorAlways));
+    ui->labelPrivateBalance->setText(KomodoUnits::formatWithPrivacy(unit, privateBalance, KomodoUnits::separatorAlways, m_privacy));
+    ui->labelInterestBalance->setText(KomodoUnits::formatWithPrivacy(unit, interestBalance, KomodoUnits::separatorAlways, m_privacy));
 
     // only show immature (newly mined) balance if it's non-zero, so as not to complicate things
     // for the non-mining users

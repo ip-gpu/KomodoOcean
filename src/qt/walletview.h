@@ -134,6 +134,8 @@ Q_SIGNALS:
     void incomingTransaction(const QString& date, int unit, const CAmount& amount, const QString& type, const QString& address, const QString& label);
     /** Notify that the out of sync warning icon has been pressed */
     void outOfSyncWarningClicked();
+
+    void setPrivacy(bool privacy);
 };
 
 #endif // KOMODO_QT_WALLETVIEW_H
