@@ -1,6 +1,7 @@
 depends_prefix="`dirname ${ac_site_file}`/.."
 
 cross_compiling=maybe
+cross_toolchain_path=@cross_toolchain_path@
 host_alias=@HOST@
 ac_tool_prefix=${host_alias}-
 

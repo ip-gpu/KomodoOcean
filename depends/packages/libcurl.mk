@@ -27,8 +27,8 @@ ifeq ($(build_os),linux)
       define $(package)_set_vars
         $(package)_config_env+=LD_LIBRARY_PATH="$(host_prefix)/lib" PKG_CONFIG_LIBDIR="$(host_prefix)/lib/pkgconfig"
         $(package)_config_env+=CPPFLAGS="-I$(host_prefix)/include -fPIC" LDFLAGS="-L$(host_prefix)/lib -Wl,-undefined -Wl,dynamic_lookup" # https://github.com/ddnet/ddnet/commit/e8bd8459a6f556594f48f33f4d145033bc89d46f
-        $(package)_config_env+=CC="$(build_prefix)/bin/$($(package)_cc)" CXX="$(build_prefix)/bin/$($(package)_cxx)"
-        $(package)_config_env+=AR="$(build_prefix)/bin/$($(package)_ar)" RANLIB="$(build_prefix)/bin/$($(package)_ranlib)"
+        $(package)_config_env+=CC="$(darwin_CC)" CXX="$(darwin_CXX)"
+        $(package)_config_env+=AR="$(darwin_AR)" RANLIB="$(darwin_RANLIB)"
         $(package)_config_opts+=--host=$(canonical_host) --without-libpsl --without-libgsasl --disable-ldap --disable-tls-srp
       endef
   endif
