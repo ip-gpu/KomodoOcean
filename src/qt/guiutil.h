@@ -239,6 +239,11 @@ namespace GUIUtil
     typedef ClickableProgressBar ProgressBar;
 #endif
 
+    /**
+     * Writes to debug.log short info about the used Qt and the host system.
+     */
+    void LogQtInfo();
+
 } // namespace GUIUtil
 
 #endif // KOMODO_QT_GUIUTIL_H

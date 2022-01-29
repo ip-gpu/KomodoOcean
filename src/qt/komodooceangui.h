@@ -56,6 +56,7 @@ public:
         The client model represents the part of the core that communicates with the P2P network, and is wallet-agnostic.
     */
     void setClientModel(ClientModel *clientModel);
+    bool isPrivacyModeActivated() const;
 
 #ifdef ENABLE_WALLET
     /** Set the wallet model.
@@ -114,6 +115,7 @@ private:
     QAction *openRPCConsoleAction;
     QAction *openAction;
     QAction *showHelpMessageAction;
+    QAction *m_mask_values_action;
 
     QSystemTrayIcon *trayIcon;
     QMenu *trayIconMenu;
@@ -155,6 +157,8 @@ private:
 Q_SIGNALS:
     /** Signal raised when a URI was entered or dragged to the GUI */
     void receivedURI(const QString &uri);
+
+    void setPrivacy(bool privacy);
 
 public Q_SLOTS:
     /** Set number of connections shown in the UI */

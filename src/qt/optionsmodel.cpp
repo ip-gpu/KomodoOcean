@@ -76,8 +76,16 @@ void OptionsModel::Init(bool resetSettings)
         settings.setValue("nDisplayUnit", KomodoUnits::KMD);
     nDisplayUnit = settings.value("nDisplayUnit").toInt();
 
+    std::string defaultStrThirdPartyTxUrls = "https://kmdexplorer.io/tx/%s|https://kmd.explorer.dexstats.info/tx/%s";
+    std::string strAssetchainName = std::string(ASSETCHAINS_SYMBOL);
+    std::transform(strAssetchainName.begin(), strAssetchainName.end(), strAssetchainName.begin(), [](unsigned char c){ return std::tolower(c); });
+
+    if (!strAssetchainName.empty()) {
+        defaultStrThirdPartyTxUrls = "https://" + strAssetchainName + ".explorer.dexstats.info/tx/%s|" + defaultStrThirdPartyTxUrls;
+    }
+
     if (!settings.contains("strThirdPartyTxUrls"))
-        settings.setValue("strThirdPartyTxUrls", "");
+        settings.setValue("strThirdPartyTxUrls", QString::fromStdString(defaultStrThirdPartyTxUrls));
     strThirdPartyTxUrls = settings.value("strThirdPartyTxUrls", "").toString();
 
     if (!settings.contains("fCoinControlFeatures"))
