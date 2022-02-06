@@ -18,6 +18,7 @@
 
 // https://stackoverflow.com/questions/16491675/how-to-send-custom-message-in-google-c-testing-framework/29155677
 #define GTEST_COUT_NOCOLOR std::cerr << "[          ] [ INFO ] "
+/*
 namespace testing
 {
     namespace internal
@@ -33,6 +34,10 @@ namespace testing
     }
 }
 #define PRINTF(...)  do { testing::internal::ColoredPrintf(testing::internal::COLOR_GREEN, "[          ] "); testing::internal::ColoredPrintf(testing::internal::COLOR_YELLOW, __VA_ARGS__); } while(0)
+*/
+
+// https://stackoverflow.com/questions/63464085/coloredprintf-in-recent-googletest
+#define PRINTF(...)  do { std::cerr << "[          ] "; std::cerr << strprintf(__VA_ARGS__); } while(0)
 
 // C++ stream interface
 class TestCout : public std::stringstream
