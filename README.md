@@ -13,7 +13,7 @@ Use the default `static` branch and following scripts to build:
 - MacOS: `build-mac-cross.sh` (cross-compilation for OSX)
 - MacOS: `build-mac.sh` (native build)
 
-Visit [#wallet-ocean-qt](https://discord.gg/U5WWaJR) channel in Komodo Discord for more information.
+Visit `#🤝│general-support` or `#wallet-ocean-qt` channel in [Komodo Discord](https://komodoplatform.com/discord) for more information.
 
 ## How to build? ##
 
@@ -94,6 +94,39 @@ cd komodo
 **komodo is experimental and a work-in-progress.** Use at your own risk.
 
 *p.s.* Currently only `x86_64` arch supported for MacOS, build for `Apple M1` processors unfortunately not yet supported.
+
+## Create komodo.conf ##
+
+Before start the wallet you should [create config file](https://github.com/DeckerSU/KomodoOcean/wiki/F.A.Q.#q-after-i-start-komodo-qt-i-receive-the-following-error-error-cannot-parse-configuration-file-missing-komodoconf-only-use-keyvalue-syntax-what-should-i-do) `komodo.conf` at one of the following locations:
+
+- Linux - `~/.komodo/komodo.conf`
+- Windows - `%APPDATA%\Komodo\komodo.conf`
+- MacOS - `~/Library/Application Support/Komodo/komodo.conf`
+
+With the following content:
+
+```
+txindex=1
+rpcuser=komodo
+rpcpassword=local321 # don't forget to change password
+rpcallowip=127.0.0.1
+rpcbind=127.0.0.1
+server=1
+```
+
+Bash one-liner for Linux to create `komodo.conf` with random RPC password:
+
+```
+RANDPASS=$(tr -cd '[:alnum:]' < /dev/urandom | fold -w16 | head -n1) && \
+tee -a ~/.komodo/komodo.conf << END
+txindex=1
+rpcuser=komodo
+rpcpassword=${RANDPASS}
+rpcallowip=127.0.0.1
+rpcbind=127.0.0.1
+server=1
+END
+```
 
 ## Developers of Qt wallet ##
 
