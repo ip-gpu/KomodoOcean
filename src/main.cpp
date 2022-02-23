@@ -2521,7 +2521,7 @@ bool IsInitialBlockDownload()
     }
     if (0 && ptr->nChainWork < UintToArith256(chainParams.GetConsensus().nMinimumChainWork))
     {
-        LogPrintf("chainpower insufficient in IsInitialDownload\n");
+        LogPrintf("nChainWork insufficient in IsInitialDownload\n");
         return true;
     }
     state = ((chainActive.Height() < ptr->nHeight - 24*60) ||
@@ -6140,7 +6140,7 @@ bool static LoadBlockIndexDB()
     if (ShutdownRequested())
         return false;
 
-    // Calculate chainPower
+    // Calculate nChainWork
     vector<pair<int, CBlockIndex*> > vSortedByHeight;
     vSortedByHeight.reserve(mapBlockIndex.size());
     BOOST_FOREACH(const PAIRTYPE(uint256, CBlockIndex*)& item, mapBlockIndex)
