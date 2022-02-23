@@ -70,7 +70,8 @@
         "regex": "cpp",
         "valarray": "cpp",
         "string": "cpp",
-        "*.cuh": "cpp"
+        "*.cuh": "cpp",
+        "Makefile*.include": "automake"
     },
     // The following will hide unneeded files in the editor
     "files.exclude": {
