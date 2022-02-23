@@ -1279,22 +1279,6 @@ bool AppInit2(boost::thread_group& threadGroup, CScheduler& scheduler)
     ECC_Start();
     globalVerifyHandle.reset(new ECCVerifyHandle());
 
-    // set the hash algorithm to use for this chain
-    // Again likely better solution here, than using long IF ELSE. 
-    extern uint32_t ASSETCHAINS_ALGO, ASSETCHAINS_VERUSHASH, ASSETCHAINS_VERUSHASHV1_1;
-    CVerusHash::init();
-    CVerusHashV2::init();
-    if (ASSETCHAINS_ALGO == ASSETCHAINS_VERUSHASH)
-    {
-        // initialize VerusHash
-        CBlockHeader::SetVerusHash();
-    }
-    else if (ASSETCHAINS_ALGO == ASSETCHAINS_VERUSHASHV1_1)
-    {
-        // initialize VerusHashV2
-        CBlockHeader::SetVerusHashV2();
-    }
-
     // Sanity check
     if (!InitSanityCheck())
         return InitError(_("Initialization sanity check failed. Komodo is shutting down."));
@@ -1887,7 +1871,7 @@ bool AppInit2(boost::thread_group& threadGroup, CScheduler& scheduler)
         if (chainActive.Tip() && chainActive.Tip() != pindexRescan)
         {
             uiInterface.InitMessage(_("Rescanning..."));
-            LogPrintf("Rescanning last %i blocks (from block %i)...\n", chainActive.Height() - pindexRescan->GetHeight(), pindexRescan->GetHeight());
+            LogPrintf("Rescanning last %i blocks (from block %i)...\n", chainActive.Height() - pindexRescan->nHeight, pindexRescan->nHeight);
             nStart = GetTimeMillis();
             pwalletMain->ScanForWalletTransactions(pindexRescan, true);
             LogPrintf(" rescan      %15dms\n", GetTimeMillis() - nStart);
