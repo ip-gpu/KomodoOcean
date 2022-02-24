@@ -1729,7 +1729,7 @@ void static BitcoinMiner()
                 return;
         }
 
-        if ((nThreads == 0 || !fGenerate) && pwallet == NULL)
+        if (nThreads == 0 || !fGenerate)
             return;
 
         minerThreads = new boost::thread_group();
