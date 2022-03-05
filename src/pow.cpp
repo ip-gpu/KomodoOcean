@@ -110,7 +110,7 @@ arith_uint256 oldRT_CST_RST(int32_t height,uint32_t nTime,arith_uint256 bnTarget
         bnTarget = ct[0] / arith_uint256(K);
         //altK = (K * (nTime-ts[0]) * (ts[0]-ts[W]) * denominator * W) / (numerator * (W-1) * (T * T));
         altK = (K * (nTime-ts[0]) * (ts[0]-ts[W]) * denominator) / (numerator * (T * T));
-        LogPrintf("ht.%d initial altK.%lld %d * %d * %d / %d\n",height,(long long)altK,(nTime-ts[0]),(ts[0]-ts[W]),denominator,numerator);
+        LogPrint("pow", "ht.%d initial altK.%lld %d * %d * %d / %d\n",height,(long long)altK,(nTime-ts[0]),(ts[0]-ts[W]),denominator,numerator);
         if ( altK > K )
             altK = K;
         bnTarget *= arith_uint256(altK);
@@ -154,7 +154,7 @@ arith_uint256 oldRT_CST_RST(int32_t height,uint32_t nTime,arith_uint256 bnTarget
                         bnTarget += ct[k];
                     bnTarget /= arith_uint256(W * K);
                     altK = (K * (nTime-ts[0]) * (ts[0]-ts[W])) / (W * T * T);
-                    LogPrintf("ht.%d made it to i == 0, j.%d ii.%d altK %lld (%d * %d) %u - %u W.%d\n",height,j,ii,(long long)altK,(nTime-ts[0]),(ts[0]-ts[W]),ts[0],ts[W],W);
+                    LogPrint("pow", "ht.%d made it to i == 0, j.%d ii.%d altK %lld (%d * %d) %u - %u W.%d\n",height,j,ii,(long long)altK,(nTime-ts[0]),(ts[0]-ts[W]),ts[0],ts[W],W);
                     bnTarget *= arith_uint256(altK);
                     j = 0; // It needed adjusting, we adjusted it, we're finished, so break out of j loop.
                 }
@@ -184,10 +184,10 @@ arith_uint256 RT_CST_RST_outer(int32_t height,uint32_t nTime,arith_uint256 bnTar
         {
             int32_t z;
             for (z=31; z>=0; z--)
-                LogPrintf("%02x",((uint8_t *)&bnTarget)[z]);
+                LogPrint("pow", "%02x",((uint8_t *)&bnTarget)[z]);
         }
-        LogPrintf(" ht.%d initial W.%d outerK.%lld %d * %d * %d / %d\n",height,W,(long long)outerK,(nTime-ts[0]),(ts[0]-ts[W]),denominator,numerator);
-    } //else LogPrintf("ht.%d no outer trigger %d >= %d\n",height,(ts[0] - ts[W]),(T * numerator)/denominator);
+        LogPrint("pow", " ht.%d initial W.%d outerK.%lld %d * %d * %d / %d\n",height,W,(long long)outerK,(nTime-ts[0]),(ts[0]-ts[W]),denominator,numerator);
+    } //else LogPrint("pow", "ht.%d no outer trigger %d >= %d\n",height,(ts[0] - ts[W]),(T * numerator)/denominator);
     return(bnTarget);
 }
 
@@ -204,8 +204,8 @@ arith_uint256 RT_CST_RST_target(int32_t height,uint32_t nTime,arith_uint256 bnTa
     {
         int32_t z;
         for (z=31; z>=0; z--)
-            LogPrintf("%02x",((uint8_t *)&bnTarget)[z]);
-        LogPrintf(" ht.%d innerK %lld (%d * %d) %u - %u width.%d\n",height,(long long)innerK,(nTime-ts[0]),(ts[0]-ts[width]),ts[0],ts[width],width);
+            LogPrint("pow", "%02x",((uint8_t *)&bnTarget)[z]);
+        LogPrint("pow", " ht.%d innerK %lld (%d * %d) %u - %u width.%d\n",height,(long long)innerK,(nTime-ts[0]),(ts[0]-ts[width]),ts[0],ts[width],width);
     }
     return(bnTarget);
 }
@@ -224,9 +224,9 @@ arith_uint256 RT_CST_RST_inner(int32_t height,uint32_t nTime,arith_uint256 bnTar
         {
             int32_t z;
             for (z=31; z>=0; z--)
-                LogPrintf("%02x",((uint8_t *)&bnTarget)[z]);
+                LogPrint("pow", "%02x",((uint8_t *)&bnTarget)[z]);
         }
-        LogPrintf(" height.%d O.%-2d, W.%-2d width.%-2d %4d vs %-4d, deficit %4d tip.%d\n",height,outeri,W,width,(ts[0] - ts[width]),expected,expected - (ts[0] - ts[width]),nTime-ts[0]);
+        LogPrint("pow", " height.%d O.%-2d, W.%-2d width.%-2d %4d vs %-4d, deficit %4d tip.%d\n",height,outeri,W,width,(ts[0] - ts[width]),expected,expected - (ts[0] - ts[width]),nTime-ts[0]);
     }
     return(bnTarget);
 }
@@ -289,9 +289,9 @@ arith_uint256 zawy_TSA_EMA(int32_t height,int32_t tipdiff,arith_uint256 prevTarg
     {
         int32_t z;
         for (z=31; z>=0; z--)
-            LogPrintf("%02x",((uint8_t *)&bnTarget)[z]);
+            LogPrint("pow", "%02x",((uint8_t *)&bnTarget)[z]);
     }
-    LogPrintf(" ht.%d TSA bnTarget tipdiff.%d\n",height,tipdiff);
+    LogPrint("pow", " ht.%d TSA bnTarget tipdiff.%d\n",height,tipdiff);
     return(bnTarget);
 }
 
@@ -479,15 +479,15 @@ unsigned int GetNextWorkRequired(const CBlockIndex* pindexLast, const CBlockHead
                 if ( bnTarget < origtarget || bnTarget > easy )
                 {
                     bnTarget = easy;
-                    LogPrintf("cmp.%d mult.%d ht.%d -> easy target\n",mult>1,(int32_t)mult,height);
+                    LogPrint("pow", "cmp.%d mult.%d ht.%d -> easy target\n",mult>1,(int32_t)mult,height);
                     return(KOMODO_MINDIFF_NBITS & (~3));
                 }
                 {
                     int32_t z;
                     for (z=31; z>=0; z--)
-                        LogPrintf("%02x",((uint8_t *)&bnTarget)[z]);
+                        LogPrint("pow", "%02x",((uint8_t *)&bnTarget)[z]);
                 }
-                LogPrintf(" exp() to the rescue cmp.%d mult.%d for ht.%d\n",mult>1,(int32_t)mult,height);
+                LogPrint("pow", " exp() to the rescue cmp.%d mult.%d for ht.%d\n",mult>1,(int32_t)mult,height);
             }
             if ( 0 && zflags[0] == 0 && zawyflag == 0 && mult <= 1 )
             {
