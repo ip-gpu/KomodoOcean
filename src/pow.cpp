@@ -187,7 +187,7 @@ arith_uint256 RT_CST_RST_outer(int32_t height,uint32_t nTime,arith_uint256 bnTar
                 LogPrintf("%02x",((uint8_t *)&bnTarget)[z]);
         }
         LogPrintf(" ht.%d initial W.%d outerK.%lld %d * %d * %d / %d\n",height,W,(long long)outerK,(nTime-ts[0]),(ts[0]-ts[W]),denominator,numerator);
-    } //else fprintf(stderr,"ht.%d no outer trigger %d >= %d\n",height,(ts[0] - ts[W]),(T * numerator)/denominator);
+    } //else LogPrintf("ht.%d no outer trigger %d >= %d\n",height,(ts[0] - ts[W]),(T * numerator)/denominator);
     return(bnTarget);
 }
 
@@ -367,13 +367,13 @@ unsigned int GetNextWorkRequired(const CBlockIndex* pindexLast, const CBlockHead
         {
             blocktime = pindexFirst->nTime;
             diff = (pblock->nTime - blocktime);
-            //fprintf(stderr,"%d ",diff);
+            //LogPrintf("%d ",diff);
             if ( i < 6 )
             {
                 diff -= (8+i)*ASSETCHAINS_BLOCKTIME;
                 if ( diff > mult )
                 {
-                    //fprintf(stderr,"i.%d diff.%d (%u - %u - %dx)\n",i,(int32_t)diff,pblock->nTime,pindexFirst->nTime,(8+i));
+                    //LogPrintf("i.%d diff.%d (%u - %u - %dx)\n",i,(int32_t)diff,pblock->nTime,pindexFirst->nTime,(8+i));
                     mult = diff;
                 }
             }
@@ -383,7 +383,7 @@ unsigned int GetNextWorkRequired(const CBlockIndex* pindexLast, const CBlockHead
         bnTot += bnTmp;
         pindexFirst = pindexFirst->pprev;
     }
-    //fprintf(stderr,"diffs %d\n",height);
+    //LogPrintf("diffs %d\n",height);
     // Check we have enough blocks
     if (pindexFirst == NULL)
         return nProofOfWorkLimit;
@@ -479,15 +479,15 @@ unsigned int GetNextWorkRequired(const CBlockIndex* pindexLast, const CBlockHead
                 if ( bnTarget < origtarget || bnTarget > easy )
                 {
                     bnTarget = easy;
-                    fprintf(stderr,"cmp.%d mult.%d ht.%d -> easy target\n",mult>1,(int32_t)mult,height);
+                    LogPrintf("cmp.%d mult.%d ht.%d -> easy target\n",mult>1,(int32_t)mult,height);
                     return(KOMODO_MINDIFF_NBITS & (~3));
                 }
                 {
                     int32_t z;
                     for (z=31; z>=0; z--)
-                        fprintf(stderr,"%02x",((uint8_t *)&bnTarget)[z]);
+                        LogPrintf("%02x",((uint8_t *)&bnTarget)[z]);
                 }
-                fprintf(stderr," exp() to the rescue cmp.%d mult.%d for ht.%d\n",mult>1,(int32_t)mult,height);
+                LogPrintf(" exp() to the rescue cmp.%d mult.%d for ht.%d\n",mult>1,(int32_t)mult,height);
             }
             if ( 0 && zflags[0] == 0 && zawyflag == 0 && mult <= 1 )
             {
