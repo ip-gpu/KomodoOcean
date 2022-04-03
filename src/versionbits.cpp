@@ -29,7 +29,7 @@ ThresholdState AbstractThresholdConditionChecker::GetStateFor(const CBlockIndex*
 
     // A block's state is always the same as that of the first of its period, so it is computed based on a pindexPrev whose height equals a multiple of nPeriod - 1.
     if (pindexPrev != nullptr) {
-        pindexPrev = pindexPrev->GetAncestor(pindexPrev->GetHeight() - ((pindexPrev->GetHeight() + 1) % nPeriod));
+        pindexPrev = pindexPrev->GetAncestor(pindexPrev->nHeight - ((pindexPrev->nHeight + 1) % nPeriod));
     }
 
     // Walk backwards in steps of nPeriod to find a pindexPrev whose information is known
@@ -46,7 +46,7 @@ ThresholdState AbstractThresholdConditionChecker::GetStateFor(const CBlockIndex*
             break;
         }
         vToCompute.push_back(pindexPrev);
-        pindexPrev = pindexPrev->GetAncestor(pindexPrev->GetHeight() - nPeriod);
+        pindexPrev = pindexPrev->GetAncestor(pindexPrev->nHeight - nPeriod);
     }
 
     // At this point, cache[pindexPrev] is known
@@ -116,13 +116,13 @@ BIP9Stats AbstractThresholdConditionChecker::GetStateStatisticsFor(const CBlockI
         return stats;
 
     // Find beginning of period
-    const CBlockIndex* pindexEndOfPrevPeriod = pindex->GetAncestor(pindex->GetHeight() - ((pindex->GetHeight() + 1) % stats.period));
-    stats.elapsed = pindex->GetHeight() - pindexEndOfPrevPeriod->GetHeight();
+    const CBlockIndex* pindexEndOfPrevPeriod = pindex->GetAncestor(pindex->nHeight - ((pindex->nHeight + 1) % stats.period));
+    stats.elapsed = pindex->nHeight - pindexEndOfPrevPeriod->nHeight;
 
     // Count from current block to beginning of period
     int count = 0;
     const CBlockIndex* currentIndex = pindex;
-    while (pindexEndOfPrevPeriod->GetHeight() != currentIndex->GetHeight()){
+    while (pindexEndOfPrevPeriod->nHeight != currentIndex->nHeight){
         if (Condition(currentIndex, params))
             count++;
         currentIndex = currentIndex->pprev;
@@ -151,17 +151,17 @@ int AbstractThresholdConditionChecker::GetStateSinceHeightFor(const CBlockIndex*
     // if we are computing for the last block of a period, then pindexPrev points to the second to last block of the period, and
     // if we are computing for the first block of a period, then pindexPrev points to the last block of the previous period.
     // The parent of the genesis block is represented by nullptr.
-    pindexPrev = pindexPrev->GetAncestor(pindexPrev->GetHeight() - ((pindexPrev->GetHeight() + 1) % nPeriod));
+    pindexPrev = pindexPrev->GetAncestor(pindexPrev->nHeight - ((pindexPrev->nHeight + 1) % nPeriod));
 
-    const CBlockIndex* previousPeriodParent = pindexPrev->GetAncestor(pindexPrev->GetHeight() - nPeriod);
+    const CBlockIndex* previousPeriodParent = pindexPrev->GetAncestor(pindexPrev->nHeight - nPeriod);
 
     while (previousPeriodParent != nullptr && GetStateFor(previousPeriodParent, params, cache) == initialState) {
         pindexPrev = previousPeriodParent;
-        previousPeriodParent = pindexPrev->GetAncestor(pindexPrev->GetHeight() - nPeriod);
+        previousPeriodParent = pindexPrev->GetAncestor(pindexPrev->nHeight - nPeriod);
     }
 
     // Adjust the result because right now we point to the parent block.
-    return pindexPrev->GetHeight() + 1;
+    return pindexPrev->nHeight + 1;
 }
 
 namespace
