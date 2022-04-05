@@ -1326,7 +1326,8 @@ void komodo_args(char *argv0)
     {
         KOMODO_MININGTHREADS = GetArg("-genproclimit",-1);
     }
-    if ( (IS_MODE_EXCHANGEWALLET = GetBoolArg("-exchange", false)) )
+    IS_MODE_EXCHANGEWALLET = GetBoolArg("-exchange", false);
+    if ( IS_MODE_EXCHANGEWALLET )
         LogPrintf("IS_MODE_EXCHANGEWALLET mode active\n");
     DONATION_PUBKEY = GetArg("-donation", "");
     NOTARY_PUBKEY = GetArg("-pubkey", "");
