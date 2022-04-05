@@ -5421,14 +5421,14 @@ bool ContextualCheckBlockHeader(const CBlockHeader& block, CValidationState& sta
         {
             if ( pcheckpoint != 0 && nHeight < pcheckpoint->nHeight )
                 return state.DoS(1, error("%s: forked chain older than last checkpoint (height %d) vs %d", __func__, nHeight,pcheckpoint->nHeight));
-            if ( komodo_checkpoint(&notarized_height,nHeight,hash) < 0 )
+            if ( !komodo_checkpoint(&notarized_height,nHeight,hash) )
             {
                 CBlockIndex *heightblock = chainActive[nHeight];
                 if ( heightblock != 0 && heightblock->GetBlockHash() == hash )
-                {
-                    //LogPrintf("got a pre notarization block that matches height.%d\n",(int32_t)nHeight);
                     return true;
-                } else return state.DoS(1, error("%s: forked chain %d older than last notarized (height %d) vs %d", __func__,nHeight, notarized_height));
+                else 
+                    return state.DoS(1, error("%s: forked chain %d older than last notarized (height %d) vs %d", __func__,
+                            nHeight, notarized_height));
             }
         }
     }
