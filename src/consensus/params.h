@@ -122,6 +122,7 @@ struct Params {
     uint256 powLimit;
     uint256 powAlternate;
     boost::optional<uint32_t> nPowAllowMinDifficultyBlocksAfterHeight;
+    boost::optional<uint32_t> nAllowNotariesMineExtraBlockAfterStaleHeight;
     int64_t nPowAveragingWindow;
     int64_t nPowMaxAdjustDown;
     int64_t nPowMaxAdjustUp;
