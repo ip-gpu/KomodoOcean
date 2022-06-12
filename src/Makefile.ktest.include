@@ -18,52 +18,12 @@ komodo_test_SOURCES = \
     test-komodo/test_addrman.cpp \
     test-komodo/test_netbase_tests.cpp \
     test-komodo/test_events.cpp \
-    test-komodo/test_hex.cpp
+    test-komodo/test_hex.cpp \
+    test-komodo/test_haraka_removal.cpp
 
 komodo_test_CPPFLAGS = $(komodod_CPPFLAGS)
 
-# https://www.gnu.org/software/make/manual/html_node/Text-Functions.html
-# https://wiki.trinitydesktop.org/Makefile.am_HOWTO#LDADD
-
 komodo_test_LDADD = -lgtest $(komodod_LDADD)
-
-# komodo_test_LDADD = $(LIBBITCOIN_SERVER) \
-#                     $(LIBBITCOIN_COMMON) \
-#                     $(LIBUNIVALUE) \
-#                     $(LIBBITCOIN_UTIL) \
-#                     $(LIBBITCOIN_CRYPTO) \
-#                     $(LIBVERUS_CRYPTO) \
-#                     $(LIBVERUS_PORTABLE_CRYPTO) \
-#                     $(LIBZCASH) \
-#                     $(LIBSNARK) \
-#                     $(LIBLEVELDB) \
-#                     $(LIBMEMENV) \
-#                     $(LIBSECP256K1) \
-#                     $(LIBCRYPTOCONDITIONS)
-
-# if ENABLE_ZMQ
-# komodo_test_LDADD += $(LIBBITCOIN_ZMQ) $(ZMQ_LIBS)
-# endif
-# if ENABLE_WALLET
-# komodo_test_LDADD += $(LIBBITCOIN_WALLET)
-# endif
-
-# komodo_test_LDADD += \
-#                     $(BOOST_LIBS) \
-#                     $(BDB_LIBS) \
-#                     $(SSL_LIBS) \
-#                     $(CRYPTO_LIBS) \
-#                     $(MINIUPNPC_LIBS) \
-#                     $(EVENT_PTHREADS_LIBS) \
-#                     $(EVENT_LIBS) \
-#                     $(LIBZCASH) \
-#                     $(LIBBITCOIN_CRYPTO) \
-#                     $(LIBVERUS_CRYPTO) \
-#                     $(LIBVERUS_PORTABLE_CRYPTO) \
-#                     $(LIBSNARK) \
-#                     $(LIBZCASH_LIBS) \
-#                     $(LIBSECP256K1) \
-#                     -lgtest
 
 komodo_test_LDFLAGS = $(RELDFLAGS) $(AM_LDFLAGS) $(LIBTOOL_APP_LDFLAGS) -static
 komodo_test_LIBTOOLFLAGS = --tag CXX

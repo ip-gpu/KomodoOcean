@@ -97,7 +97,6 @@ using namespace std;
 extern void ThreadSendAlert();
 extern bool komodo_dailysnapshot(int32_t height);
 extern int32_t KOMODO_LOADINGBLOCKS;
-extern bool VERUS_MINTBLOCKS;
 extern char ASSETCHAINS_SYMBOL[];
 extern int32_t KOMODO_SNAPSHOT_INTERVAL;
 extern void komodo_init(int32_t height);
@@ -225,7 +224,6 @@ void Shutdown()
     /// module was initialized.
     static char shutoffstr[128];
     sprintf(shutoffstr,"%s-shutoff",ASSETCHAINS_SYMBOL);
-    //RenameThread("verus-shutoff");
     RenameThread(shutoffstr);
     mempool.AddTransactionsUpdated(1);
 
@@ -543,7 +541,6 @@ std::string HelpMessage(HelpMessageMode mode)
 
 #ifdef ENABLE_MINING
     strUsage += HelpMessageGroup(_("Mining options:"));
-    strUsage += HelpMessageOpt("-mint", strprintf(_("Mint/stake coins automatically (default: %u)"), 0));
     strUsage += HelpMessageOpt("-gen", strprintf(_("Mine/generate coins (default: %u)"), 0));
     strUsage += HelpMessageOpt("-genproclimit=<n>", strprintf(_("Set the number of threads for coin mining if enabled (-1 = all cores, default: %d)"), 0));
     strUsage += HelpMessageOpt("-equihashsolver=<name>", _("Specify the Equihash solver to be used if enabled (default: \"default\")"));
@@ -610,7 +607,6 @@ std::string HelpMessage(HelpMessageMode mode)
     strUsage += HelpMessageOpt("-ac_timelockgte",  _("Timelocked coinbase minimum amount to be locked"));
     strUsage += HelpMessageOpt("-ac_timelockto",   _("Timelocked coinbase stop height"));
     strUsage += HelpMessageOpt("-ac_txpow", _("Enforce transaction-rate limit, default 0"));
-    strUsage += HelpMessageOpt("-ac_veruspos", _("Use Verus Proof-Of-Stake (-ac_veruspos=50) default 0"));
 
     return strUsage;
 }
@@ -1279,22 +1275,6 @@ bool AppInit2(boost::thread_group& threadGroup, CScheduler& scheduler)
     ECC_Start();
     globalVerifyHandle.reset(new ECCVerifyHandle());
 
-    // set the hash algorithm to use for this chain
-    // Again likely better solution here, than using long IF ELSE. 
-    extern uint32_t ASSETCHAINS_ALGO, ASSETCHAINS_VERUSHASH, ASSETCHAINS_VERUSHASHV1_1;
-    CVerusHash::init();
-    CVerusHashV2::init();
-    if (ASSETCHAINS_ALGO == ASSETCHAINS_VERUSHASH)
-    {
-        // initialize VerusHash
-        CBlockHeader::SetVerusHash();
-    }
-    else if (ASSETCHAINS_ALGO == ASSETCHAINS_VERUSHASHV1_1)
-    {
-        // initialize VerusHashV2
-        CBlockHeader::SetVerusHashV2();
-    }
-
     // Sanity check
     if (!InitSanityCheck())
         return InitError(_("Initialization sanity check failed. Komodo is shutting down."));
@@ -1887,7 +1867,7 @@ bool AppInit2(boost::thread_group& threadGroup, CScheduler& scheduler)
         if (chainActive.Tip() && chainActive.Tip() != pindexRescan)
         {
             uiInterface.InitMessage(_("Rescanning..."));
-            LogPrintf("Rescanning last %i blocks (from block %i)...\n", chainActive.Height() - pindexRescan->GetHeight(), pindexRescan->GetHeight());
+            LogPrintf("Rescanning last %i blocks (from block %i)...\n", chainActive.Height() - pindexRescan->nHeight, pindexRescan->nHeight);
             nStart = GetTimeMillis();
             pwalletMain->ScanForWalletTransactions(pindexRescan, true);
             LogPrintf(" rescan      %15dms\n", GetTimeMillis() - nStart);
@@ -2039,8 +2019,6 @@ bool AppInit2(boost::thread_group& threadGroup, CScheduler& scheduler)
 #ifdef ENABLE_MINING
     // Generate coins in the background
  #ifdef ENABLE_WALLET
-    VERUS_MINTBLOCKS = GetBoolArg("-mint", false);
-
     if (pwalletMain || !GetArg("-mineraddress", "").empty())
         GenerateBitcoins(GetBoolArg("-gen", false), pwalletMain, GetArg("-genproclimit", -1));
  #else
