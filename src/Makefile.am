@@ -24,7 +24,6 @@ LIBBITCOIN_CLI=libbitcoin_cli.a
 LIBBITCOIN_UTIL=libbitcoin_util.a
 LIBBITCOIN_CRYPTO=crypto/libbitcoin_crypto.a
 LIBBITCOINQT=qt/libkomodoqt.a
-LIBVERUS_CRYPTO=crypto/libverus_crypto.a
 if ENABLE_SSE41
 LIBBITCOIN_CRYPTO_SSE41 = crypto/libbitcoin_crypto_sse41.a
 LIBBITCOIN_CRYPTO += $(LIBBITCOIN_CRYPTO_SSE41)
@@ -37,7 +36,6 @@ if ENABLE_SHANI
 LIBBITCOIN_CRYPTO_SHANI = crypto/libbitcoin_crypto_shani.a
 LIBBITCOIN_CRYPTO += $(LIBBITCOIN_CRYPTO_SHANI)
 endif
-LIBVERUS_PORTABLE_CRYPTO=crypto/libverus_portable_crypto.a
 LIBSECP256K1=secp256k1/libsecp256k1.la
 LIBCRYPTOCONDITIONS=cryptoconditions/libcryptoconditions_core.la
 LIBSNARK=snark/libsnark.a
@@ -85,8 +83,6 @@ EXTRA_LIBRARIES += $(LIBCJSON)
 # But to build the less dependent modules first, we manually select their order here:
 EXTRA_LIBRARIES += \
   $(LIBBITCOIN_CRYPTO) \
-  $(LIBVERUS_CRYPTO) \
-  $(LIBVERUS_PORTABLE_CRYPTO) \
   $(LIBBITCOIN_UTIL) \
   $(LIBBITCOIN_COMMON) \
   $(LIBBITCOIN_SERVER) \
@@ -176,9 +172,6 @@ BITCOIN_CORE_H = \
   consensus/validation.h \
   core_io.h \
   core_memusage.h \
-  crypto/haraka.h \
-  crypto/haraka_portable.h \
-  crypto/verus_hash.h \
   deprecation.h \
   fs.h \
   hash.h \
@@ -207,7 +200,6 @@ BITCOIN_CORE_H = \
   prevector.h \
   primitives/block.h \
   primitives/transaction.h \
-  primitives/nonce.h \
   protocol.h \
   pubkey.h \
   random.h \
@@ -313,10 +305,6 @@ libbitcoin_server_a_SOURCES = \
   fs.cpp \
   crosschain.cpp \
   crosschain_authority.cpp \
-  crypto/haraka.h \
-  crypto/haraka_portable.h \
-  crypto/verus_hash.h \
-  crypto/verus_hash.cpp \
   deprecation.cpp \
   httprpc.cpp \
   httpserver.cpp \
@@ -413,11 +401,7 @@ crypto_libbitcoin_crypto_a_SOURCES = \
   crypto/sha256.cpp \
   crypto/sha256.h \
   crypto/sha512.cpp \
-  crypto/sha512.h \
-  crypto/haraka.h \
-  crypto/haraka_portable.h \
-  crypto/verus_hash.h \
-  crypto/verus_hash.cpp
+  crypto/sha512.h
 
 if USE_ASM
 crypto_libbitcoin_crypto_a_SOURCES += crypto/sha256_sse4.cpp
@@ -453,20 +437,6 @@ crypto_libbitcoin_crypto_a_SOURCES += \
 	${EQUIHASH_TROMP_SOURCES}
 endif
 
-# Verus hash specific library - optimized
-crypto_libverus_crypto_a_CPPFLAGS = -O3 -march=x86-64 -msse4 -msse4.1 -msse4.2 -mssse3 -mavx -maes -g -funroll-loops -fomit-frame-pointer -fPIC $(AM_CPPFLAGS)
-crypto_libverus_crypto_a_CXXFLAGS = -O3 -march=x86-64 -msse4 -msse4.1 -msse4.2 -mssse3 -mavx -maes -g -funroll-loops -fomit-frame-pointer -fPIC $(AM_CXXFLAGS)
-crypto_libverus_crypto_a_SOURCES = \
-  crypto/haraka.h \
-  crypto/haraka.c
-
-# Verus hash specific library - portable
-crypto_libverus_portable_crypto_a_CPPFLAGS = -O3 -march=x86-64 -g -funroll-loops -fomit-frame-pointer -fPIC $(AM_CPPFLAGS)
-crypto_libverus_portable_crypto_a_CXXFLAGS = -O3 -march=x86-64 -g -funroll-loops -fomit-frame-pointer -fPIC $(AM_CXXFLAGS)
-crypto_libverus_portable_crypto_a_SOURCES = \
-  crypto/haraka_portable.h \
-  crypto/haraka_portable.c
-
 # common: shared between zcashd and non-server tools
 libbitcoin_common_a_CPPFLAGS = -fPIC $(BITCOIN_INCLUDES)
 libbitcoin_common_a_SOURCES = \
@@ -481,10 +451,6 @@ libbitcoin_common_a_SOURCES = \
   consensus/upgrades.cpp \
   core_read.cpp \
   core_write.cpp \
-  crypto/haraka.h \
-  crypto/haraka_portable.h \
-  crypto/verus_hash.h \
-  crypto/verus_hash.cpp \
   hash.cpp \
   hex.c \
   importcoin.cpp \
@@ -509,7 +475,6 @@ libbitcoin_common_a_SOURCES = \
   metrics.cpp \
   primitives/block.cpp \
   primitives/transaction.cpp \
-  primitives/nonce.cpp \
   protocol.cpp \
   pubkey.cpp \
   scheduler.cpp \
@@ -579,8 +544,6 @@ komodod_LDADD = \
   $(LIBUNIVALUE) \
   $(LIBBITCOIN_UTIL) \
   $(LIBBITCOIN_CRYPTO) \
-  $(LIBVERUS_CRYPTO) \
-  $(LIBVERUS_PORTABLE_CRYPTO) \
   $(LIBZCASH) \
   $(LIBSNARK) \
   $(LIBLEVELDB) \
@@ -609,8 +572,6 @@ komodod_LDADD += \
   $(EVENT_LIBS) \
   $(LIBZCASH) \
   $(LIBBITCOIN_CRYPTO) \
-  $(LIBVERUS_CRYPTO) \
-  $(LIBVERUS_PORTABLE_CRYPTO) \
   $(LIBSNARK) \
   $(LIBZCASH_LIBS)
 
@@ -643,8 +604,6 @@ komodo_cli_LDADD = \
   $(EVENT_LIBS) \
   $(LIBZCASH) \
   $(LIBSNARK) \
-  $(LIBVERUS_CRYPTO) \
-  $(LIBVERUS_PORTABLE_CRYPTO) \
   $(LIBBITCOIN_CRYPTO) \
   $(LIBZCASH_LIBS)
 
@@ -653,8 +612,6 @@ wallet_utility_LDADD = \
 	$(LIBBITCOIN_WALLET) \
 	$(LIBBITCOIN_COMMON) \
 	$(LIBBITCOIN_CRYPTO) \
-  $(LIBVERUS_CRYPTO) \
-  $(LIBVERUS_PORTABLE_CRYPTO) \
 	$(LIBSECP256K1) \
 	$(LIBBITCOIN_UTIL) \
 	$(BOOST_LIBS) \
@@ -684,8 +641,6 @@ komodo_tx_LDADD = \
   $(LIBZCASH) \
   $(LIBSNARK) \
   $(LIBBITCOIN_CRYPTO) \
-  $(LIBVERUS_CRYPTO) \
-  $(LIBVERUS_PORTABLE_CRYPTO) \
   $(LIBZCASH_LIBS) \
   $(LIBCRYPTOCONDITIONS)
 
@@ -733,7 +688,6 @@ libzcashconsensus_la_SOURCES = \
   crypto/sha512.cpp \
   hash.cpp \
   primitives/transaction.cpp \
-  primitives/nonce.cpp \
   pubkey.cpp \
   script/zcashconsensus.cpp \
   script/interpreter.cpp \
@@ -752,7 +706,7 @@ endif
 #
 
 CLEANFILES = $(LIBBITCOIN_COMMON) $(LIBBITCOIN_SERVER) $(LIBBITCOIN_CLI) $(LIBBITCOIN_UTIL) $(LIBBITCOIN_WALLET) $(LIBBITCOIN_ZMQ) $(LIBZCASH)
-CLEANFILES += $(LIBBITCOIN_CRYPTO) $(LIBVERUS_CRYPTO) $(LIBVERUS_PORTABLE_CRYPTO) $(LIBCJSON)
+CLEANFILES += $(LIBBITCOIN_CRYPTO) $(LIBCJSON)
 CLEANFILES += *.gcda *.gcno */*.gcno wallet/*/*.gcno
 DISTCLEANFILES = obj/build.h
 
@@ -768,7 +722,8 @@ clean-local:
 
 .rc.o:
 	@test -f $(WINDRES)
-	$(AM_V_GEN) $(WINDRES) -DWINDRES_PREPROC -i $< -o $@
+	## FIXME: How to get the appropriate modulename_CPPFLAGS in here?
+	$(AM_V_GEN) $(WINDRES) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(CPPFLAGS) -DWINDRES_PREPROC -i $< -o $@
 
 check-symbols: $(bin_PROGRAMS)
 if GLIBC_BACK_COMPAT

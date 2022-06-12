@@ -526,15 +526,15 @@ void CTxMemPool::removeExpired(unsigned int nBlockHeight)
         CTxMemPool::removeExpired. need to test, may be here better to validate against pindexNew->nTime.
         In ConnectBlock we have a condition for each tx like komodo_validate_interest(..., block.nTime), so
         blocks mined with such txes will be valid. Mean, may be chainActive.LastTip()->GetMedianTimePast() + 777
-        is "too earlier" condition. [nBlockHeight should be equal tipindex->GetHeight()+1 here]
+        is "too earlier" condition. [nBlockHeight should be equal tipindex->nHeight+1 here]
         */
 
-        // if (IsExpiredTx(tx, nBlockHeight) || (ASSETCHAINS_SYMBOL[0] == 0 && tipindex != 0 && komodo_validate_interest(tx,tipindex->GetHeight()+1,tipindex->GetMedianTimePast() + 777,0)) < 0)
-        bool fInterestNotValidated = ASSETCHAINS_SYMBOL[0] == 0 && tipindex != 0 && komodo_validate_interest(tx,tipindex->GetHeight()+1,tipindex->GetMedianTimePast() + 777,0) < 0;
+        // if (IsExpiredTx(tx, nBlockHeight) || (ASSETCHAINS_SYMBOL[0] == 0 && tipindex != 0 && komodo_validate_interest(tx,tipindex->nHeight+1,tipindex->GetMedianTimePast() + 777,0)) < 0)
+        bool fInterestNotValidated = ASSETCHAINS_SYMBOL[0] == 0 && tipindex != 0 && komodo_validate_interest(tx,tipindex->nHeight+1,tipindex->GetMedianTimePast() + 777,0) < 0;
         if (IsExpiredTx(tx, nBlockHeight) || fInterestNotValidated)
         {
             if (fInterestNotValidated && tipindex != 0)
-                LogPrintf("Removing interest violate txid.%s nHeight.%d nTime.%u vs locktime.%u\n",tx.GetHash().ToString(),tipindex->GetHeight()+1,tipindex->GetMedianTimePast() + 777,tx.nLockTime);
+                LogPrintf("Removing interest violate txid.%s nHeight.%d nTime.%u vs locktime.%u\n",tx.GetHash().ToString(),tipindex->nHeight+1,tipindex->GetMedianTimePast() + 777,tx.nLockTime);
             transactionsToRemove.push_back(tx);
         }
     }
