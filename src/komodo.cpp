@@ -707,7 +707,7 @@ int32_t komodo_connectblock(bool fJustCheck, CBlockIndex *pindex,CBlock& block)
                         fflush(signedfp);
                     }
                     transaction = i;
-                    LogPrintf("[%s] ht.%d txi.%d signedmask.%llx numvins.%d numvouts.%d <<<<<<<<<<<  notarized\n",ASSETCHAINS_SYMBOL,height,i,(long long)signedmask,numvins,numvouts);
+                    LogPrintf("[%s] ht.%d txi.%d signedmask.%llx numvins.%d numvalid.%d numvouts.%d <<<<<<<<<<<  notarized\n",ASSETCHAINS_SYMBOL,height,i,(long long)signedmask,numvins,numvalid,numvouts);
                 }
                 notarized = 1;
             }
