@@ -272,6 +272,8 @@ void Shutdown()
         pcoinsdbview = NULL;
         delete pblocktree;
         pblocktree = NULL;
+        delete pnotarisations;
+        pnotarisations = nullptr;
     }
 #ifdef ENABLE_WALLET
     if (pwalletMain)
