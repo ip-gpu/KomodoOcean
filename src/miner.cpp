@@ -1318,6 +1318,13 @@ void static BitcoinMiner()
                 LOCK(cs_main);
                 pindexPrev = chainActive.Tip();
             }
+
+            // If we don't have a valid chain tip to work from, wait and try again.
+            if (pindexPrev == nullptr) {
+                MilliSleep(1000);
+                continue;
+            }
+
             if ( Mining_height != pindexPrev->nHeight+1 )
             {
                 Mining_height = pindexPrev->nHeight+1;
