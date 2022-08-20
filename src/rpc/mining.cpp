@@ -63,7 +63,7 @@ int32_t komodo_newStakerActive(int32_t height, uint32_t timestamp);
  */
 int64_t GetNetworkHashPS(int lookup, int height) 
 {
-    CBlockIndex *pb = chainActive.LastTip();
+    CBlockIndex *pb = chainActive.Tip();
 
     if (height >= 0 && height < chainActive.Height())
         pb = chainActive[height];
@@ -270,7 +270,7 @@ UniValue generate(const UniValue& params, bool fHelp, const CPubKey& mypk)
         CBlock *pblock = &pblocktemplate->block;
         {
             LOCK(cs_main);
-            IncrementExtraNonce(pblock, chainActive.LastTip(), nExtraNonce);
+            IncrementExtraNonce(pblock, chainActive.Tip(), nExtraNonce);
         }
 
         // Hash state
@@ -314,7 +314,7 @@ UniValue generate(const UniValue& params, bool fHelp, const CPubKey& mypk)
         }
 endloop:
         CValidationState state;
-        if (!ProcessNewBlock(1,chainActive.LastTip()->nHeight+1,state, NULL, pblock, true, NULL))
+        if (!ProcessNewBlock(1,chainActive.Tip()->nHeight+1,state, NULL, pblock, true, NULL))
             throw JSONRPCError(RPC_INTERNAL_ERROR, "ProcessNewBlock, block not accepted");
         ++nHeight;
         blockHashes.push_back(pblock->GetHash().GetHex());
@@ -668,7 +668,7 @@ UniValue getblocktemplate(const UniValue& params, bool fHelp, const CPubKey& myp
                 return "duplicate-inconclusive";
             }
 
-            CBlockIndex* const pindexPrev = chainActive.LastTip();
+            CBlockIndex* const pindexPrev = chainActive.Tip();
             // TestBlockValidity only supports blocks built on the current Tip
             if (block.hashPrevBlock != pindexPrev->GetBlockHash())
                 return "inconclusive-not-best-prevblk";
@@ -718,7 +718,7 @@ UniValue getblocktemplate(const UniValue& params, bool fHelp, const CPubKey& myp
         else
         {
             // NOTE: Spec does not specify behaviour for non-string longpollid, but this makes testing easier
-            hashWatchedChain = chainActive.LastTip()->GetBlockHash();
+            hashWatchedChain = chainActive.Tip()->GetBlockHash();
             nTransactionsUpdatedLastLP = nTransactionsUpdatedLast;
         }
 
@@ -728,7 +728,7 @@ UniValue getblocktemplate(const UniValue& params, bool fHelp, const CPubKey& myp
             checktxtime = boost::get_system_time() + boost::posix_time::minutes(1);
 
             boost::unique_lock<boost::mutex> lock(csBestBlock);
-            while (chainActive.LastTip()->GetBlockHash() == hashWatchedChain && IsRPCRunning())
+            while (chainActive.Tip()->GetBlockHash() == hashWatchedChain && IsRPCRunning())
             {
                 if (!cvBlockChange.timed_wait(lock, checktxtime))
                 {
@@ -750,7 +750,7 @@ UniValue getblocktemplate(const UniValue& params, bool fHelp, const CPubKey& myp
     static CBlockIndex* pindexPrev;
     static int64_t nStart;
     static CBlockTemplate* pblocktemplate;
-    if (pindexPrev != chainActive.LastTip() ||
+    if (pindexPrev != chainActive.Tip() ||
         (mempool.GetTransactionsUpdated() != nTransactionsUpdatedLast && GetTime() - nStart > 5))
     {
         // Clear pindexPrev so future calls make a new block, despite any failures from here on
@@ -758,7 +758,7 @@ UniValue getblocktemplate(const UniValue& params, bool fHelp, const CPubKey& myp
 
         // Store the pindexBest used before CreateNewBlockWithKey, to avoid races
         nTransactionsUpdatedLast = mempool.GetTransactionsUpdated();
-        CBlockIndex* pindexPrevNew = chainActive.LastTip();
+        CBlockIndex* pindexPrevNew = chainActive.Tip();
         nStart = GetTime();
 
         // Create new block
@@ -825,7 +825,7 @@ UniValue getblocktemplate(const UniValue& params, bool fHelp, const CPubKey& myp
                 // Correct this if GetBlockTemplate changes the order
                 entry.push_back(Pair("foundersreward", (int64_t)tx.vout[1].nValue));
             }
-            CAmount nReward = GetBlockSubsidy(chainActive.LastTip()->nHeight+1, Params().GetConsensus());
+            CAmount nReward = GetBlockSubsidy(chainActive.Tip()->nHeight+1, Params().GetConsensus());
             entry.push_back(Pair("coinbasevalue", nReward));
             entry.push_back(Pair("required", true));
             txCoinbase = entry;
@@ -859,7 +859,7 @@ UniValue getblocktemplate(const UniValue& params, bool fHelp, const CPubKey& myp
       //  result.push_back(Pair("coinbaseaux", aux));
       //  result.push_back(Pair("coinbasevalue", (int64_t)pblock->vtx[0].vout[0].nValue));
     //}
-    result.push_back(Pair("longpollid", chainActive.LastTip()->GetBlockHash().GetHex() + i64tostr(nTransactionsUpdatedLast)));
+    result.push_back(Pair("longpollid", chainActive.Tip()->GetBlockHash().GetHex() + i64tostr(nTransactionsUpdatedLast)));
     if ( ASSETCHAINS_STAKED != 0 )
     {
         arith_uint256 POWtarget; int32_t PoSperc;
@@ -877,7 +877,7 @@ UniValue getblocktemplate(const UniValue& params, bool fHelp, const CPubKey& myp
     result.push_back(Pair("mutable", aMutable));
     result.push_back(Pair("noncerange", "00000000ffffffff"));
     result.push_back(Pair("sigoplimit", (int64_t)MAX_BLOCK_SIGOPS));
-    result.push_back(Pair("sizelimit", (int64_t)MAX_BLOCK_SIZE(chainActive.LastTip()->nHeight+1)));
+    result.push_back(Pair("sizelimit", (int64_t)MAX_BLOCK_SIZE(chainActive.Tip()->nHeight+1)));
     result.push_back(Pair("curtime", pblock->GetBlockTime()));
     result.push_back(Pair("bits", strprintf("%08x", pblock->nBits)));
     result.push_back(Pair("height", (int64_t)(pindexPrev->nHeight+1)));
@@ -959,8 +959,7 @@ UniValue submitblock(const UniValue& params, bool fHelp, const CPubKey& mypk)
     CValidationState state;
     submitblock_StateCatcher sc(block.GetHash());
     RegisterValidationInterface(&sc);
-    //LogPrintf("submitblock, height=%d, coinbase sequence: %d, scriptSig: %s\n", chainActive.LastTip()->nHeight+1, block.vtx[0].vin[0].nSequence, block.vtx[0].vin[0].scriptSig.ToString().c_str());
-    bool fAccepted = ProcessNewBlock(1,chainActive.LastTip()->nHeight+1,state, NULL, &block, true, NULL);
+    bool fAccepted = ProcessNewBlock(1,chainActive.Tip()->nHeight+1,state, NULL, &block, true, NULL);
     UnregisterValidationInterface(&sc);
     if (fBlockPresent)
     {

@@ -520,12 +520,12 @@ void CTxMemPool::removeExpired(unsigned int nBlockHeight)
     for (indexed_transaction_set::const_iterator it = mapTx.begin(); it != mapTx.end(); it++)
     {
         const CTransaction& tx = it->GetTx();
-        tipindex = chainActive.LastTip();
+        tipindex = chainActive.Tip();
 
-        /* cmptime = chainActive.LastTip()->GetMedianTimePast() + 777 - here for interest validation, inside
+        /* cmptime = chainActive.Tip()->GetMedianTimePast() + 777 - here for interest validation, inside
         CTxMemPool::removeExpired. need to test, may be here better to validate against pindexNew->nTime.
         In ConnectBlock we have a condition for each tx like komodo_validate_interest(..., block.nTime), so
-        blocks mined with such txes will be valid. Mean, may be chainActive.LastTip()->GetMedianTimePast() + 777
+        blocks mined with such txes will be valid. Mean, may be chainActive.Tip()->GetMedianTimePast() + 777
         is "too earlier" condition. [nBlockHeight should be equal tipindex->nHeight+1 here]
         */
 
