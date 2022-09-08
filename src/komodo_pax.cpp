@@ -13,12 +13,12 @@
  *                                                                            *
  ******************************************************************************/
 #include "komodo_pax.h"
-#include "komodo_extern_globals.h"
+#include "komodo_globals.h"
 #include "komodo_utils.h" // iguana_rwnum
-//#include "komodo.h" // KOMODO_PAXMAX
+#include "komodo.h" // KOMODO_PAXMAX
 
-#define KOMODO_PAXMAX (10000 * COIN)
-uint64_t komodo_seed(int32_t height); // komodo_bitcoind.h
+uint32_t *PVALS;
+int32_t NUM_PRICES;
 
 uint64_t M1SUPPLY[] = { 3317900000000, 6991604000000, 667780000000000, 1616854000000, 331000000000, 861909000000, 584629000000, 46530000000, // major currencies
     45434000000000, 16827000000000, 3473357229000, 306435000000, 27139000000000, 2150641000000, 347724099000, 1469583000000, 749543000000, 1826110000000, 2400434000000, 1123925000000, 3125276000000, 13975000000000, 317657000000, 759706000000000, 354902000000, 2797061000000, 162189000000, 163745000000, 1712000000000, 39093000000, 1135490000000000, 80317000000,
@@ -30,7 +30,34 @@ uint32_t MINDENOMS[] = { MIND, MIND, 100*MIND, MIND, MIND, MIND, MIND, MIND, // 
 10*MIND,
 };
 
-int32_t Peggy_inds[539] = {289, 404, 50, 490, 59, 208, 87, 508, 366, 288, 13, 38, 159, 440, 120, 480, 361, 104, 534, 195, 300, 362, 489, 108, 143, 220, 131, 244, 133, 473, 315, 439, 210, 456, 219, 352, 153, 444, 397, 491, 286, 479, 519, 384, 126, 369, 155, 427, 373, 360, 135, 297, 256, 506, 322, 425, 501, 251, 75, 18, 420, 537, 443, 438, 407, 145, 173, 78, 340, 240, 422, 160, 329, 32, 127, 128, 415, 495, 372, 522, 60, 238, 129, 364, 471, 140, 171, 215, 378, 292, 432, 526, 252, 389, 459, 350, 233, 408, 433, 51, 423, 19, 62, 115, 211, 22, 247, 197, 530, 7, 492, 5, 53, 318, 313, 283, 169, 464, 224, 282, 514, 385, 228, 175, 494, 237, 446, 105, 150, 338, 346, 510, 6, 348, 89, 63, 536, 442, 414, 209, 216, 227, 380, 72, 319, 259, 305, 334, 236, 103, 400, 176, 267, 355, 429, 134, 257, 527, 111, 287, 386, 15, 392, 535, 405, 23, 447, 399, 291, 112, 74, 36, 435, 434, 330, 520, 335, 201, 478, 17, 162, 483, 33, 130, 436, 395, 93, 298, 498, 511, 66, 487, 218, 65, 309, 419, 48, 214, 377, 409, 462, 139, 349, 4, 513, 497, 394, 170, 307, 241, 185, 454, 29, 367, 465, 194, 398, 301, 229, 212, 477, 303, 39, 524, 451, 116, 532, 30, 344, 85, 186, 202, 517, 531, 515, 230, 331, 466, 147, 426, 234, 304, 64, 100, 416, 336, 199, 383, 200, 166, 258, 95, 188, 246, 136, 90, 68, 45, 312, 354, 184, 314, 518, 326, 401, 269, 217, 512, 81, 88, 272, 14, 413, 328, 393, 198, 226, 381, 161, 474, 353, 337, 294, 295, 302, 505, 137, 207, 249, 46, 98, 27, 458, 482, 262, 253, 71, 25, 0, 40, 525, 122, 341, 107, 80, 165, 243, 168, 250, 375, 151, 503, 124, 52, 343, 371, 206, 178, 528, 232, 424, 163, 273, 191, 149, 493, 177, 144, 193, 388, 1, 412, 265, 457, 255, 475, 223, 41, 430, 76, 102, 132, 96, 97, 316, 472, 213, 263, 3, 317, 324, 274, 396, 486, 254, 205, 285, 101, 21, 279, 58, 467, 271, 92, 538, 516, 235, 332, 117, 500, 529, 113, 445, 390, 358, 79, 34, 488, 245, 83, 509, 203, 476, 496, 347, 280, 12, 84, 485, 323, 452, 10, 146, 391, 293, 86, 94, 523, 299, 91, 164, 363, 402, 110, 321, 181, 138, 192, 469, 351, 276, 308, 277, 428, 182, 260, 55, 152, 157, 382, 121, 507, 225, 61, 431, 31, 106, 327, 154, 16, 49, 499, 73, 70, 449, 460, 187, 24, 248, 311, 275, 158, 387, 125, 67, 284, 35, 463, 190, 179, 266, 376, 221, 42, 26, 290, 357, 268, 43, 167, 99, 374, 242, 156, 239, 403, 339, 183, 320, 180, 306, 379, 441, 20, 481, 141, 77, 484, 69, 410, 502, 172, 417, 118, 461, 261, 47, 333, 450, 296, 453, 368, 359, 437, 421, 264, 504, 281, 270, 114, 278, 56, 406, 448, 411, 521, 418, 470, 123, 455, 148, 356, 468, 109, 204, 533, 365, 8, 345, 174, 370, 28, 57, 11, 2, 231, 310, 196, 119, 82, 325, 44, 342, 37, 189, 142, 222, 9, 54, };
+int32_t Peggy_inds[539] = {289, 404, 50, 490, 59, 208, 87, 508, 366, 288, 13, 38, 159, 440, 120, 480, 
+        361, 104, 534, 195, 300, 362, 489, 108, 143, 220, 131, 244, 133, 473, 315, 439, 210, 456, 219, 
+        352, 153, 444, 397, 491, 286, 479, 519, 384, 126, 369, 155, 427, 373, 360, 135, 297, 256, 506, 
+        322, 425, 501, 251, 75, 18, 420, 537, 443, 438, 407, 145, 173, 78, 340, 240, 422, 160, 329, 32, 
+        127, 128, 415, 495, 372, 522, 60, 238, 129, 364, 471, 140, 171, 215, 378, 292, 432, 526, 252, 
+        389, 459, 350, 233, 408, 433, 51, 423, 19, 62, 115, 211, 22, 247, 197, 530, 7, 492, 5, 53, 318, 
+        313, 283, 169, 464, 224, 282, 514, 385, 228, 175, 494, 237, 446, 105, 150, 338, 346, 510, 6, 
+        348, 89, 63, 536, 442, 414, 209, 216, 227, 380, 72, 319, 259, 305, 334, 236, 103, 400, 176, 
+        267, 355, 429, 134, 257, 527, 111, 287, 386, 15, 392, 535, 405, 23, 447, 399, 291, 112, 74, 36, 
+        435, 434, 330, 520, 335, 201, 478, 17, 162, 483, 33, 130, 436, 395, 93, 298, 498, 511, 66, 487, 
+        218, 65, 309, 419, 48, 214, 377, 409, 462, 139, 349, 4, 513, 497, 394, 170, 307, 241, 185, 454, 
+        29, 367, 465, 194, 398, 301, 229, 212, 477, 303, 39, 524, 451, 116, 532, 30, 344, 85, 186, 202, 
+        517, 531, 515, 230, 331, 466, 147, 426, 234, 304, 64, 100, 416, 336, 199, 383, 200, 166, 258, 
+        95, 188, 246, 136, 90, 68, 45, 312, 354, 184, 314, 518, 326, 401, 269, 217, 512, 81, 88, 272, 
+        14, 413, 328, 393, 198, 226, 381, 161, 474, 353, 337, 294, 295, 302, 505, 137, 207, 249, 46, 
+        98, 27, 458, 482, 262, 253, 71, 25, 0, 40, 525, 122, 341, 107, 80, 165, 243, 168, 250, 375, 
+        151, 503, 124, 52, 343, 371, 206, 178, 528, 232, 424, 163, 273, 191, 149, 493, 177, 144, 193, 
+        388, 1, 412, 265, 457, 255, 475, 223, 41, 430, 76, 102, 132, 96, 97, 316, 472, 213, 263, 3, 
+        317, 324, 274, 396, 486, 254, 205, 285, 101, 21, 279, 58, 467, 271, 92, 538, 516, 235, 332, 
+        117, 500, 529, 113, 445, 390, 358, 79, 34, 488, 245, 83, 509, 203, 476, 496, 347, 280, 12, 84, 
+        485, 323, 452, 10, 146, 391, 293, 86, 94, 523, 299, 91, 164, 363, 402, 110, 321, 181, 138, 192,
+        469, 351, 276, 308, 277, 428, 182, 260, 55, 152, 157, 382, 121, 507, 225, 61, 431, 31, 106, 
+        327, 154, 16, 49, 499, 73, 70, 449, 460, 187, 24, 248, 311, 275, 158, 387, 125, 67, 284, 35, 
+        463, 190, 179, 266, 376, 221, 42, 26, 290, 357, 268, 43, 167, 99, 374, 242, 156, 239, 403, 339, 
+        183, 320, 180, 306, 379, 441, 20, 481, 141, 77, 484, 69, 410, 502, 172, 417, 118, 461, 261, 47,
+        333, 450, 296, 453, 368, 359, 437, 421, 264, 504, 281, 270, 114, 278, 56, 406, 448, 411, 521, 
+        418, 470, 123, 455, 148, 356, 468, 109, 204, 533, 365, 8, 345, 174, 370, 28, 57, 11, 2, 231, 
+        310, 196, 119, 82, 325, 44, 342, 37, 189, 142, 222, 9, 54, };
 
 uint64_t peggy_smooth_coeffs[sizeof(Peggy_inds)/sizeof(*Peggy_inds)] =	// numprimes.13
 {
@@ -248,18 +275,6 @@ int32_t komodo_pax_opreturn(int32_t height,uint8_t *opret,int32_t maxsize)
     return(n);
 }
 
-/*uint32_t PAX_val32(double val)
- {
- uint32_t val32 = 0; struct price_resolution price;
- if ( (price.Pval= val*1000000000) != 0 )
- {
- if ( price.Pval > 0xffffffff )
- LogPrintf("Pval overflow error %lld\n",(long long)price.Pval);
- else val32 = (uint32_t)price.Pval;
- }
- return(val32);
- }*/
-
 int32_t PAX_pubkey(int32_t rwflag,uint8_t *pubkey33,uint8_t *addrtypep,uint8_t rmd160[20],char fiat[4],uint8_t *shortflagp,int64_t *fiatoshisp)
 {
     if ( rwflag != 0 )
@@ -312,14 +327,11 @@ void komodo_pvals(int32_t height,uint32_t *pvals,uint8_t numpvals)
             KMDBTC = ((double)kmdbtc / (1000000000. * 1000.));
             BTCUSD = PAX_BTCUSD(height,btcusd);
             CNYUSD = ((double)cnyusd / 1000000000.);
-            portable_mutex_lock(&komodo_mutex);
+            std::lock_guard<std::mutex> lock(komodo_mutex);
             PVALS = (uint32_t *)realloc(PVALS,(NUM_PRICES+1) * sizeof(*PVALS) * 36);
             PVALS[36 * NUM_PRICES] = height;
             memcpy(&PVALS[36 * NUM_PRICES + 1],pvals,sizeof(*pvals) * 35);
             NUM_PRICES++;
-            portable_mutex_unlock(&komodo_mutex);
-            if ( 0 )
-                LogPrintf("OP_RETURN.%d KMD %.8f BTC %.6f CNY %.6f NUM_PRICES.%d (%llu %llu %llu)\n",height,KMDBTC,BTCUSD,CNYUSD,NUM_PRICES,(long long)kmdbtc,(long long)btcusd,(long long)cnyusd);
         }
     }
 }
@@ -467,7 +479,6 @@ uint64_t _komodo_paxprice(uint64_t *kmdbtcp,uint64_t *btcusdp,int32_t height,cha
         height -= 10;
     if ( (baseid= komodo_baseid(base)) >= 0 && (relid= komodo_baseid(rel)) >= 0 )
     {
-        //portable_mutex_lock(&komodo_mutex);
         for (i=NUM_PRICES-1; i>=0; i--)
         {
             ptr = &PVALS[36 * i];
@@ -479,13 +490,11 @@ uint64_t _komodo_paxprice(uint64_t *kmdbtcp,uint64_t *btcusdp,int32_t height,cha
                     *kmdbtcp = pvals[MAX_CURRENCIES] / 539;
                     *btcusdp = pvals[MAX_CURRENCIES + 1] / 539;
                 }
-                //portable_mutex_unlock(&komodo_mutex);
                 if ( kmdbtc != 0 && btcusd != 0 )
                     return(komodo_paxcalc(height,pvals,baseid,relid,basevolume,kmdbtc,btcusd));
                 else return(0);
             }
         }
-        //portable_mutex_unlock(&komodo_mutex);
     } //else LogPrintf("paxprice invalid base.%s %d, rel.%s %d\n",base,baseid,rel,relid);
     return(0);
 }
@@ -584,26 +593,10 @@ uint64_t komodo_paxpriceB(uint64_t seed,int32_t height,char *base,char *rel,uint
     } else return(_komodo_paxpriceB(seed,height,base,rel,basevolume));
 }
 
-/*uint64_t komodo_paxpriceB(uint64_t seed,int32_t height,char *base,char *rel,uint64_t basevolume)
-{
-    uint64_t baseusd,basekmd,usdkmd; int32_t baseid = komodo_baseid(base);
-    //if ( strcmp(rel,"KMD") != 0 || baseid < 0 || MINDENOMS[baseid] == MINDENOMS[USD] )
-    //    return(_komodo_paxpriceB(seed,height,base,rel,basevolume));
-    //else
-    {
-        baseusd = _komodo_paxpriceB(seed,height,base,(char *)"USD",SATOSHIDEN);
-        usdkmd = _komodo_paxpriceB(seed,height,(char *)"USD",(char *)"KMD",SATOSHIDEN);
-        basekmd = (komodo_paxvol(basevolume,baseusd) * usdkmd) / 10000000;
-        if ( strcmp("KMD",base) == 0 )
-            LogPrintf("baseusd.%llu usdkmd.%llu %llu\n",(long long)baseusd,(long long)usdkmd,(long long)basekmd);
-        return(basekmd);
-    }
-}*/
-
 uint64_t komodo_paxprice(uint64_t *seedp,int32_t height,char *base,char *rel,uint64_t basevolume)
 {
     int32_t i,nonz=0; int64_t diff; uint64_t price,seed,sum = 0;
-    if ( ASSETCHAINS_SYMBOL[0] == 0 && chainActive.Tip() != 0 && height > chainActive.Tip()->nHeight )
+    if ( chainName.isKMD() && chainActive.Tip() != 0 && height > chainActive.Tip()->nHeight )
     {
         if ( height < 100000000 )
         {
@@ -614,69 +607,51 @@ uint64_t komodo_paxprice(uint64_t *seedp,int32_t height,char *base,char *rel,uin
         return(0);
     }
     *seedp = komodo_seed(height);
-    portable_mutex_lock(&komodo_mutex);
-    for (i=0; i<17; i++)
     {
-        if ( (price= komodo_paxpriceB(*seedp,height-i,base,rel,basevolume)) != 0 )
+        std::lock_guard<std::mutex> lock(komodo_mutex);
+        for (i=0; i<17; i++)
         {
-            sum += price;
-            nonz++;
-            if ( 0 && i == 1 && nonz == 2 )
+            if ( (price= komodo_paxpriceB(*seedp,height-i,base,rel,basevolume)) != 0 )
             {
-                diff = (((int64_t)price - (sum >> 1)) * 10000);
-                if ( diff < 0 )
-                    diff = -diff;
-                diff /= price;
-                LogPrintf("(%llu %llu %lld).%lld ",(long long)price,(long long)(sum>>1),(long long)(((int64_t)price - (sum >> 1)) * 10000),(long long)diff);
-                if ( diff < 33 )
-                    break;
+                sum += price;
+                nonz++;
+                if ( 0 && i == 1 && nonz == 2 )
+                {
+                    diff = (((int64_t)price - (sum >> 1)) * 10000);
+                    if ( diff < 0 )
+                        diff = -diff;
+                    diff /= price;
+                    LogPrintf("(%llu %llu %lld).%lld ",(long long)price,(long long)(sum>>1),(long long)(((int64_t)price - (sum >> 1)) * 10000),(long long)diff);
+                    if ( diff < 33 )
+                        break;
+                }
+                else if ( 0 && i == 3 && nonz == 4 )
+                {
+                    diff = (((int64_t)price - (sum >> 2)) * 10000);
+                    if ( diff < 0 )
+                        diff = -diff;
+                    diff /= price;
+                    LogPrintf("(%llu %llu %lld).%lld ",(long long)price,(long long)(sum>>2),(long long) (((int64_t)price - (sum >> 2)) * 10000),(long long)diff);
+                    if ( diff < 20 )
+                        break;
+                }
             }
-            else if ( 0 && i == 3 && nonz == 4 )
-            {
-                diff = (((int64_t)price - (sum >> 2)) * 10000);
-                if ( diff < 0 )
-                    diff = -diff;
-                diff /= price;
-                LogPrintf("(%llu %llu %lld).%lld ",(long long)price,(long long)(sum>>2),(long long) (((int64_t)price - (sum >> 2)) * 10000),(long long)diff);
-                if ( diff < 20 )
-                    break;
-            }
+            if ( height < 165000 || height > 236000 )
+                break;
         }
-        if ( height < 165000 || height > 236000 )
-            break;
     }
-    portable_mutex_unlock(&komodo_mutex);
     if ( nonz != 0 )
         sum /= nonz;
     //LogPrintf("-> %lld %s/%s i.%d ht.%d\n",(long long)sum,base,rel,i,height);
     return(sum);
 }
 
-int32_t komodo_paxprices(int32_t *heights,uint64_t *prices,int32_t max,char *base,char *rel)
-{
-    int32_t baseid=-1,relid=-1,i,num = 0; uint32_t *ptr;
-    if ( (baseid= komodo_baseid(base)) >= 0 && (relid= komodo_baseid(rel)) >= 0 )
-    {
-        for (i=NUM_PRICES-1; i>=0; i--)
-        {
-            ptr = &PVALS[36 * i];
-            heights[num] = *ptr;
-            prices[num] = komodo_paxcalc(*ptr,&ptr[1],baseid,relid,COIN,0,0);
-            num++;
-            if ( num >= max )
-                return(num);
-        }
-    }
-    return(num);
-}
-
-void komodo_stateupdate(int32_t height,uint8_t notarypubs[][33],uint8_t numnotaries,uint8_t notaryid,uint256 txhash,uint64_t voutmask,uint8_t numvouts,uint32_t *pvals,uint8_t numpvals,int32_t KMDheight,uint32_t KMDtimestamp,uint64_t opretvalue,uint8_t *opretbuf,uint16_t opretlen,uint16_t vout,uint256 MoM,int32_t MoMdepth); // komodo.h
 void komodo_paxpricefeed(int32_t height,uint8_t *pricefeed,int32_t opretlen)
 {
     double KMDBTC,BTCUSD,CNYUSD; uint32_t numpvals,timestamp,pvals[128]; uint256 zero;
     numpvals = dpow_readprices(height,pricefeed,&timestamp,&KMDBTC,&BTCUSD,&CNYUSD,pvals);
     memset(&zero,0,sizeof(zero));
-    komodo_stateupdate(height,0,0,0,zero,0,0,pvals,numpvals,0,0,0,0,0,0,zero,0);
+    komodo_stateupdate(height,0,0,0,zero,pvals,numpvals,0,0,0,0,0,0,zero,0);
     if ( 0 )
     {
         int32_t i;
@@ -686,14 +661,14 @@ void komodo_paxpricefeed(int32_t height,uint8_t *pricefeed,int32_t opretlen)
     }
 }
 
-uint64_t PAX_fiatdest(uint64_t *seedp,int32_t tokomodo,char *destaddr,uint8_t pubkey33[33],char *coinaddr,int32_t height,char *origbase,int64_t fiatoshis)
+uint64_t PAX_fiatdest(uint64_t *seedp,int32_t tokomodo,char *destaddr,uint8_t pubkey33[33],const char *coinaddr,int32_t height,const char *origbase,int64_t fiatoshis)
 {
     uint8_t shortflag = 0; char base[4]; int32_t i,baseid; uint8_t addrtype,rmd160[20]; int64_t komodoshis = 0;
     *seedp = komodo_seed(height);
     if ( (baseid= komodo_baseid(origbase)) < 0 || baseid == MAX_CURRENCIES )
     {
         if ( 0 && origbase[0] != 0 )
-            LogPrintf("[%s] PAX_fiatdest illegal base.(%s)\n",ASSETCHAINS_SYMBOL,origbase);
+            LogPrintf("[%s] PAX_fiatdest illegal base.(%s)\n",chainName.symbol().c_str(),origbase);
         return(0);
     }
     for (i=0; i<3; i++)
@@ -702,7 +677,6 @@ uint64_t PAX_fiatdest(uint64_t *seedp,int32_t tokomodo,char *destaddr,uint8_t pu
     if ( fiatoshis < 0 )
         shortflag = 1, fiatoshis = -fiatoshis;
     komodoshis = komodo_paxprice(seedp,height,base,(char *)"KMD",(uint64_t)fiatoshis);
-    //LogPrintf("PAX_fiatdest ht.%d price %s %.8f -> KMD %.8f seed.%llx\n",height,base,(double)fiatoshis/COIN,(double)komodoshis/COIN,(long long)*seedp);
     if ( bitcoin_addr2rmd160(&addrtype,rmd160,coinaddr) == 20 )
     {
         PAX_pubkey(1,pubkey33,&addrtype,rmd160,base,&shortflag,tokomodo != 0 ? &komodoshis : &fiatoshis);

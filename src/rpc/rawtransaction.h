@@ -1,5 +1,6 @@
+#pragma once
 /******************************************************************************
- * Copyright © 2014-2019 The SuperNET Developers.                             *
+ * Copyright © 2021 Komodo Core Developers.                                   *
  *                                                                            *
  * See the AUTHORS, DEVELOPER-AGREEMENT and LICENSE files at                  *
  * the top-level directory of this distribution for the individual copyright  *
@@ -12,20 +13,7 @@
  * Removal or modification of this copyright notice is prohibited.            *
  *                                                                            *
  ******************************************************************************/
-#pragma once
-#include "komodo_defs.h"
-#include "komodo_structs.h"
 
-void komodo_eventadd_notarized(komodo_state *sp,char *symbol,int32_t height, komodo::event_notarized& ntz);
-
-void komodo_eventadd_pubkeys(komodo_state *sp,char *symbol,int32_t height, komodo::event_pubkeys& pk);
-
-void komodo_eventadd_pricefeed(komodo_state *sp,char *symbol,int32_t height, komodo::event_pricefeed& pf);
-
-void komodo_eventadd_opreturn(komodo_state *sp,char *symbol,int32_t height, komodo::event_opreturn& opret);
-
-void komodo_eventadd_kmdheight(komodo_state *sp,char *symbol,int32_t height, komodo::event_kmdheight& kmd_ht);
-
-void komodo_event_rewind(komodo_state *sp,char *symbol,int32_t height);
-
-void komodo_setkmdheight(komodo_state *sp,int32_t kmdheight,uint32_t timestamp);
+UniValue TxJoinSplitToJSON(const CTransaction& tx);
+void TxToJSON(const CTransaction& tx, const uint256 hashBlock, UniValue& entry);
+void ScriptPubKeyToJSON(const CScript& scriptPubKey, UniValue& out, bool fIncludeHex);

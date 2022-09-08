@@ -39,6 +39,10 @@
 #include "zcash/IncrementalMerkleTree.hpp"
 #include "sodium.h"
 #include "miner.h"
+#include "komodo_notary.h"
+#include "komodo_bitcoind.h"
+#include "rpc/rawtransaction.h"
+#include "komodo_bitcoind.h"
 
 #include <stdint.h>
 
@@ -51,15 +55,6 @@
 #include "paymentdisclosuredb.h"
 
 using namespace libzcash;
-
-extern char ASSETCHAINS_SYMBOL[65];
-
-int32_t komodo_dpowconfs(int32_t height,int32_t numconfs);
-int32_t komodo_blockheight(uint256 hash);
-int tx_height( const uint256 &hash );
-bool komodo_hardfork_active(uint32_t time);
-extern UniValue signrawtransaction(const UniValue& params, bool fHelp, const CPubKey& mypk);
-extern UniValue sendrawtransaction(const UniValue& params, bool fHelp, const CPubKey& mypk);
 
 int find_output(UniValue obj, int n) {
     UniValue outputMapValue = find_value(obj, "outputmap");
@@ -374,7 +369,7 @@ bool AsyncRPCOperation_sendmany::main_impl() {
             }
             // for Komodo, set lock time to accure interest, for other chains, set
             // locktime to spend time locked coinbases
-            if (ASSETCHAINS_SYMBOL[0] == 0)
+            if (chainName.isKMD())
             {
                 //if ((uint32_t)chainActive.Tip()->nTime < ASSETCHAINS_STAKED_HF_TIMESTAMP)
                 if ( !komodo_hardfork_active((uint32_t)chainActive.Tip()->nTime) )
@@ -391,7 +386,7 @@ bool AsyncRPCOperation_sendmany::main_impl() {
                 CTxIn in(COutPoint(txid, vout));
                 rawTx.vin.push_back(in);
             }
-            if (ASSETCHAINS_SYMBOL[0] == 0)
+            if (chainName.isKMD())
             {
                 //if ((uint32_t)chainActive.Tip()->nTime < ASSETCHAINS_STAKED_HF_TIMESTAMP)
                 if ( !komodo_hardfork_active((uint32_t)chainActive.Tip()->nTime) )

@@ -35,7 +35,11 @@
 #include "httprpc.h"
 #include "key.h"
 #include "notarisationdb.h"
-//#include "komodo_notary.h"
+#include "komodo_globals.h"
+#include "komodo_notary.h"
+#include "komodo_gateway.h"
+#include "main.h"
+
 #ifdef ENABLE_MINING
 #include "key_io.h"
 #endif
@@ -56,6 +60,7 @@
 #ifdef ENABLE_WALLET
 #include "wallet/wallet.h"
 #include "wallet/walletdb.h"
+
 #endif
 #include <stdint.h>
 #include <stdio.h>
@@ -94,14 +99,18 @@
 using namespace std;
 
 #include "komodo_defs.h"
+#include "komodo_extern_globals.h"
+#include "assetchain.h"
+
+#include "komodo_gateway.h"
+#include "rpc/net.h"
 extern void ThreadSendAlert();
-extern bool komodo_dailysnapshot(int32_t height);
-extern int32_t KOMODO_LOADINGBLOCKS;
-extern char ASSETCHAINS_SYMBOL[];
-extern int32_t KOMODO_SNAPSHOT_INTERVAL;
-extern void komodo_init(int32_t height);
+//extern bool komodo_dailysnapshot(int32_t height);  //todo remove
+//extern int32_t KOMODO_SNAPSHOT_INTERVAL;
 
 ZCJoinSplit* pzcashParams = NULL;
+
+assetchain chainName;
 
 #ifdef ENABLE_WALLET
 CWallet* pwalletMain = NULL;
@@ -271,7 +280,7 @@ void Shutdown()
         delete pcoinsdbview;
         pcoinsdbview = NULL;
         delete pblocktree;
-        pblocktree = NULL;
+        pblocktree = nullptr;
         delete pnotarisations;
         pnotarisations = nullptr;
     }
@@ -707,7 +716,7 @@ void ThreadImport(std::vector<boost::filesystem::path> vImportFiles)
         LogPrintf("Reindexing finished\n");
         // To avoid ending up in a situation without genesis block, re-try initializing (no-op if reindexing worked):
         InitBlockIndex();
-        KOMODO_LOADINGBLOCKS = 0;
+        KOMODO_LOADINGBLOCKS = false;
     }
 
     // hardcoded $DATADIR/bootstrap.dat
@@ -861,11 +870,15 @@ bool AppInitServers(boost::thread_group& threadGroup)
     return true;
 }
 
-/** Initialize bitcoin.
- *  @pre Parameters should be parsed and config file should be read.
- */
-extern int32_t KOMODO_REWIND;
+//extern int32_t KOMODO_REWIND;
 
+/***
+ * Initialize everything and fire up the services
+ * @pre Parameters should be parsed and config file should be read
+ * @param threadGroup
+ * @param scheduler
+ * @returns true on success
+ */
 bool AppInit2(boost::thread_group& threadGroup, CScheduler& scheduler)
 {
     // ********************************************************* Step 1: setup
@@ -1374,7 +1387,7 @@ bool AppInit2(boost::thread_group& threadGroup, CScheduler& scheduler)
             return InitError(_("Unable to start HTTP server. See debug log for details."));
     }
 
-    int64_t nStart;
+    int64_t nStart = GetTimeMillis();
 
     // ********************************************************* Step 5: verify wallet database integrity
 #ifdef ENABLE_WALLET
@@ -1551,7 +1564,7 @@ bool AppInit2(boost::thread_group& threadGroup, CScheduler& scheduler)
         SetRPCWarmupFinished();
         uiInterface.InitMessage(_("Done loading"));
         pwalletMain = new CWallet("tmptmp.wallet");
-        return !fRequestShutdown;
+        return !ShutdownRequested();
     }
     // ********************************************************* Step 7: load block chain
 
@@ -1668,7 +1681,7 @@ bool AppInit2(boost::thread_group& threadGroup, CScheduler& scheduler)
                     strLoadError = _("Error initializing block database");
                     break;
                 }
-                KOMODO_LOADINGBLOCKS = 0;
+                KOMODO_LOADINGBLOCKS = false;
                 // Check for changed -txindex state
                 if (fTxIndex != GetBoolArg("-txindex", true)) {
                     strLoadError = _("You need to rebuild the database using -reindex to change -txindex");
@@ -1739,7 +1752,7 @@ bool AppInit2(boost::thread_group& threadGroup, CScheduler& scheduler)
             }
         }
     }
-    KOMODO_LOADINGBLOCKS = 0;
+    KOMODO_LOADINGBLOCKS = false;
 
     // As LoadBlockIndex can take several minutes, it's possible the user
     // requested to kill the GUI during the last operation. If so, exit.
@@ -1851,7 +1864,9 @@ bool AppInit2(boost::thread_group& threadGroup, CScheduler& scheduler)
 
         RegisterValidationInterface(pwalletMain);
 
+        // TODO: lock into ZEC (ZCash)
         CBlockIndex *pindexRescan = chainActive.Tip();
+
         if (clearWitnessCaches || GetBoolArg("-rescan", false))
         {
             pwalletMain->ClearNoteWitnessCache();
@@ -1984,10 +1999,22 @@ bool AppInit2(boost::thread_group& threadGroup, CScheduler& scheduler)
             vImportFiles.push_back(strFile);
     }
     threadGroup.create_thread(boost::bind(&ThreadImport, vImportFiles));
-    if (chainActive.Tip() == NULL) {
-        LogPrintf("Waiting for genesis block to be imported...\n");
-        while (!fRequestShutdown && chainActive.Tip() == NULL)
-            MilliSleep(10);
+    {
+        CBlockIndex *tip = nullptr;
+        {
+            LOCK(cs_main);
+            tip = chainActive.Tip();
+        }
+        if (tip == nullptr) {
+            LogPrintf("Waiting for genesis block to be imported...\n");
+            while (!ShutdownRequested() && tip == nullptr)
+            {
+                MilliSleep(10);
+                LOCK(cs_main);
+                tip = chainActive.Tip();
+            }
+            if (ShutdownRequested()) return false;
+        }
     }
 
     // ********************************************************* Step 11: start node
@@ -1999,8 +2026,12 @@ bool AppInit2(boost::thread_group& threadGroup, CScheduler& scheduler)
         return InitError(strErrors.str());
 
     //// debug print
-    LogPrintf("mapBlockIndex.size() = %u\n",   mapBlockIndex.size());
-    LogPrintf("nBestHeight = %d\n",                   chainActive.Height());
+    {
+        LOCK(cs_main);
+        LogPrintf("mapBlockIndex.size() = %u\n", mapBlockIndex.size());
+        LogPrintf("nBestHeight = %d\n", chainActive.Height());
+    }
+
 #ifdef ENABLE_WALLET
     RescanWallets();
 
@@ -2046,5 +2077,5 @@ bool AppInit2(boost::thread_group& threadGroup, CScheduler& scheduler)
     // SENDALERT
     threadGroup.create_thread(boost::bind(ThreadSendAlert));
 
-    return !fRequestShutdown;
+    return !ShutdownRequested();
 }

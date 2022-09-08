@@ -13,8 +13,6 @@
 extern char ASSETCHAINS_SYMBOL[KOMODO_ASSETCHAIN_MAXLEN];
 extern uint32_t ASSETCHAIN_INIT;
 extern std::string NOTARY_PUBKEY;
-void komodo_passport_iteration();
-void komodo_cbopretupdate(int32_t forceflag);
 CBlockIndex *komodo_chainactive(int32_t height);
 
 //#include "chainparams.h"
@@ -355,19 +353,24 @@ void KomodoCore::shutdown()
 
         while (!fShutdown)
         {
-            if ( ASSETCHAINS_SYMBOL[0] == 0 )
+            /* TODO: move to ThreadUpdateKomodoInternals */
+            if ( chainName.isKMD() )
             {
-                //if (!ShutdownRequested()) komodo_passport_iteration();
-                if ( KOMODO_NSPV_FULLNODE )
-                    komodo_passport_iteration();
-                MilliSleep(1000);
+                if ( KOMODO_NSPV_FULLNODE ) {
+                    komodo_update_interest();
+                    komodo_longestchain();
+                }
+                for (i=0; i<10; i++)
+                {
+                    fShutdown = ShutdownRequested();
+                    if ( fShutdown != 0 )
+                        break;
+                    MilliSleep(1000);
+                }
             } 
             else
             {
-                //komodo_interestsum();
-                //komodo_longestchain();
-                if ( ASSETCHAINS_CBOPRET != 0 )
-                    komodo_cbopretupdate(0);
+                /* for ACs we do nothing at present */
                 for (i=0; i<=ASSETCHAINS_BLOCKTIME/5; i++)
                 {
                     fShutdown = ShutdownRequested();

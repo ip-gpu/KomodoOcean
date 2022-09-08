@@ -28,6 +28,12 @@
 #include "httpserver.h"
 #include "httprpc.h"
 
+#include "komodo.h"
+#include "komodo_defs.h"
+#include "komodo_gateway.h"
+#include "komodo_bitcoind.h"
+#include "komodo_gateway.h"
+
 #include <boost/algorithm/string/predicate.hpp>
 #include <boost/filesystem.hpp>
 #include <boost/thread.hpp>
@@ -56,16 +62,6 @@
  */
 
 static bool fDaemon;
-#include "komodo_defs.h"
-#define KOMODO_ASSETCHAIN_MAXLEN 65
-extern char ASSETCHAINS_SYMBOL[KOMODO_ASSETCHAIN_MAXLEN];
-extern int32_t ASSETCHAINS_BLOCKTIME;
-extern uint64_t ASSETCHAINS_CBOPRET;
-void komodo_passport_iteration();
-uint64_t komodo_interestsum();
-int32_t komodo_longestchain();
-void komodo_cbopretupdate(int32_t forceflag);
-CBlockIndex *komodo_chainactive(int32_t height);
 
 void WaitForShutdown(boost::thread_group* threadGroup)
 {
@@ -76,23 +72,18 @@ void WaitForShutdown(boost::thread_group* threadGroup)
         LogPrintf("error: earlytx must be before block height %d or tx does not exist\n",KOMODO_EARLYTXID_HEIGHT);
         StartShutdown();
     }
-    /*if ( ASSETCHAINS_STAKED == 0 && ASSETCHAINS_ADAPTIVEPOW == 0 && (pindex= komodo_chainactive(1)) != 0 )
-    {
-        if ( pindex->nTime > ADAPTIVEPOW_CHANGETO_DEFAULTON )
-        {
-            ASSETCHAINS_ADAPTIVEPOW = 1;
-            fprintf(stderr,"default activate adaptivepow\n");
-        } else fprintf(stderr,"height1 time %u vs %u\n",pindex->nTime,ADAPTIVEPOW_CHANGETO_DEFAULTON);
-    } //else fprintf(stderr,"cant find height 1\n");*/
+
     if ( ASSETCHAINS_CBOPRET != 0 )
         komodo_pricesinit();
     while (!fShutdown)
     {
-        //LogPrintf("call passport iteration\n");
-        if ( ASSETCHAINS_SYMBOL[0] == 0 )
+        /* TODO: move to ThreadUpdateKomodoInternals */
+        if ( chainName.isKMD() )
         {
-            if ( KOMODO_NSPV_FULLNODE )
-                komodo_passport_iteration();
+            if ( KOMODO_NSPV_FULLNODE ) {
+                komodo_update_interest();
+                komodo_longestchain();
+            }
             for (i=0; i<10; i++)
             {
                 fShutdown = ShutdownRequested();
@@ -103,10 +94,7 @@ void WaitForShutdown(boost::thread_group* threadGroup)
         }
         else
         {
-            //komodo_interestsum();
-            //komodo_longestchain();
-            if ( ASSETCHAINS_CBOPRET != 0 )
-                komodo_cbopretupdate(0);
+            /* for ACs we do nothing at present */
             for (i=0; i<=ASSETCHAINS_BLOCKTIME/5; i++)
             {
                 fShutdown = ShutdownRequested();
@@ -128,12 +116,6 @@ void WaitForShutdown(boost::thread_group* threadGroup)
 //
 // Start
 //
-extern bool IS_KOMODO_NOTARY;
-extern int32_t USE_EXTERNAL_PUBKEY;
-extern uint32_t ASSETCHAIN_INIT;
-extern std::string NOTARY_PUBKEY;
-int32_t komodo_is_issuer();
-void komodo_passport_iteration();
 
 bool AppInit(int argc, char* argv[])
 {
@@ -182,7 +164,7 @@ bool AppInit(int argc, char* argv[])
         chainparams_commandline();
 
         LogPrintf("call komodo_args.(%s) NOTARY_PUBKEY.(%s)\n",argv[0],NOTARY_PUBKEY.c_str());
-        LogPrintf("initialized %s at %u\n",ASSETCHAINS_SYMBOL,(uint32_t)time(NULL));
+        LogPrintf("initialized %s at %u\n",chainName.symbol().c_str(),(uint32_t)time(NULL));
         if (!boost::filesystem::is_directory(GetDataDir(false)))
         {
             LogPrintf("Error: Specified data directory \"%s\" does not exist.\n", mapArgs["-datadir"].c_str());
@@ -230,7 +212,7 @@ bool AppInit(int argc, char* argv[])
         fDaemon = GetBoolArg("-daemon", false);
         if (fDaemon)
         {
-            fprintf(stdout, "Komodo %s server starting\n",ASSETCHAINS_SYMBOL);
+            LogPrintf("Komodo %s server starting\n",chainName.symbol().c_str());
 
             // Daemonize
             pid_t pid = fork();
