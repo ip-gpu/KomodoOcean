@@ -490,46 +490,45 @@ public:
 class CChain {
 protected:
     std::vector<CBlockIndex*> vChain;
-    CBlockIndex *at(int nHeight) const REQUIRES(cs_main)
-    {
+    CBlockIndex *at(int nHeight) const {
         if (nHeight < 0 || nHeight >= (int)vChain.size())
             return NULL;
         return vChain[nHeight];
     }
 public:
     /** Returns the index entry for the genesis block of this chain, or NULL if none. */
-    CBlockIndex *Genesis() const REQUIRES(cs_main) {
+    CBlockIndex *Genesis() const {
         AssertLockHeld(cs_main);
         return vChain.size() > 0 ? vChain[0] : NULL;
     }
 
     /** Returns the index entry for the tip of this chain, or NULL if none. */
-    CBlockIndex *Tip() const REQUIRES(cs_main) {
+    CBlockIndex *Tip() const {
         AssertLockHeld(cs_main);
         return vChain.size() > 0 ? vChain[vChain.size() - 1] : nullptr;
     }
 
     /** Returns the index entry at a particular height in this chain, or NULL if no such height exists. */
-    CBlockIndex *operator[](int nHeight) const REQUIRES(cs_main) {
+    CBlockIndex *operator[](int nHeight) const {
         AssertLockHeld(cs_main);
         return at(nHeight);
     }
 
     /** Compare two chains efficiently. */
-    friend bool operator==(const CChain &a, const CChain &b) REQUIRES(cs_main) {
+    friend bool operator==(const CChain &a, const CChain &b) {
         AssertLockHeld(cs_main);
         return a.Height() == b.Height() &&
                a.Tip() == b.Tip();
     }
 
     /** Efficiently check whether a block is present in this chain. */
-    bool Contains(const CBlockIndex *pindex) const REQUIRES(cs_main) {
+    bool Contains(const CBlockIndex *pindex) const {
         AssertLockHeld(cs_main);
         return (*this)[pindex->nHeight] == pindex;
     }
 
     /** Find the successor of a block in this chain, or NULL if the given index is not found or is the tip. */
-    CBlockIndex *Next(const CBlockIndex *pindex) const REQUIRES(cs_main) {
+    CBlockIndex *Next(const CBlockIndex *pindex) const {
         AssertLockHeld(cs_main);
         if (Contains(pindex))
             return (*this)[pindex->nHeight + 1];
@@ -538,19 +537,19 @@ public:
     }
 
     /** Return the maximal height in the chain. Is equal to chain.Tip() ? chain.Tip()->nHeight : -1. */
-    int Height() const REQUIRES(cs_main) {
+    int Height() const {
         AssertLockHeld(cs_main);
         return vChain.size() - 1;
     }
 
     /** Set/initialize a chain with a given tip. */
-    void SetTip(CBlockIndex *pindex) REQUIRES(cs_main);
+    void SetTip(CBlockIndex *pindex);
 
     /** Return a CBlockLocator that refers to a block in this chain (by default the tip). */
-    CBlockLocator GetLocator(const CBlockIndex *pindex = NULL) const REQUIRES(cs_main);
+    CBlockLocator GetLocator(const CBlockIndex *pindex = NULL) const;
 
     /** Find the last common block between this chain and a block index entry. */
-    const CBlockIndex *FindFork(const CBlockIndex *pindex) const REQUIRES(cs_main);
+    const CBlockIndex *FindFork(const CBlockIndex *pindex) const;
 };
 
 #endif // BITCOIN_CHAIN_H
