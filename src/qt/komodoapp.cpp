@@ -274,7 +274,7 @@ private:
     void startThread();
 };
 
-#include "komodo.moc"
+#include "komodoapp.moc"
 
 KomodoCore::KomodoCore():
     QObject()
