@@ -536,6 +536,9 @@ void PrintExceptionContinue(const std::exception* pex, const char* pszThread)
     strMiscWarning = message;
 }
 
+
+namespace fs = boost::filesystem;
+
 /**
  * @brief get the OS-specific default application data directory
  * @note Windows: be "C:\Users\[username]\AppData\Roaming"

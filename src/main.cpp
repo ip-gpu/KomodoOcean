@@ -1778,6 +1778,7 @@ bool AcceptToMemoryPool(CTxMemPool& pool, CValidationState &state, const CTransa
     if (pfMissingInputs)
         *pfMissingInputs = false;
     uint32_t tiptime;
+    int flag = 0;
     int nextBlockHeight = chainActive.Height() + 1;
     auto consensusBranchId = CurrentEpochBranchId(nextBlockHeight, Params().GetConsensus());
     if ( nextBlockHeight <= 1 || chainActive.Tip() == 0 )
@@ -1799,7 +1800,7 @@ bool AcceptToMemoryPool(CTxMemPool& pool, CValidationState &state, const CTransa
     }
     auto verifier = libzcash::ProofVerifier::Strict();
     if ( chainName.isKMD() && chainActive.Tip() != nullptr
-            && komodo_validate_interest(tx,chainActive.Tip()->nHeight+1, chainActive.Tip()->GetMedianTimePast() + 777,0) < 0 )
+            && komodo_validate_interest(tx,chainActive.Tip()->nHeight+1, chainActive.Tip()->GetMedianTimePast() + 777) < 0 )
     {
         return error("%s: komodo_validate_interest failed txid.%s", __func__, tx.GetHash().ToString());
     }
@@ -1856,7 +1857,7 @@ bool AcceptToMemoryPool(CTxMemPool& pool, CValidationState &state, const CTransa
             if (pool.mapNextTx.count(outpoint))
             {
                 // Disable replacement feature for now
-                return state.Invalid(false, REJECT_CONFLICT, "txn-mempool-conflict");
+                return state.Invalid(false, REJECT_INVALID, "txn-mempool-conflict");
             }
         }
         BOOST_FOREACH(const JSDescription &joinsplit, tx.vjoinsplit) {
@@ -2795,7 +2796,7 @@ namespace Consensus {
                 // Ensure that coinbases are matured, no DoS as retry may work later
                 if (nSpendHeight - coins->nHeight < ::Params().CoinbaseMaturity()) {
                     return state.Invalid(
-                                         error("CheckInputs(): tried to spend coinbase at depth %d/%d", nSpendHeight - coins->nHeight, (int32_t)COINBASE_MATURITY),
+                                         error("CheckInputs(): tried to spend coinbase at depth %d/%d", nSpendHeight - coins->nHeight, (int32_t)::Params().CoinbaseMaturity()),
                                          REJECT_INVALID, "bad-txns-premature-spend-of-coinbase");
                 }
 
@@ -6422,7 +6423,7 @@ bool CVerifyDB::VerifyDB(CCoinsView *coinsview, int nCheckLevel, int nCheckDepth
  * @param params the chain parameters
  * @returns true on success
  */
-bool RewindBlockIndex(const CChainParams& params, bool& clearWitnessCaches)
+bool RewindBlockIndex(const CChainParams& params)
 {
     LOCK(cs_main);
 
@@ -6603,18 +6604,19 @@ void UnloadBlockIndex()
  * Load block index
  * @returns true on success
  */
-bool LoadBlockIndex()
+bool LoadBlockIndex(bool reindex)
 {
     // Load block index from databases
-    KOMODO_LOADINGBLOCKS = 1;
-    if (!fReindex && !LoadBlockIndexDB())
+    KOMODO_LOADINGBLOCKS = true;
+    if (!reindex && !LoadBlockIndexDB())
     {
-        KOMODO_LOADINGBLOCKS = 0;
+        KOMODO_LOADINGBLOCKS = false;
         return false;
     }
     LogPrintf("finished loading blocks %s\n",chainName.symbol().c_str());
     return true;
 }
+
 
 /** 
  * Initialize a new block tree database + block data on disk 

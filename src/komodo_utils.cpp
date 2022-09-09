@@ -1239,8 +1239,8 @@ uint32_t komodo_assetmagic(const char *symbol,uint64_t supply,uint8_t *extraptr,
         vcalc_sha256(0,hash.bytes,extraptr,extralen);
         crc0 = hash.uints[0];
         for (int32_t i=0; i<extralen; i++)
-            LogPrintf(""%02x",extraptr[i]);
-        LogPrintf("" extralen.%d crc0.%x\n",extralen,crc0);
+            LogPrintf("%02x",extraptr[i]);
+        LogPrintf(" extralen.%d crc0.%x\n",extralen,crc0);
     }
 
     return calc_crc32(crc0,buf,len);

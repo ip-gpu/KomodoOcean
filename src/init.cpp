@@ -232,7 +232,7 @@ void Shutdown()
     /// Be sure that anything that writes files or flushes caches only does this if the respective
     /// module was initialized.
     static char shutoffstr[128];
-    sprintf(shutoffstr,"%s-shutoff",ASSETCHAINS_SYMBOL);
+    sprintf(shutoffstr,"%s-shutoff",chainName.symbol().c_str());
     RenameThread(shutoffstr);
     mempool.AddTransactionsUpdated(1);
 
@@ -1663,7 +1663,7 @@ bool AppInit2(boost::thread_group& threadGroup, CScheduler& scheduler)
 
                 if (fRequestShutdown) break;
 
-                if (!LoadBlockIndex()) {
+                if (!LoadBlockIndex(fReindex)) {
                     strLoadError = _("Error loading block database");
                     break;
                 }
@@ -1706,7 +1706,7 @@ bool AppInit2(boost::thread_group& threadGroup, CScheduler& scheduler)
 
                 if (!fReindex) {
                     uiInterface.InitMessage(_("Rewinding blocks if needed..."));
-                    if (!RewindBlockIndex(chainparams, clearWitnessCaches)) {
+                    if (!RewindBlockIndex(chainparams)) {
                         strLoadError = _("Unable to rewind the database to a pre-upgrade state. You will need to redownload the blockchain");
                         break;
                     }

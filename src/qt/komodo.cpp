@@ -7,13 +7,13 @@
 #endif
 
 #include "komodooceangui.h"
-#include "komodo_defs.h"
 
-#define KOMODO_ASSETCHAIN_MAXLEN 65
-extern char ASSETCHAINS_SYMBOL[KOMODO_ASSETCHAIN_MAXLEN];
-extern uint32_t ASSETCHAIN_INIT;
-extern std::string NOTARY_PUBKEY;
-CBlockIndex *komodo_chainactive(int32_t height);
+#include "komodo.h"
+#include "komodo_bitcoind.h"
+#include "komodo_defs.h"
+#include "komodo_gateway.h"
+#include "komodo_globals.h"
+#include "rpc/net.h"
 
 //#include "chainparams.h"
 #include "clientmodel.h"
@@ -347,9 +347,6 @@ void KomodoCore::shutdown()
             LogPrintf("error: earlytx must be before block height %d or tx does not exist\n",KOMODO_EARLYTXID_HEIGHT);
             StartShutdown();
         }
-
-        if ( ASSETCHAINS_CBOPRET != 0 )
-            komodo_pricesinit();
 
         while (!fShutdown)
         {
@@ -715,7 +712,7 @@ int main(int argc, char *argv[])
         chainparams_commandline();
 
         LogPrintf("call komodo_args.(%s) NOTARY_PUBKEY.(%s)\n",argv[0],NOTARY_PUBKEY.c_str());
-        LogPrintf("initialized %s\n",ASSETCHAINS_SYMBOL);
+        LogPrintf("initialized %s\n",chainName.symbol().c_str());
 
 
     /// 5. Now that settings and translations are available, ask user for data directory

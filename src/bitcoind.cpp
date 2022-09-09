@@ -63,6 +63,7 @@
 
 static bool fDaemon;
 
+int32_t komodo_longestchain();
 void WaitForShutdown(boost::thread_group* threadGroup)
 {
     int32_t i,height; CBlockIndex *pindex; bool fShutdown = ShutdownRequested(); const uint256 zeroid;
@@ -73,8 +74,6 @@ void WaitForShutdown(boost::thread_group* threadGroup)
         StartShutdown();
     }
 
-    if ( ASSETCHAINS_CBOPRET != 0 )
-        komodo_pricesinit();
     while (!fShutdown)
     {
         /* TODO: move to ThreadUpdateKomodoInternals */

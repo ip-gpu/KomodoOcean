@@ -516,7 +516,7 @@ void CTxMemPool::removeExpired(unsigned int nBlockHeight)
 
         bool fInterestNotValidated = chainName.isKMD() 
                 && tipindex != 0 
-                && komodo_validate_interest(tx,tipindex->nHeight+1,tipindex->GetMedianTimePast() + 777,0) < 0;
+                && komodo_validate_interest(tx,tipindex->nHeight+1,tipindex->GetMedianTimePast() + 777) < 0;
         if (IsExpiredTx(tx, nBlockHeight) || fInterestNotValidated)
         {
             if (fInterestNotValidated && tipindex != 0)

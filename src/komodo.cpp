@@ -336,7 +336,7 @@ int32_t komodo_validate_chain(uint256 srchash,int32_t notarized_height)
         {
             if ( last_rewind != 0 )
             {
-                LogPrintf(%s FORK detected. notarized.%d %s not in this chain! last notarization %d -> rewindtarget.%d\n",
+                LogPrintf("%s FORK detected. notarized.%d %s not in this chain! last notarization %d -> rewindtarget.%d\n",
                         chainName.symbol().c_str(),notarized_height,srchash.ToString().c_str(),
                         sp->LastNotarizedHeight(),rewindtarget);
             }
@@ -359,13 +359,13 @@ int32_t komodo_voutupdate(bool fJustCheck,int32_t *isratificationp,int32_t notar
     {
         if ( i == 0 && j == 0 && memcmp(NOTARY_PUBKEY33,scriptbuf+1,33) == 0 && IS_KOMODO_NOTARY )
         {
-            LogPrintf(%s KOMODO_LASTMINED.%d -> %d\n",chainName.symbol().c_str(),KOMODO_LASTMINED,height);
+            LogPrintf("%s KOMODO_LASTMINED.%d -> %d\n",chainName.symbol().c_str(),KOMODO_LASTMINED,height);
             prevKOMODO_LASTMINED = KOMODO_LASTMINED;
             KOMODO_LASTMINED = height;
         }
         decode_hex(crypto777,33,CRYPTO777_PUBSECPSTR);
         /*for (k=0; k<33; k++)
-            LogPrintf(%02x",crypto777[k]);
+            LogPrintf("%02x",crypto777[k]);
         LogPrintf(" crypto777 ");
         for (k=0; k<scriptlen; k++)
         LogPrintf(" <- script ht.%d i.%d j.%d cmp.%d\n",height,i,j,memcmp(crypto777,scriptbuf+1,33));*/
@@ -568,7 +568,7 @@ int32_t komodo_voutupdate(bool fJustCheck,int32_t *isratificationp,int32_t notar
                 if ( k == 32 )
                 {
                     *isratificationp = 1;
-                    LogPrintf(ISRATIFICATION (%s)\n",(char *)&scriptbuf[len+32*2+4]);
+                    LogPrintf("ISRATIFICATION (%s)\n",(char *)&scriptbuf[len+32*2+4]);
                 }
             }
 
@@ -648,7 +648,7 @@ int32_t komodo_connectblock(bool fJustCheck, CBlockIndex *pindex,CBlock& block)
     KOMODO_INITDONE = (uint32_t)time(NULL);
     if ( (sp= komodo_stateptr(symbol,dest)) == 0 )
     {
-        LogPrintf("unexpected null komodostateptr.[%s]\n",ASSETCHAINS_SYMBOL);
+        LogPrintf("unexpected null komodostateptr.[%s]\n",chainName.symbol().c_str());
         return(0);
     }
     // Wallet Filter. Disabled here. Cant be activated by notaries or pools with some changes.
@@ -716,7 +716,7 @@ int32_t komodo_connectblock(bool fJustCheck, CBlockIndex *pindex,CBlock& block)
                         int32_t k;
                         for (k=0; k<scriptlen; k++)
                             LogPrintf("%02x",scriptPubKey[k]);
-                        LogPrintf( scriptPubKey doesnt match any notary vini.%d of %d\n",j,numvins);
+                        LogPrintf(" scriptPubKey doesnt match any notary vini.%d of %d\n",j,numvins);
                     }
                 } //else LogPrintf("cant get scriptPubKey for ht.%d txi.%d vin.%d\n",height,i,j);
             }
@@ -770,7 +770,7 @@ int32_t komodo_connectblock(bool fJustCheck, CBlockIndex *pindex,CBlock& block)
                     if ( 0 && i > 0 )
                     {
                         for (k=0; k<len; k++)
-                            LogPrintf(%02x",scriptbuf[k]);
+                            LogPrintf("%02x",scriptbuf[k]);
                         LogPrintf(" <- notaryid.%d ht.%d i.%d j.%d numvouts.%d numvins.%d voutmask.%llx txid.(%s)\n",notaryid,height,i,j,numvouts,numvins,(long long)voutmask,txhash.ToString().c_str());
                     }
                 }
@@ -780,7 +780,7 @@ int32_t komodo_connectblock(bool fJustCheck, CBlockIndex *pindex,CBlock& block)
                 if ( isratification != 0 )
                 {
                     LogPrintf("%s NOTARY SIGNED.%llx numvins.%d ht.%d txi.%d notaryht.%d specialtx.%d\n",chainName.symbol().c_str(),(long long)signedmask,numvins,height,i,notarizedheight,specialtx);
-                    LogPrintf(ht.%d specialtx.%d isratification.%d numvouts.%d signed.%llx numnotaries.%d\n",height,specialtx,isratification,numvouts,(long long)signedmask,numnotaries);
+                    LogPrintf("ht.%d specialtx.%d isratification.%d numvouts.%d signed.%llx numnotaries.%d\n",height,specialtx,isratification,numvouts,(long long)signedmask,numnotaries);
                 }
                 if ( specialtx != 0 && isratification != 0 && numvouts > 2 )
                 {

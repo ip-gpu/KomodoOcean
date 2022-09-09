@@ -76,8 +76,8 @@ extern uint64_t ASSETCHAINS_PEGSCCPARAMS[3];
 extern uint64_t ASSETCHAINS_TIMEUNLOCKFROM;
 extern uint64_t ASSETCHAINS_TIMEUNLOCKTO;
 
-//extern std::mutex komodo_mutex;
-extern pthread_mutex_t komodo_mutex;
+extern std::mutex komodo_mutex;
+//extern pthread_mutex_t komodo_mutex;
 extern pthread_mutex_t KOMODO_CC_mutex;
 
 /**
