@@ -334,7 +334,7 @@ void *OS_loadfile(const char *fname,uint8_t **bufp,long *lenp,long *allocsizep)
         {
             fclose(fp);
             *lenp = 0;
-            printf("OS_loadfile null size.(%s)\n",fname);
+            LogPrintf("OS_loadfile null size.(%s)\n",fname);
             return(0);
         }
         if ( filesize > buflen )
@@ -344,17 +344,17 @@ void *OS_loadfile(const char *fname,uint8_t **bufp,long *lenp,long *allocsizep)
         }
         rewind(fp);
         if ( buf == 0 )
-            printf("Null buf ???\n");
+            LogPrintf("Null buf ???\n");
         else
         {
             if ( fread(buf,1,(long)filesize,fp) != (unsigned long)filesize )
-                printf("error reading filesize.%ld\n",(long)filesize);
+                LogPrintf("error reading filesize.%ld\n",(long)filesize);
             buf[filesize] = 0;
         }
         fclose(fp);
         *lenp = filesize;
-        //printf("loaded.(%s)\n",buf);
-    } //else printf("OS_loadfile couldnt load.(%s)\n",fname);
+        //LogPrintf("loaded.(%s)\n",buf);
+    } //else LogPrintf("OS_loadfile couldnt load.(%s)\n",fname);
     return(buf);
 }
 
@@ -388,7 +388,7 @@ long komodo_stateind_validate(struct komodo_state *sp,const std::string& indfnam
     if ( (inds= OS_fileptr(&fsize,indfname.c_str())) != 0 )
     {
         long lastfpos = 0;
-        fprintf(stderr,"inds.%p validate %s fsize.%ld datalen.%ld n.%d lastfpos.%ld\n",inds,indfname.c_str(),fsize,datalen,(int32_t)(fsize / sizeof(uint32_t)),lastfpos);
+        LogPrintf("inds.%p validate %s fsize.%ld datalen.%ld n.%d lastfpos.%ld\n",inds,indfname.c_str(),fsize,datalen,(int32_t)(fsize / sizeof(uint32_t)),lastfpos);
         if ( (fsize % sizeof(uint32_t)) == 0 )
         {
             int32_t n = (int32_t)(fsize / sizeof(uint32_t));
@@ -407,7 +407,7 @@ long komodo_stateind_validate(struct komodo_state *sp,const std::string& indfnam
                     fpos = prevpos100 + offset;
                     if ( lastfpos >= datalen || filedata[lastfpos] != func )
                     {
-                        printf("validate.%d error (%u %d) prev100 %u -> fpos.%ld datalen.%ld [%d] (%c) vs (%c) lastfpos.%ld\n",i,offset,func,prevpos100,fpos,datalen,lastfpos < datalen ? filedata[lastfpos] : -1,func,filedata[lastfpos],lastfpos);
+                        LogPrintf("validate.%d error (%u %d) prev100 %u -> fpos.%ld datalen.%ld [%d] (%c) vs (%c) lastfpos.%ld\n",i,offset,func,prevpos100,fpos,datalen,lastfpos < datalen ? filedata[lastfpos] : -1,func,filedata[lastfpos],lastfpos);
                         return -1;
                     }
                 }
@@ -421,10 +421,10 @@ long komodo_stateind_validate(struct komodo_state *sp,const std::string& indfnam
             return fpos;
         } 
         else 
-            printf("wrong filesize %s %ld\n",indfname.c_str(),fsize);
+            LogPrintf("wrong filesize %s %ld\n",indfname.c_str(),fsize);
     }
     free(inds);
-    fprintf(stderr,"indvalidate return -1\n");
+    LogPrintf("indvalidate return -1\n");
     return -1;
 }
 
@@ -434,7 +434,7 @@ long komodo_indfile_update(FILE *indfp,uint32_t *prevpos100p,long lastfpos,long 
     {
         uint32_t tmp = ((uint32_t)(newfpos - *prevpos100p) << 8) | (func & 0xff);
         if ( ftell(indfp)/sizeof(uint32_t) != *indcounterp )
-            printf("indfp fpos %ld -> ind.%ld vs counter.%u\n",ftell(indfp),ftell(indfp)/sizeof(uint32_t),*indcounterp);
+            LogPrintf("indfp fpos %ld -> ind.%ld vs counter.%u\n",ftell(indfp),ftell(indfp)/sizeof(uint32_t),*indcounterp);
         fwrite(&tmp,1,sizeof(tmp),indfp), (*indcounterp)++;
         if ( (*indcounterp % 100) == 0 )
         {
@@ -472,7 +472,7 @@ bool komodo_faststateinit(komodo_state *sp,const char *fname,char *symbol,char *
         if ( indfp != nullptr )
             fwrite(&prevpos100,1,sizeof(prevpos100),indfp), indcounter++;
 
-        fprintf(stderr,"processing %s %ldKB, validated.%d\n",fname,datalen/1024,-1);
+        LogPrintf("processing %s %ldKB, validated.%d\n",fname,datalen/1024,-1);
         int32_t func;
         while (!ShutdownRequested() && (func= komodo_parsestatefiledata(sp,filedata,&fpos,datalen,symbol,dest)) >= 0)
         {
@@ -483,11 +483,11 @@ bool komodo_faststateinit(komodo_state *sp,const char *fname,char *symbol,char *
         {
             fclose(indfp);
             if ( (fpos= komodo_stateind_validate(0,indfname,filedata,datalen,&prevpos100,&indcounter,symbol,dest)) < 0 )
-                printf("unexpected komodostate.ind validate failure %s datalen.%ld\n",indfname.c_str(),datalen);
+                LogPrintf("unexpected komodostate.ind validate failure %s datalen.%ld\n",indfname.c_str(),datalen);
             else 
-                printf("%s validated fpos.%ld\n",indfname.c_str(),fpos);
+                LogPrintf("%s validated fpos.%ld\n",indfname.c_str(),fpos);
         }
-        fprintf(stderr,"took %d seconds to process %s %ldKB\n",(int32_t)(time(NULL)-starttime),fname,datalen/1024);
+        LogPrintf("took %d seconds to process %s %ldKB\n",(int32_t)(time(NULL)-starttime),fname,datalen/1024);
         free(filedata);
         return true;
     }
