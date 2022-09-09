@@ -24,8 +24,6 @@
 #define DECORATION_SIZE 54
 #define NUM_ITEMS 5
 
-extern char ASSETCHAINS_SYMBOL[KOMODO_ASSETCHAIN_MAXLEN];
-
 class TxViewDelegate : public QAbstractItemDelegate
 {
     Q_OBJECT
@@ -211,7 +209,7 @@ void OverviewPage::setBalance(const CAmount& balance, const CAmount& unconfirmed
     // for the non-mining users
     bool showImmature = immatureBalance != 0;
     bool showWatchOnlyImmature = watchImmatureBalance != 0;
-    bool showInterest = (ASSETCHAINS_SYMBOL[0] == 0);
+    bool showInterest = chainName.isKMD();
 
     // for symmetry reasons also show immature label when the watch-only one is shown
     ui->labelImmature->setVisible(showImmature || showWatchOnlyImmature);

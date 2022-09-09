@@ -9,9 +9,6 @@
 
 #include <QStringList>
 
-#define KOMODO_ASSETCHAIN_MAXLEN 65
-extern char ASSETCHAINS_SYMBOL[KOMODO_ASSETCHAIN_MAXLEN];
-
 KomodoUnits::KomodoUnits(QObject *parent):
         QAbstractListModel(parent),
         unitlist(availableUnits())
@@ -44,9 +41,9 @@ QString KomodoUnits::name(int unit)
 {
     switch(unit)
     {
-    case KMD: return QString(ASSETCHAINS_SYMBOL[0] == 0 ? "KMD" : ASSETCHAINS_SYMBOL);
-    case mKMD: return QString("m")+QString(ASSETCHAINS_SYMBOL[0] == 0 ? "KMD" : ASSETCHAINS_SYMBOL);
-    case uKMD: return QString::fromUtf8("μ")+QString(ASSETCHAINS_SYMBOL[0] == 0 ? "KMD" : ASSETCHAINS_SYMBOL);
+    case KMD: return QString(chainName.ToString().c_str());
+    case mKMD: return QString("m")+QString(chainName.ToString().c_str());
+    case uKMD: return QString::fromUtf8("μ")+QString(chainName.ToString().c_str());
     default: return QString("???");
     }
 }
