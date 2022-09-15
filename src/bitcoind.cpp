@@ -66,7 +66,9 @@ static bool fDaemon;
 int32_t komodo_longestchain();
 void WaitForShutdown(boost::thread_group* threadGroup)
 {
-    int32_t i,height; CBlockIndex *pindex; bool fShutdown = ShutdownRequested(); const uint256 zeroid;
+    int32_t i,height; CBlockIndex *pindex; bool fShutdown = ShutdownRequested();
+    static const uint256 zeroid; //!< null uint256 constant
+
     // Tell the main threads to shutdown.
     if (komodo_currentheight()>KOMODO_EARLYTXID_HEIGHT && KOMODO_EARLYTXID!=zeroid && ((height=tx_height(KOMODO_EARLYTXID))==0 || height>KOMODO_EARLYTXID_HEIGHT))
     {

@@ -1800,7 +1800,7 @@ bool AcceptToMemoryPool(CTxMemPool& pool, CValidationState &state, const CTransa
     }
     auto verifier = libzcash::ProofVerifier::Strict();
     if ( chainName.isKMD() && chainActive.Tip() != nullptr
-            && komodo_validate_interest(tx,chainActive.Tip()->nHeight+1, chainActive.Tip()->GetMedianTimePast() + 777) < 0 )
+            && !komodo_validate_interest(tx,chainActive.Tip()->nHeight+1, chainActive.Tip()->GetMedianTimePast() + 777))
     {
         return error("%s: komodo_validate_interest failed txid.%s", __func__, tx.GetHash().ToString());
     }
@@ -5421,7 +5421,7 @@ bool ContextualCheckBlock(int32_t slowflag,const CBlock& block, CValidationState
         const CTransaction& tx = block.vtx[i];
 
         // Interest validation
-        if (komodo_validate_interest(tx, txheight, cmptime) < 0)
+        if (!komodo_validate_interest(tx, txheight, cmptime))
         {
             LogPrintf("validate intrest failed for txnum.%i tx.%s\n", i, tx.ToString());
             return error("%s: komodo_validate_interest failed", __func__);
