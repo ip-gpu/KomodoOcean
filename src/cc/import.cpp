@@ -624,9 +624,6 @@ bool Eval::ImportCoin(const std::vector<uint8_t> params, const CTransaction &imp
 
     LOGSTREAM("importcoin", CCLOG_DEBUG1, stream << "Validating import tx..., txid=" << importTx.GetHash().GetHex() << std::endl);
 
-    if ( chainName.isSymbol("CFEKDIMXY6") && chainActive.Height() <= 44693)
-        return true;
-
     if (importTx.vout.size() < 2)
         return Invalid("too-few-vouts");
 
@@ -635,7 +632,7 @@ bool Eval::ImportCoin(const std::vector<uint8_t> params, const CTransaction &imp
         return Invalid("invalid-params");
     // Control all aspects of this transaction
     // It should not be at all malleable
-    if (ASSETCHAINS_SELFIMPORT!="PEGSCC" && MakeImportCoinTransaction(proof, burnTx, payouts, importTx.nExpiryHeight).GetHash() != importTx.GetHash())  // ExistsImportTombstone prevents from duplication
+    if (MakeImportCoinTransaction(proof, burnTx, payouts, importTx.nExpiryHeight).GetHash() != importTx.GetHash())  // ExistsImportTombstone prevents from duplication
         return Invalid("non-canonical");
 
     // burn params
@@ -692,13 +689,6 @@ bool Eval::ImportCoin(const std::vector<uint8_t> params, const CTransaction &imp
                 return Invalid("CODA-import-without-port");
             else if ( UnmarshalBurnTx(burnTx,srcaddr,receipt)==0 || CheckCODAimport(importTx,burnTx,payouts,srcaddr,receipt) < 0 )
                 return Invalid("CODA-import-failure");
-        }
-        else if ( targetSymbol == "PEGSCC" )
-        {
-            if ( ASSETCHAINS_SELFIMPORT != "PEGSCC" )
-                return Invalid("PEGSCC-import-when-not PEGSCC");
-            // else if ( CheckPUBKEYimport(merkleBranchProof,rawproof,burnTx,payouts) < 0 )
-            //     return Invalid("PEGSCC-import-failure");
         }
         else if ( targetSymbol == "PUBKEY" )
         {
