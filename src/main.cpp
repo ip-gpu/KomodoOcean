@@ -1799,7 +1799,7 @@ bool AcceptToMemoryPool(CTxMemPool& pool, CValidationState &state, const CTransa
     if ( chainName.isKMD() && chainActive.Tip() != nullptr
             && !komodo_validate_interest(tx,chainActive.Tip()->nHeight+1, chainActive.Tip()->GetMedianTimePast() + 777))
     {
-        return error("%s: komodo_validate_interest failed txid.%s", __func__, tx.GetHash().ToString());
+        return state.DoS(0, error("%s: komodo_validate_interest failed txid.%s", __func__, tx.GetHash().ToString()), REJECT_INVALID, "komodo-interest-invalid");
     }
     
     if (!CheckTransaction(tiptime,tx, state, verifier, 0, 0))
@@ -5411,7 +5411,7 @@ bool ContextualCheckBlock(int32_t slowflag,const CBlock& block, CValidationState
         if (!komodo_validate_interest(tx, txheight, cmptime))
         {
             LogPrintf("validate intrest failed for txnum.%i tx.%s\n", i, tx.ToString());
-            return error("%s: komodo_validate_interest failed", __func__);
+            return state.DoS(0, error("%s: komodo_validate_interest failed", __func__), REJECT_INVALID, "komodo-interest-invalid");
         }
 
         // Check transaction contextually against consensus rules at block height
