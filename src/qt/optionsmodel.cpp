@@ -77,7 +77,7 @@ void OptionsModel::Init(bool resetSettings)
     nDisplayUnit = settings.value("nDisplayUnit").toInt();
 
     std::string defaultStrThirdPartyTxUrls = "https://kmdexplorer.io/tx/%s|https://kmd.explorer.dexstats.info/tx/%s";
-    std::string strAssetchainName = std::string(ASSETCHAINS_SYMBOL);
+    std::string strAssetchainName = std::string(chainName.symbol().c_str());
     std::transform(strAssetchainName.begin(), strAssetchainName.end(), strAssetchainName.begin(), [](unsigned char c){ return std::tolower(c); });
 
     if (!strAssetchainName.empty()) {

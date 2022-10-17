@@ -26,6 +26,9 @@
 #include "chain.h"
 #include "core_io.h"
 #include "crosschain.h"
+#include "komodo_structs.h"
+#include "komodo_notary.h"
+#include "komodo_globals.h"
 #include "consensus/merkle.h"
 
 bool CClib_Dispatch(const CC *cond,Eval *eval,std::vector<uint8_t> paramsNull,const CTransaction &txTo,unsigned int nIn);
@@ -161,9 +164,6 @@ bool Eval::GetBlock(uint256 hash, CBlockIndex& blockIdx) const
     return false;
 }
 
-extern int32_t komodo_notaries(uint8_t pubkeys[64][33],int32_t height,uint32_t timestamp);
-
-
 int32_t Eval::GetNotaries(uint8_t pubkeys[64][33], int32_t height, uint32_t timestamp) const
 {
     return komodo_notaries(pubkeys, height, timestamp);
@@ -178,7 +178,7 @@ bool Eval::CheckNotaryInputs(const CTransaction &tx, uint32_t height, uint32_t t
     auth.requiredSigs = 11;
     auth.size = GetNotaries(auth.notaries, height, timestamp);
 
-    return CheckTxAuthority(tx, auth);
+    return CrossChain::CheckTxAuthority(tx, auth);
 }
 
 
@@ -203,7 +203,7 @@ uint32_t Eval::GetAssetchainsCC() const
 
 std::string Eval::GetAssetchainsSymbol() const
 {
-    return std::string(ASSETCHAINS_SYMBOL);
+    return chainName.symbol();
 }
 
 
