@@ -28,10 +28,6 @@
 #include "hex.h"
 #include <string.h>
 
-#ifndef DBL_EPSILON
-#define DBL_EPSILON 2.2204460492503131E-16
-#endif
-
 static const char *ep;
 
 long stripquotes(char *str)
