@@ -21,6 +21,7 @@
 
 #include "notarisationdb.h"
 #include "rpc/server.h"
+#include "komodo_bitcoind.h"
 
 static std::map<std::string,bool> nspv_remote_commands =  {{"channelsopen", true},{"channelspayment", true},{"channelsclose", true},{"channelsrefund", true},
 {"channelslist", true},{"channelsinfo", true},{"oraclescreate", true},{"oraclesfund", true},{"oraclesregister", true},{"oraclessubscribe", true}, 
@@ -36,19 +37,19 @@ struct NSPV_ntzargs
 
 int32_t NSPV_notarization_find(struct NSPV_ntzargs *args,int32_t height,int32_t dir)
 {
-    int32_t ntzheight = 0; uint256 hashBlock; CTransaction tx; Notarisation nota; char *symbol; std::vector<uint8_t> opret;
-    symbol = (ASSETCHAINS_SYMBOL[0] == 0) ? (char *)"KMD" : ASSETCHAINS_SYMBOL;
+    int32_t ntzheight = 0; uint256 hashBlock; CTransaction tx; Notarisation nota; 
+    std::vector<uint8_t> opret;
     memset(args,0,sizeof(*args));
     if ( dir > 0 )
         height += 10;
-    if ( (args->txidht= ScanNotarisationsDB(height,symbol,1440,nota)) == 0 )
+    if ( (args->txidht= ScanNotarisationsDB(height,chainName.ToString(),1440,nota)) == 0 )
         return(-1);
     args->txid = nota.first;
     if ( !GetTransaction(args->txid,tx,hashBlock,false) || tx.vout.size() < 2 )
         return(-2);
     GetOpReturnData(tx.vout[1].scriptPubKey,opret);
     if ( opret.size() >= 32*2+4 )
-        args->desttxid = NSPV_opretextract(&args->ntzheight,&args->blockhash,symbol,opret,args->txid);
+        args->desttxid = NSPV_opretextract(&args->ntzheight,&args->blockhash,chainName.ToString().c_str(),opret,args->txid);
     return(args->ntzheight);
 }
 
@@ -185,7 +186,7 @@ int32_t NSPV_getaddressutxos(struct NSPV_utxosresp *ptr,char *coinaddr,bool isCC
                         ptr->utxos[ind].vout = (int32_t)it->first.index;
                         ptr->utxos[ind].satoshis = it->second.satoshis;
                         ptr->utxos[ind].height = it->second.blockHeight;
-                        if ( ASSETCHAINS_SYMBOL[0] == 0 && it->second.satoshis >= 10*COIN )
+                        if ( chainName.isKMD() && it->second.satoshis >= 10*COIN )
                         {
                             ptr->utxos[n].extradata = komodo_accrued_interest(&txheight,&locktime,ptr->utxos[ind].txid,ptr->utxos[ind].vout,ptr->utxos[ind].height,ptr->utxos[ind].satoshis,tipheight);
                             interest += ptr->utxos[ind].extradata;
@@ -517,7 +518,7 @@ int32_t NSPV_mempoolfuncs(bits256 *satoshisp,int32_t *vindexp,std::vector<uint25
                     {
                         switch (eval)
                         {
-                            case EVAL_CHANNELS:EVAL_PEGS:EVAL_ORACLES:EVAL_GAMES:EVAL_IMPORTGATEWAY:EVAL_ROGUE:
+                            case EVAL_CHANNELS:EVAL_ORACLES:EVAL_GAMES:EVAL_IMPORTGATEWAY:EVAL_ROGUE:
                                 E_UNMARSHAL(vopret,ss >> e; ss >> f; ss >> tmp_txid;);
                                 if (e!=eval || (txid!=zeroid && txid!=tmp_txid) || (func!=0 && f!=func)) continue;
                                 break;
@@ -687,6 +688,9 @@ int32_t NSPV_remoterpc(struct NSPV_remoterpcresp *ptr,char *json,int n)
         {
             rpc_result = JSONRPCReplyObj(result, NullUniValue, jreq.id);
             response=rpc_result.write();
+            ptr->json = (char*)malloc(response.size());
+            if (ptr->json == nullptr)
+                throw JSONRPCError(RPC_OUT_OF_MEMORY, "Cannot allocate memory for response");
             memcpy(ptr->json,response.c_str(),response.size());
             len+=response.size();
             return (len);
@@ -708,6 +712,7 @@ int32_t NSPV_remoterpc(struct NSPV_remoterpcresp *ptr,char *json,int n)
         rpc_result = JSONRPCReplyObj(NullUniValue,JSONRPCError(RPC_PARSE_ERROR, e.what()), jreq.id);
         response=rpc_result.write();
     }
+    ptr->json = (char*)malloc(response.size());  // only not a big size error responses are here
     memcpy(ptr->json,response.c_str(),response.size());
     len+=response.size();
     return (len);

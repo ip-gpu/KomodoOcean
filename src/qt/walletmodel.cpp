@@ -51,8 +51,6 @@ extern CAmount getBalanceZaddr(std::string address, int minDepth = 1, bool ignor
 extern CAmount getBalanceTaddr(std::string transparentAddress, int minDepth=1, bool ignoreUnspendable=true);
 extern uint64_t komodo_interestsum();
 
-extern char ASSETCHAINS_SYMBOL[KOMODO_ASSETCHAIN_MAXLEN];
-
 // JSDescription size depends on the transaction version
 #define V3_JS_DESCRIPTION_SIZE    (GetSerializeSize(JSDescription(), SER_NETWORK, (OVERWINTER_TX_VERSION | (1 << 31))))
 // Here we define the maximum number of zaddr outputs that can be included in a transaction.
@@ -122,7 +120,7 @@ CAmount WalletModel::getPrivateBalance() const
 
 CAmount WalletModel::getInterestBalance() const
 {
-    return (ASSETCHAINS_SYMBOL[0] == 0) ? komodo_interestsum() : 0;
+    return (chainName.isKMD()) ? komodo_interestsum() : 0;
 }
 
 bool WalletModel::haveWatchOnly() const
@@ -187,7 +185,7 @@ void WalletModel::checkBalanceChanged()
     CAmount newWatchUnconfBalance = 0;
     CAmount newWatchImmatureBalance = 0;
     CAmount newprivateBalance = getBalanceZaddr("", 1, true);
-    CAmount newinterestBalance = (ASSETCHAINS_SYMBOL[0] == 0) ? komodo_interestsum() : 0;
+    CAmount newinterestBalance = (chainName.isKMD()) ? komodo_interestsum() : 0;
     if (haveWatchOnly())
     {
         newWatchOnlyBalance = getWatchBalance();
@@ -445,7 +443,7 @@ WalletModel::SendCoinsReturn WalletModel::prepareZTransaction(WalletModelZTransa
                     if ( fromSprout || toSprout )
                         return SproutUsageExpired;
                 }
-                if ( toSapling && ASSETCHAINS_SYMBOL[0] == 0 )
+                if ( toSapling && chainName.isKMD() )
                     return SproutUsageWillExpireSoon;
 
                 // If we are sending from a shielded address, all recipient

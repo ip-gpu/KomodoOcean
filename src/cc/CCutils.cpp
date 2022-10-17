@@ -16,18 +16,19 @@
 /*
  CCutils has low level functions that are universally useful for all contracts.
  */
+
 #include "CCinclude.h"
 #include "komodo_structs.h"
+#include "komodo_bitcoind.h"
+#include "komodo_utils.h"
 #include "key_io.h"
+#include "komodo_bitcoind.h"
 
-#ifdef TESTMODE           
+#ifdef TESTMODE
     #define MIN_NON_NOTARIZED_CONFIRMS 2
 #else
     #define MIN_NON_NOTARIZED_CONFIRMS 101
 #endif // TESTMODE
-int32_t komodo_dpowconfs(int32_t height,int32_t numconfs);
-struct komodo_state *komodo_stateptr(char *symbol,char *dest);
-extern uint32_t KOMODO_DPOWCONFS;
 
 void endiancpy(uint8_t *dest,uint8_t *src,int32_t len)
 {
@@ -159,7 +160,7 @@ bool CheckTxFee(const CTransaction &tx, uint64_t txfee, uint32_t height, uint64_
     int64_t interest; uint64_t valuein;
     CCoinsViewMemPool viewMemPool(pcoinsTip, mempool);
     view.SetBackend(viewMemPool);
-    valuein = view.GetValueIn(height,&interest,tx,blocktime);
+    valuein = view.GetValueIn(height,interest,tx);
     actualtxfee = valuein-tx.GetValueOut();
     if ( actualtxfee > txfee )
     {
@@ -173,7 +174,7 @@ uint32_t GetLatestTimestamp(int32_t height)
 {
     if ( KOMODO_NSPV_SUPERLITE ) return ((uint32_t)NSPV_blocktime(height));
     return(komodo_heightstamp(height));
-} // :P
+}
 
 void CCaddr2set(struct CCcontract_info *cp,uint8_t evalcode,CPubKey pk,uint8_t *priv,char *coinaddr)
 {
@@ -381,7 +382,7 @@ bool ConstrainVout(CTxOut vout, int32_t CCflag, char *cmpaddr, int64_t nValue)
     }
     else if ( cmpaddr != 0 && (Getscriptaddress(destaddr, vout.scriptPubKey) == 0 || strcmp(destaddr, cmpaddr) != 0) )
     {
-        LogPrintf("constrain vout error: check addr %s vs script addr %s\n", cmpaddr!=0?cmpaddr:"", destaddr!=0?destaddr:"");
+        LogPrintf("constrain vout error: check addr %s vs script addr %s\n", cmpaddr!=0?cmpaddr:"", destaddr);
         return(false);
     }
     else if ( nValue != 0 && nValue != vout.nValue ) //(nValue == 0 && vout.nValue < 10000) || (
@@ -433,7 +434,6 @@ bool priv2addr(char *coinaddr,uint8_t *buf33,uint8_t priv32[32])
 
 std::vector<uint8_t> Mypubkey()
 {
-    extern uint8_t NOTARY_PUBKEY33[33];
     std::vector<uint8_t> pubkey; int32_t i; uint8_t *dest,*pubkey33;
     pubkey33 = NOTARY_PUBKEY33;
     pubkey.resize(33);
@@ -443,8 +443,6 @@ std::vector<uint8_t> Mypubkey()
     return(pubkey);
 }
 
-extern char NSPV_wifstr[],NSPV_pubkeystr[];
-extern uint32_t NSPV_logintime;
 #define NSPV_AUTOLOGOUT 777
 
 bool Myprivkey(uint8_t myprivkey[])
@@ -452,16 +450,15 @@ bool Myprivkey(uint8_t myprivkey[])
     char coinaddr[64],checkaddr[64]; std::string strAddress; char *dest; int32_t i,n; CBitcoinAddress address; CKeyID keyID; CKey vchSecret; uint8_t buf33[33];
     if ( KOMODO_NSPV_SUPERLITE )
     {
+        extern uint32_t NSPV_logintime;
         if ( NSPV_logintime == 0 || time(NULL) > NSPV_logintime+NSPV_AUTOLOGOUT )
         {
             LogPrintf("need to be logged in to get myprivkey\n");
             return false;
         }
+        extern char *NSPV_wifstr;
         vchSecret = DecodeSecret(NSPV_wifstr);
         memcpy(myprivkey,vchSecret.begin(),32);
-        //for (i=0; i<32; i++)
-        //    fprintf(stderr,"%02x",myprivkey[i]);
-        //fprintf(stderr," myprivkey %s\n",NSPV_wifstr);
         memset((uint8_t *)vchSecret.begin(),0,32);
         return true;
     }
@@ -821,39 +818,27 @@ int64_t TotalPubkeyCCInputs(const CTransaction &tx, const CPubKey &pubkey)
 
 bool ProcessCC(struct CCcontract_info *cp,Eval* eval, std::vector<uint8_t> paramsNull,const CTransaction &ctx, unsigned int nIn)
 {
-    CTransaction createTx; uint256 assetid,assetid2,hashBlock; uint8_t funcid; int32_t height,i,n,from_mempool = 0; int64_t amount; std::vector<uint8_t> origpubkey;
-    height = KOMODO_CONNECTING;
     if ( KOMODO_CONNECTING < 0 ) // always comes back with > 0 for final confirmation
-        return(true);
-    if ( ASSETCHAINS_CC == 0 || (height & ~(1<<30)) < KOMODO_CCACTIVATE )
+        return true;
+
+    if ( ASSETCHAINS_CC == 0 || (KOMODO_CONNECTING & ~(1<<30)) < KOMODO_CCACTIVATE )
         return eval->Invalid("CC are disabled or not active yet");
-    if ( (KOMODO_CONNECTING & (1<<30)) != 0 )
-    {
-        from_mempool = 1;
-        height &= ((1<<30) - 1);
-    }
+
     if (cp->validate == NULL)
         return eval->Invalid("validation not supported for eval code");
 
-    //LogPrintf("KOMODO_CONNECTING.%d mempool.%d vs CCactive.%d\n",height,from_mempool,KOMODO_CCACTIVATE);
-    // there is a chance CC tx is valid in mempool, but invalid when in block, so we cant filter duplicate requests. if any of the vins are spent, for example
-    //txid = ctx.GetHash();
-    //if ( txid == cp->prevtxid )
-    //    return(true);
-    //LogPrintf("process CC %02x\n",cp->evalcode);
+    // there is a chance CC tx is valid in mempool, but invalid when in block, so we cant filter duplicate requests. 
+    // if any of the vins are spent, for example
+
     CCclearvars(cp);
+
     if ( paramsNull.size() != 0 ) // Don't expect params
         return eval->Invalid("Cannot have params");
-    //else if ( ctx.vout.size() == 0 )      // spend can go to z-addresses
-    //    return eval->Invalid("no-vouts");
     else if ( (*cp->validate)(cp,eval,ctx,nIn) != 0 )
     {
-        //LogPrintf("done CC %02x\n",cp->evalcode);
-        //cp->prevtxid = txid;
-        return(true);
+        return true;
     }
-    //LogPrintf("invalid CC %02x\n",cp->evalcode);
-    return(false);
+    return false;
 }
 
 extern struct CCcontract_info CCinfos[0x100];
@@ -862,38 +847,41 @@ bool CClib_validate(struct CCcontract_info *cp,int32_t height,Eval *eval,const C
 
 bool CClib_Dispatch(const CC *cond,Eval *eval,std::vector<uint8_t> paramsNull,const CTransaction &txTo,unsigned int nIn)
 {
-    uint8_t evalcode; int32_t height,from_mempool; struct CCcontract_info *cp;
     if ( ASSETCHAINS_CCLIB != MYCCLIBNAME )
     {
         LogPrintf("-ac_cclib=%s vs myname %s\n",ASSETCHAINS_CCLIB.c_str(),MYCCLIBNAME.c_str());
         return eval->Invalid("-ac_cclib name mismatches myname");
     }
-    height = KOMODO_CONNECTING;
+
     if ( KOMODO_CONNECTING < 0 ) // always comes back with > 0 for final confirmation
-        return(true);
+        return true;
+
+    // chain height calc and check
+    int32_t height = KOMODO_CONNECTING;
     if ( ASSETCHAINS_CC == 0 || (height & ~(1<<30)) < KOMODO_CCACTIVATE )
         return eval->Invalid("CC are disabled or not active yet");
     if ( (KOMODO_CONNECTING & (1<<30)) != 0 )
     {
-        from_mempool = 1;
         height &= ((1<<30) - 1);
     }
-    evalcode = cond->code[0];
+
+    uint8_t evalcode = cond->code[0];
     if ( evalcode >= EVAL_FIRSTUSER && evalcode <= EVAL_LASTUSER )
     {
-        cp = &CCinfos[(int32_t)evalcode];
+        CCcontract_info *cp = &CCinfos[(int32_t)evalcode];
         if ( cp->didinit == 0 )
         {
             if ( CClib_initcp(cp,evalcode) == 0 )
                 cp->didinit = 1;
-            else return eval->Invalid("unsupported CClib evalcode");
+            else 
+                return eval->Invalid("unsupported CClib evalcode");
         }
         CCclearvars(cp);
         if ( paramsNull.size() != 0 ) // Don't expect params
             return eval->Invalid("Cannot have params");
         else if ( CClib_validate(cp,height,eval,txTo,nIn) != 0 )
-            return(true);
-        return(false); //eval->Invalid("error in CClib_validate");
+            return true;
+        return false; //eval->Invalid("error in CClib_validate");
     }
     return eval->Invalid("cclib CC must have evalcode between 16 and 127");
 }

@@ -3,11 +3,10 @@
 #include <cstdlib>
 #include <iterator>
 #include <boost/filesystem.hpp>
-#include <komodo_structs.h>
-
-int32_t komodo_faststateinit(struct komodo_state *sp,char *fname,char *symbol,char *dest);
-struct komodo_state *komodo_stateptrget(char *base);
-extern int32_t KOMODO_EXTERNAL_NOTARIES;
+#include "komodo.h"
+#include "komodo_structs.h"
+#include "komodo_gateway.h"
+#include "komodo_extern_globals.h"
 
 namespace TestEvents {
 
@@ -158,7 +157,8 @@ TEST(TestEvents, komodo_faststateinit_test)
     SetupEnvironment();
 
     char symbol[] = "TST";
-    strcpy(ASSETCHAINS_SYMBOL, symbol);
+
+    chainName = assetchain("TST");
     KOMODO_EXTERNAL_NOTARIES = 1;
 
     boost::filesystem::path temp = boost::filesystem::unique_path();
@@ -570,7 +570,7 @@ TEST(TestEvents, komodo_faststateinit_test_kmd)
     // Nothing should be added to events if this is the komodo chain
 
     char symbol[] = "KMD";
-    ASSETCHAINS_SYMBOL[0] = 0;
+    chainName = assetchain();
     KOMODO_EXTERNAL_NOTARIES = 0;
 
     boost::filesystem::path temp = boost::filesystem::unique_path();

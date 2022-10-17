@@ -31,7 +31,9 @@
 #include "utilmoneystr.h"
 #include "validationinterface.h"
 #include "version.h"
-#define _COINBASE_MATURITY 100
+#include "komodo_globals.h"
+#include "komodo_utils.h"
+#include "komodo_bitcoind.h"
 
 using namespace std;
 
@@ -125,7 +127,6 @@ bool CTxMemPool::addUnchecked(const uint256& hash, const CTxMemPoolEntry &entry,
     if (!tx.IsCoinImport()) {
         for (unsigned int i = 0; i < tx.vin.size(); i++)
         {
-            if (tx.IsPegsImport() && i==0) continue;
             mapNextTx[tx.vin[i].prevout] = CInPoint(&tx, i);
         }
     }
@@ -153,7 +154,7 @@ void CTxMemPool::addAddressIndex(const CTxMemPoolEntry &entry, const CCoinsViewC
 
     uint256 txhash = tx.GetHash();
     for (unsigned int j = 0; j < tx.vin.size(); j++) {
-        if (tx.IsPegsImport() && j==0) continue; 
+
         const CTxIn input = tx.vin[j];
         const CTxOut &prevout = view.GetOutputFor(input);
 
@@ -259,7 +260,7 @@ void CTxMemPool::addSpentIndex(const CTxMemPoolEntry &entry, const CCoinsViewCac
 
     uint256 txhash = tx.GetHash();
     for (unsigned int j = 0; j < tx.vin.size(); j++) {
-        if (tx.IsPegsImport() && j==0) continue; 
+
         const CTxIn input = tx.vin[j];
         const CTxOut &prevout = view.GetOutputFor(input);
 
@@ -391,15 +392,8 @@ void CTxMemPool::remove(const CTransaction &origTx, std::list<CTransaction>& rem
     }
 }
 
-extern uint64_t ASSETCHAINS_TIMELOCKGTE;
-int64_t komodo_block_unlocktime(uint32_t nHeight);
-
 void CTxMemPool::removeForReorg(const CCoinsViewCache *pcoins, unsigned int nMemPoolHeight, int flags)
 {
-    // Remove transactions spending a coinbase which are now immature
-    extern char ASSETCHAINS_SYMBOL[KOMODO_ASSETCHAIN_MAXLEN];
-    if ( ASSETCHAINS_SYMBOL[0] == 0 )
-        COINBASE_MATURITY = _COINBASE_MATURITY;
     // Remove transactions spending a coinbase which are now immature and no-longer-final transactions
     LOCK(cs);
     list<CTransaction> transactionsToRemove;
@@ -414,7 +408,7 @@ void CTxMemPool::removeForReorg(const CCoinsViewCache *pcoins, unsigned int nMem
                     continue;
                 const CCoins *coins = pcoins->AccessCoins(txin.prevout.hash);
 		        if (nCheckFrequency != 0) assert(coins);
-                if (!coins || (coins->IsCoinBase() && (((signed long)nMemPoolHeight) - coins->nHeight < COINBASE_MATURITY) && 
+                if (!coins || (coins->IsCoinBase() && (((signed long)nMemPoolHeight) - coins->nHeight < Params().CoinbaseMaturity()) && 
                                                        ((signed long)nMemPoolHeight < komodo_block_unlocktime(coins->nHeight) && 
                                                          coins->IsAvailable(0) && coins->vout[0].nValue >= ASSETCHAINS_TIMELOCKGTE))) {
                     transactionsToRemove.push_back(tx);
@@ -508,33 +502,26 @@ void CTxMemPool::removeConflicts(const CTransaction &tx, std::list<CTransaction>
     }
 }
 
-int32_t komodo_validate_interest(const CTransaction &tx,int32_t txheight,uint32_t nTime,int32_t dispflag);
-extern char ASSETCHAINS_SYMBOL[];
-
 void CTxMemPool::removeExpired(unsigned int nBlockHeight)
 {
     CBlockIndex *tipindex;
     // Remove expired txs from the mempool
     LOCK(cs);
-    list<CTransaction> transactionsToRemove;
+    std::list<CTransaction> transactionsToRemove;
     for (indexed_transaction_set::const_iterator it = mapTx.begin(); it != mapTx.end(); it++)
     {
         const CTransaction& tx = it->GetTx();
         tipindex = chainActive.Tip();
 
-        /* cmptime = chainActive.Tip()->GetMedianTimePast() + 777 - here for interest validation, inside
-        CTxMemPool::removeExpired. need to test, may be here better to validate against pindexNew->nTime.
-        In ConnectBlock we have a condition for each tx like komodo_validate_interest(..., block.nTime), so
-        blocks mined with such txes will be valid. Mean, may be chainActive.Tip()->GetMedianTimePast() + 777
-        is "too earlier" condition. [nBlockHeight should be equal tipindex->nHeight+1 here]
-        */
-
-        // if (IsExpiredTx(tx, nBlockHeight) || (ASSETCHAINS_SYMBOL[0] == 0 && tipindex != 0 && komodo_validate_interest(tx,tipindex->nHeight+1,tipindex->GetMedianTimePast() + 777,0)) < 0)
-        bool fInterestNotValidated = ASSETCHAINS_SYMBOL[0] == 0 && tipindex != 0 && komodo_validate_interest(tx,tipindex->nHeight+1,tipindex->GetMedianTimePast() + 777,0) < 0;
+        bool fInterestNotValidated = chainName.isKMD() 
+                && tipindex != 0 
+                && !komodo_validate_interest(tx,tipindex->nHeight+1,tipindex->GetMedianTimePast() + 777);
         if (IsExpiredTx(tx, nBlockHeight) || fInterestNotValidated)
         {
             if (fInterestNotValidated && tipindex != 0)
-                LogPrintf("Removing interest violate txid.%s nHeight.%d nTime.%u vs locktime.%u\n",tx.GetHash().ToString(),tipindex->nHeight+1,tipindex->GetMedianTimePast() + 777,tx.nLockTime);
+                LogPrintf("Removing interest violate txid.%s nHeight.%d nTime.%u vs locktime.%u\n",
+                        tx.GetHash().ToString(),tipindex->nHeight+1,
+                        tipindex->GetMedianTimePast() + 777,tx.nLockTime);
             transactionsToRemove.push_back(tx);
         }
     }
